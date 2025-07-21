@@ -21,4 +21,4 @@ jobs:
         with:
           context: .
           push: false
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/hello-nginx:latest
+          tags: test/test-nginx:latest

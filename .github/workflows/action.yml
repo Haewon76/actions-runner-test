@@ -23,4 +23,4 @@ jobs:
           push: false
           tags: test/test-nginx:latest
           cache-from: type=local,src=/opt/docker-cache
-          cache-to: type=local,dest=/opt/docker-cache
+          cache-to: type=local,dest=/opt/docker-cache, mode=max

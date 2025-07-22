@@ -19,8 +19,11 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
         with:
-          driver: docker
-          install: false
+          buildkitd-config-inline: |
+            [registry."docker-registry-server:5000"]
+              http = true
+              
+        driver-opts: "image=docker-registry-server:5000/moby/buildkit:latest,network=host"
 
       - name: Build and push Docker image (no push version)
         uses: docker/build-push-action@v6

@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- Mybatis 사용법: http://www.mybatis.org/mybatis-3/ko/index.html -->
+
+<mapper namespace="com.cashmallow.api.domain.model.traveler.TravelerWalletMapper">
+
+    <insert id="insertBackupWallet">
+        REPLACE INTO traveler_wallet_backup
+        SELECT *
+        FROM traveler_wallet tw
+        WHERE tw.id = #{walletId}
+    </insert>
+
+    <update id="insertRestoreWallet">
+        REPLACE INTO traveler_wallet (id, traveler_id, country, e_money, r_money, created_date, updated_date, creator, root_cd, c_money, exchange_ids, can_refund, expired)
+        SELECT id,
+               traveler_id,
+               country,
+               e_money,
+               r_money,
+               created_date,
+               now(),
+               creator,
+               root_cd,
+               c_money,
+               exchange_ids,
+               can_refund,
+               expired
+        FROM traveler_wallet_backup twb
+        WHERE twb.id = #{walletId}
+    </update>
+
+    <delete id="deleteBackupWallet">
+        DELETE
+        FROM traveler_wallet_backup
+        WHERE id = #{walletId}
+    </delete>
+
+    <select id="getBackupWallet" resultType="com.cashmallow.api.domain.model.traveler.TravelerWallet">
+        SELECT id,
+               traveler_id,
+               country,
+               e_money,
+               r_money,
+               created_date,
+               updated_date,
+               creator,
+               root_cd,
+               c_money,
+               exchange_ids,
+               can_refund,
+               expired
+        FROM traveler_wallet_backup
+        WHERE id = #{walletId}
+    </select>
+
+    <select id="getRelatedWalletsByWalletId" resultType="com.cashmallow.api.domain.model.traveler.TravelerWallet">
+        SELECT *
+        FROM traveler_wallet tw
+        WHERE exchange_id = (SELECT exchange_id
+                             FROM traveler_wallet w
+                             WHERE w.id = #{walletId})
+    </select>
+
+    <select id="getAllWallets" resultType="com.cashmallow.api.domain.model.traveler.AllWallet">
+        SELECT root_cd                                           AS from_cd,
+               country                                           AS to_cd,
+               IFNULL(SUM(e_money), 0) + IFNULL(SUM(c_money), 0) AS total_pending_money,
+               IFNULL(SUM(e_money), 0)                           AS e_money,
+               IFNULL(SUM(c_money), 0)                           AS c_money,
+               IFNULL(SUM(r_money), 0)                           AS r_money,
+               count(*)                                          AS count
+        FROM traveler_wallet tw
+        WHERE tw.root_cd = #{fromCd}
+        GROUP BY tw.country;
+    </select>
+
+    <update id="insertBackupRelatedWalletsByWalletId">
+        REPLACE INTO traveler_wallet_backup
+        SELECT *
+        FROM traveler_wallet tw
+        WHERE exchange_id = (SELECT exchange_id
+                             FROM traveler_wallet w
+                             WHERE w.id = #{walletId})
+    </update>
+
+    <update id="insertRestoreRelatedWalletsByWalletId">
+        REPLACE INTO traveler_wallet (id, traveler_id, country, e_money, r_money, created_date, updated_date, creator, root_cd, c_money, exchange_ids, can_refund, expired)
+        SELECT id,
+               traveler_id,
+               country,
+               e_money,
+               r_money,
+               created_date,
+               now(),
+               creator,
+               root_cd,
+               c_money,
+               exchange_ids,
+               can_refund,
+               expired
+        FROM traveler_wallet_backup
+        WHERE exchange_id =  (SELECT exchange_id
+                             FROM traveler_wallet w
+                             WHERE w.id = #{walletId})
+    </update>
+
+    <delete id="deleteBackupRelatedWalletsByWalletId">
+        DELETE
+        FROM traveler_wallet_backup
+        WHERE exchange_id =  (SELECT exchange_id
+                             FROM traveler_wallet w
+                             WHERE w.id = #{walletId})
+    </delete>
+
+    <!--  MYSQL 정책상 동일 테이블을 조회해서 UPDATE는 불가능해서 임시 테이블처럼 조회 -->
+    <delete id="deleteOtherRelatedWallets">
+        DELETE
+        FROM traveler_wallet
+        WHERE id != #{walletId}
+          AND exchange_id = (SELECT exchange_id
+                                 FROM (SELECT exchange_id
+                                         FROM traveler_wallet w
+                                        WHERE w.id = #{walletId}) AS temp)
+    </delete>
+
+    <select id="getUnpaidListForGlobal" resultType="com.cashmallow.api.domain.model.traveler.TravelerWallet">
+        SELECT *
+        FROM traveler_wallet tw
+        WHERE root_cd = #{fromCountryCode}
+          AND exchange_id IS NOT NULL
+          AND (e_money > 0 or c_money > 0 or r_money > 0)
+    </select>
+
+</mapper>

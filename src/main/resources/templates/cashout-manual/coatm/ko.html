@@ -1,0 +1,179 @@
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        .collapsible {
+            background-color: #ffffff;
+            cursor: pointer;
+            padding-left: 16px;
+            padding-right: 16px;
+            height: 48px;
+            width: 100%;
+            border: none;
+            text-align: left;
+            outline: none;
+            font-size: 24px;
+            margin-top: 8px;
+            vertical-align: middle;
+        }
+
+        .content {
+            padding: 0 16px;
+            display: none;
+            overflow: hidden;
+            background-color: #f8fafa;
+        }
+
+        .align-right {
+            float: right;
+        }
+
+        .material-icons-round {
+            font-family: 'Material Icons';
+            font-weight: normal;
+            font-style: round;
+            font-size: 24px; /* Preferred icon size */
+            display: inline-block;
+            line-height: 1;
+            text-transform: none;
+            letter-spacing: normal;
+            word-wrap: normal;
+            white-space: nowrap;
+            direction: ltr;
+
+            /* Support for all WebKit browsers. */
+            -webkit-font-smoothing: antialiased;
+            /* Support for Safari and Chrome. */
+            text-rendering: optimizeLegibility;
+
+            /* Support for Firefox. */
+            -moz-osx-font-smoothing: grayscale;
+
+            /* Support for IE. */
+            font-feature-settings: 'liga';
+        }
+
+        p {
+            font-size: 14px;
+        }
+
+
+    </style>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons"
+          rel="stylesheet">
+</head>
+<body>
+<span style="font-size:14;">ATM 화면 좌측 상단 로고를 확인하여 선택하세요.</span>
+<button type="button" class="collapsible">
+    <img th:src="${cdnUrl} + '/images/nice_logo.png'" style="height: 22px;"/>
+    <span name="expand_icon" class="material-icons-round align-right" style="margin-top: 2px;">expand_more</span>
+    <span style="font-size:9; color:gray; margin-top: 6px; float: right;">(CU, Emart24∙∙∙)</span>
+</button>
+<div class="content">
+    <p>
+        1. ATM 첫 화면 좌측 상단에 ATM 회사를 확인
+        <br> 2. 스마트(포인트) 출금 을 선택
+        <br> 3. COATM을 선택
+        <br> 4. 생일(YYYYMMDD) 8자리 입력
+        <br> 5. 승인번호를 입력
+        <br> 6. 현금 수령
+    <div style="text-align: right;"><a href="https://www.cashmallow.com/ko/atm-withdrawal-way/nicepark/">Detail</a></div>
+    </p>
+</div>
+
+<button type="button" class="collapsible">
+    <img th:src="${cdnUrl} + '/images/hannet.png'" style="height: 32px;"/>
+    <span name="expand_icon" class="material-icons-round align-right" style="margin-top: 2px;">expand_more</span>
+    <span style="font-size:9; color:gray; margin-top: 6px; float: right;">(Subway Station, Emart24∙∙∙)</span>
+
+</button>
+<div class="content">
+    <p>
+        1. ATM 첫 화면 좌측 상단에 ATM 회사를 확인
+        <br> 2. 포인트/스마트 출금 을 선택
+        <br> 3. COATM을 선택
+        <br> 4. 생일(YYYYMMDD) 8자리 입력
+        <br> 5. 승인번호를 입력
+        <br> 6. 명세표 출력 여부 선택
+        <br> 7. 명세표 수령
+        <br> 8. 현금 수령
+    <div style="text-align: right;"><a href="https://www.cashmallow.com/ko/atm-withdrawal-way/hannet/">Detail</a></div>
+    </p>
+</div>
+
+<button type="button" class="collapsible">
+    <img th:src="${cdnUrl} + '/images/hyosung.png'" style="height: 16px;"/>
+    <span name="expand_icon" class="material-icons-round align-right">expand_more</span>
+    <span style="font-size:9; color:gray; margin-top: 4px; float: right;">(GS25, Ministop∙∙∙)</span>
+</button>
+<div class="content">
+    <p>
+        1. ATM 첫 화면 좌측 상단에 ATM 회사를 확인
+        <br> 2. 모바일/포인트 출금 을 선택
+        <br> 3. COATM을 선택
+        <br> 4. "앱출금"을 선택
+        <br> 5. 다음화면을 선택
+        <br> 6. 생일(YYYYMMDD) 8자리 입력
+        <br> 7. 승인번호를 입력
+        <br> 8. 인출 확인 및 "확인" 선택
+        <br> 9. 금액 확인 및 "확인" 선택
+        <br>10. 현금 수령
+    <div style="text-align: right;"><a href="https://www.cashmallow.com/ko/atm-withdrawal-way/hs/">Detail</a></div>
+    </p>
+</div>
+
+<button type="button" class="collapsible">
+    <img th:src="${cdnUrl} + '/images/lotte_atm.png'" style="height: 14px;"/>
+    <span name="expand_icon" class="material-icons-round align-right">expand_more</span>
+    <span style="font-size:9; color:gray; margin-top: 4px; float: right;">(7-11, Lotte Mart∙∙∙)</span>
+</button>
+<div class="content">
+    <p>
+        1. ATM 첫 화면 좌측 상단에 ATM 회사를 확인
+        <br> 2. 포인트‧캐시 PAYCO‧L.POINT을 선택
+        <br> 3. COATM을 선택
+        <br> 4. 스마트 출금을 선택
+        <br> 5. 생일(YYYYMMDD) 8자리 입력
+        <br> 6. 승인번호를 입력
+        <br> 7. 인출 확인 및 "확인"선택
+        <br> 8. 명세표 출력 여부 선택
+        <br> 9. 명세표 수령
+        <br>10. 현금 수령
+    <div style="text-align: right;"><a href="https://www.cashmallow.com/ko/atm-withdrawal-way/lotte/">Detail</a></div>
+    </p>
+</div>
+
+<script>
+    var coll = document.getElementsByClassName("collapsible");
+    var i;
+
+    for (i = 0; i < coll.length; i++) {
+        coll[i].addEventListener("click", function () {
+            this.classList.toggle("active");
+            var content = this.nextElementSibling;
+            if (content.style.display === "block") {
+                content.style.display = "none";
+                this.childNodes[3].innerHTML = "expand_more";
+            } else {
+                content.style.display = "block";
+                this.childNodes[3].innerHTML = "expand_less";
+            }
+
+            for (j = 0; j < coll.length; j++) {
+                var c = coll[j]
+                if (c != this) {
+
+                    var otherContent = c.nextElementSibling;
+                    otherContent.style.display = "none";
+                    c.childNodes[3].innerHTML = "expand_more";
+                }
+            }
+        });
+    }
+</script>
+
+</body>
+</html>
+
+

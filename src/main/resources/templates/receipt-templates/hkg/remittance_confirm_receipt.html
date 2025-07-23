@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Cashmallow Exchange Receipt</title>
+    <style type="text/css">
+        body {
+            font-family: Droid Sans Fallback
+        }
+
+        table {
+            width: 100%;
+            border-spacing: 0pt;
+            border-left: none;
+            border-top: none;
+        }
+
+        th {
+            padding: 8px;
+            border-right: none;
+            border-bottom: none;
+        }
+
+        td {
+            padding: 8px;
+            border-right: none;
+            border-bottom: none;
+        }
+
+        .center {
+            text-align: center;
+        }
+
+        .right {
+            text-align: right;
+        }
+
+        .bottom {
+            text-align: right;
+            border-bottom: 1px solid #ddd;
+        }
+    </style>
+</head>
+<body>
+<table>
+    <tr>
+        <th scope="row" class="center"><h1>RECEIPT</h1></th>
+    </tr>
+    <tr>
+        <td scope="row" class="right">Receipt No.: <span th:text="${receiptNo}"></span></td>
+    </tr>
+    <tr>
+        <td scope="row" class="right">Issued Date: <span th:text="${date}"></span></td>
+    </tr>
+    <tr>
+    </tr>
+    <tr>
+        <td>* Customer Name: <span th:text="${name}"></span></td>
+    </tr>
+    <tr>
+        <td>&nbsp;&nbsp;- User E-Mail: <span th:text="${emailId}"></span></td>
+    </tr>
+    <tr>
+        <td>&nbsp;&nbsp;- ID No. / Passport No.: <span th:text="${identificationNo}"></span></td>
+    </tr>
+</table>
+<table border="1">
+    <tr>
+        <th scope="row" bgcolor="c0c0c0">Classification</th>
+        <th scope="row" bgcolor="c0c0c0">Description</th>
+        <th scope="row" bgcolor="c0c0c0">Remark</th>
+    </tr>
+    <tr>
+        <th scope="row">Applied Amount</th>
+        <th scope="row">HKD&nbsp;<span th:text="${fromAmt}"></span></th>
+        <th scope="row"></th>
+    </tr>
+    <tr>
+        <th scope="row">Service Charge</th>
+        <th scope="row">HKD&nbsp;<span th:text="${fee}"></span></th>
+        <th scope="row"></th>
+    </tr>
+    <tr>
+        <th scope="row">Transfer Amount</th>
+        <th scope="row">HKD&nbsp;<span th:text="${fromPrincipal}"></span></th>
+        <th scope="row"></th>
+    </tr>
+    <tr>
+        <th scope="row">Exchange Rates</th>
+        <th scope="row"><span th:text="${exchange_rate}"></span></th>
+        <th scope="row">HKD against&nbsp;<span th:text="${toIso4217}"></span></th>
+    </tr>
+    <tr>
+        <th scope="row">Customer Receiving Amount</th>
+        <th scope="row"><span th:text="${toIso4217}"></span>&nbsp;<span th:text="${toAmt}"></span></th>
+        <th scope="row"></th>
+    </tr>
+</table>
+<table>
+    <tr>
+        <th scope="row" class="right"><img th:src="${stampImage}" alt="Cashmallow stamp"></img></th>
+    </tr>
+    <tr>
+        <th scope="row" class="right">Cashmallow Hong Kong Limited</th>
+    </tr>
+</table>
+&nbsp;<br>
+&nbsp;<br>
+&nbsp;<br>
+<div th:fragment="footer-confirm">
+    <div style="background-color:#f9fafa; color:rgb(168,168,168); padding:16px; line-height:1.5em;">
+        <div style="font-size:0.9em; text-align:center;">
+            Cashmallow Hong Kong Limited <br>
+            Room1423, 14/F, Radio City 505-511 Hennessy Road, Causeway Bay, Hong Kong<br>
+            Tel: +852 2736 8767 E-mail: contact@cashmallow.com<br>
+        </div>
+    </div>
+</div>
+</body>
+</html>

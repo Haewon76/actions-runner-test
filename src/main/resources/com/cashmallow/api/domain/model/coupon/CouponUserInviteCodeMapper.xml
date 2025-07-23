@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.cashmallow.api.domain.model.coupon.CouponUserInviteCodeMapper">
+
+    <select id="getCouponUserInviteCode" parameterType="com.cashmallow.api.interfaces.coupon.dto.req.CouponUserInviteCodeRequest"
+            resultType="com.cashmallow.api.domain.model.coupon.entity.CouponUserInviteCode">
+        SELECT
+        id,
+        user_id,
+        invite_code,
+        created_at
+        FROM coupon_user_invite_code_v2
+        WHERE 1=1
+        <if test="id != null and !''.equals(id)">
+            AND id = #{id}
+        </if>
+        <if test="userId != null and !''.equals(userId)">
+            AND user_id = #{userId}
+        </if>
+        <if test="inviteCode != null and !''.equals(inviteCode)">
+            AND invite_code = #{inviteCode}
+        </if>
+        <if test="abbreviation != null and !''.equals(abbreviation)">
+            AND invite_code LIKE CONCAT(#{abbreviation}, '%')
+        </if>
+    </select>
+
+    <select id="getUserIdByInviteCode" parameterType="com.cashmallow.api.interfaces.coupon.dto.req.CouponUserInviteCodeRequest"
+            resultType="com.cashmallow.api.domain.model.coupon.entity.CouponUserInviteCode">
+        SELECT id
+             , user_id
+             , invite_code
+             , created_at
+          FROM coupon_user_invite_code_v2
+         WHERE 1=1
+        <if test="id != null">
+            AND id = #{id}
+        </if>
+        <if test="userId != null">
+            AND user_id = #{userId}
+        </if>
+        <if test="inviteCode != null">
+            AND invite_code = #{inviteCode}
+        </if>
+        <if test="abbreviation != null">
+            AND invite_code LIKE CONCAT(#{abbreviation}, '%')
+        </if>
+    </select>
+
+    <insert id="insertCouponUserInviteCode" parameterType="com.cashmallow.api.interfaces.coupon.dto.req.CouponUserInviteCodeRequest">
+        INSERT INTO coupon_user_invite_code_v2(user_id,
+                                            invite_code)
+        VALUES (#{userId}, #{inviteCode})
+    </insert>
+
+    <select id="getInviteCodeByUserId" parameterType="java.lang.Long" resultType="com.cashmallow.api.domain.model.coupon.entity.CouponUserInviteCode">
+        SELECT id
+             , user_id
+             , invite_code
+             , created_at
+          FROM coupon_user_invite_code_v2
+         WHERE user_id = #{userId}
+    </select>
+
+</mapper>

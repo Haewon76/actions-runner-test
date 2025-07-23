@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>crypto</title>
+    <script type="text/javascript" src="https://code.jquery.com/jquery-latest.min.js"></script>
+    <style>
+        .container {
+            width: 90%;
+            margin: auto;
+            padding: 20px;
+            text-align: center;
+        }
+
+        #title, #content {
+            width: 100%;
+            margin-bottom: 10px;
+            padding: 10px;
+        }
+
+        #saveButton {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        #saveButton:hover {
+            background-color: #45a049;
+        }
+
+        #result {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ddd;
+        }
+    </style>
+    <script>
+
+        $(document).ready(function () {
+            $('#saveButton').click(function () {
+                let token = $('#title').val();
+                let content = $('#content').val();
+
+                $.ajax({
+                    url: "/api/devoffice/contingency/crypto/decrypt?token=" + token,
+                    type: "POST",
+                    contentType: "application/json;charset=UTF-8",
+                    data: content,
+                    success: function (response) {
+                        $('#result').val(response);
+                    },
+                    error: function (xhr, status, error) {
+                        alert('응답 실패');
+                        console.log("응답 실패: ", status, error);
+                    }
+                });
+            });
+        });
+    </script>
+</head>
+<body>
+<div class="container">
+    <input type="text" id="title" placeholder="토큰을 입력하세요">
+    <textarea id="content" placeholder="암호화된 값을 여기에 넣어주세요"></textarea>
+    <button id="saveButton">복호화</button>
+    <p></p>
+    <textarea id="result" rows="30" cols="100%">
+    </textarea>
+</div>
+</body>
+</html>

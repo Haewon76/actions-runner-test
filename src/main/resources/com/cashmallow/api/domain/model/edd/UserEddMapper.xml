@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- Mybatis 사용법: http://www.mybatis.org/mybatis-3/ko/index.html -->
+
+<mapper namespace="com.cashmallow.api.domain.model.edd.UserEddMapper">
+
+    <resultMap type="com.cashmallow.api.domain.model.edd.UserEdd" id="userEddMap">
+        <result column="creatorLastName" property="creatorLastName" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+        <result column="creatorFirstName" property="creatorFirstName" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+        <result column="first_name" property="firstName" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+        <result column="last_name" property="lastName" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+        <result column="email" property="email" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+    </resultMap>
+
+
+    <resultMap type="com.cashmallow.api.domain.model.edd.UserEddFromAmtHistory" id="userEddFromAmtHistoryMap">
+        <result column="receiverFirstName" property="receiverFirstName" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+        <result column="receiverLastName" property="receiverLastName" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+    </resultMap>
+
+    <!-- 조회 -->
+    <select id="getUserEddList" resultType="com.cashmallow.api.domain.model.edd.UserEdd" parameterType="hashmap">
+        SELECT *
+        FROM user_edd
+        <where>
+            <if test="userId != null and userId != ''">
+                AND user_id = #{userId}
+            </if>
+            <if test="limited != null and limited != ''">
+                AND limited = #{limited}
+            </if>
+            <if test="id != null and id != ''">
+                AND id = #{id}
+            </if>
+        </where>
+        Order by id desc
+    </select>
+
+    <!-- 조회 -->
+    <select id="getUserEddJoinList" resultMap="userEddMap" parameterType="hashmap">
+        SELECT ue.id,
+        ue.user_id,
+        ue.amount,
+        ue.count,
+        ue.limited,
+        ue.created_at,
+        ue.init_at,
+        ue.creator_id,
+        ue.search_start_at,
+        ue.search_end_at,
+        ue.init_ip,
+        (select last_name from user where id = ue.creator_id) as creatorLastName,
+        (select first_name from user where id = ue.creator_id) as creatorFirstName,
+        u.first_name,
+        u.last_name,
+        u.email,
+        c.kor_name,
+        (select count(*) from memo m where ue.id = m.ref_id and m.type = 'EDD') as memo_count,
+        (select count(*) from user_edd_image uei where uei.user_edd_id = ue.id) as image_count
+        FROM user_edd ue
+        join user u on ue.user_id = u.id
+        join country c on u.country = c.id
+        <where>
+            <if test="userId != null and userId != ''">
+                AND ue.user_id = #{userId}
+            </if>
+            <if test="limited != null and limited != ''">
+                AND ue.limited = #{limited}
+            </if>
+            <if test="id != null and id != ''">
+                AND ue.id = #{id}
+            </if>
+            <if test="email != null and email != ''">
+                AND u.email like CONCAT('%',#{email, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler},'%')
+            </if>
+        </where>
+        Order by id desc
+    </select>
+
+    <select id="getUserEddLimit" resultType="hashmap" parameterType="hashmap">
+        SELECT IFNULL(SUM(fromAmtSum), 0) fromAmtSum, SUM(cnt) cnt
+        FROM (SELECT IFNULL(SUM(rm.from_amt), 0) fromAmtSum, COUNT(rm.id) cnt
+              FROM remittance rm
+                       INNER JOIN remittance_status rms
+                                  ON rm.id = rms.remit_id
+                                      AND rms.remit_status = 'CF'
+                                      AND rm.traveler_id = #{travelerId}
+                                      AND rm.from_cd = #{fromCd}
+                                      AND rms.created_date BETWEEN #{fromDate} and #{toDate}
+
+              UNION ALL
+
+              SELECT IFNULL(SUM(from_amt), 0) fromAmtSum, COUNT(id) cnt
+              FROM exchange
+              WHERE traveler_id = #{travelerId}
+                AND from_cd = #{fromCd}
+                AND ex_status = 'CF'
+                AND ex_status_date BETWEEN #{fromDate} and #{toDate}) as fromAtmTot
+    </select>
+
+    <select id="getFromAmtHistory" resultMap="userEddFromAmtHistoryMap" parameterType="hashmap">
+        SELECT rm.id                                                    as id
+             , '송금'                                                     as type
+             , rm.from_amt                                              as fromAmt
+             , rms.created_date                                         as createdAt
+             , (SELECT kor_name FROM country c where c.code = rm.to_cd) as korName
+             , receiver_last_name                                       as receiverLastName
+             , receiver_first_name                                      as receiverFirstName
+
+        FROM remittance rm
+                 INNER JOIN remittance_status rms
+                            ON rm.id = rms.remit_id
+                                AND rms.remit_status = 'CF'
+                                AND rm.traveler_id = #{travelerId}
+                                AND rm.from_cd = #{fromCd}
+                                AND rms.created_date BETWEEN #{fromDate} and #{toDate}
+        UNION ALL
+        SELECT id
+             , '환전'                                                  as type
+             , from_amt                                              as fromAmt
+             , ex_status_date                                        as createdAt
+             , (SELECT kor_name FROM country c where c.code = to_cd) as korName
+             , ''                                                    as receiverLastName
+             , ''                                                    as receiverFirstName
+        FROM exchange
+        WHERE traveler_id = #{travelerId}
+          AND from_cd = #{fromCd}
+          AND ex_status = 'CF'
+          AND ex_status_date BETWEEN #{fromDate} and #{toDate}
+    </select>
+
+
+    <select id="getUserEddCount" parameterType="hashmap" resultType="int">
+        SELECT count(*)
+        FROM user_edd
+        <where>
+            <if test="userId != null and userId != ''">
+                AND user_id = #{userId}
+            </if>
+            <if test="limited != null and limited != ''">
+                AND limited = #{limited}
+            </if>
+            <if test="id != null and id != ''">
+                AND id = #{id}
+            </if>
+        </where>
+    </select>
+
+    <insert id="registerUserEdd" parameterType="com.cashmallow.api.domain.model.edd.UserEdd">
+        INSERT INTO user_edd (
+        user_id,
+        amount,
+        count,
+        limited,
+        creator_id,
+        init_at,
+        created_at,
+        updated_at,
+        search_start_at,
+        search_end_at,
+        init_ip
+        ) VALUES (
+        #{userId},
+        #{amount},
+        #{count},
+        #{limited},
+        #{creatorId},
+        #{initAt},
+        #{createdAt},
+        #{updatedAt},
+        #{searchStartAt},
+        #{searchEndAt},
+        #{initIp}
+        <selectKey keyProperty="id" resultType="Long" order="AFTER">
+            SELECT LAST_INSERT_ID()
+        </selectKey>
+        )
+    </insert>
+
+    <update id="updateUserEdd" parameterType="com.cashmallow.api.domain.model.edd.UserEdd">
+        UPDATE user_edd
+        SET user_id         = #{userId},
+            amount          = #{amount},
+            count           = #{count},
+            limited         = #{limited},
+            creator_id      = #{creatorId},
+            init_at         = #{initAt},
+            updated_at      = #{updatedAt},
+            search_start_at = #{searchStartAt},
+            search_end_at   = #{searchEndAt},
+            init_ip         = #{initIp}
+        WHERE id = #{id}
+    </update>
+
+</mapper>

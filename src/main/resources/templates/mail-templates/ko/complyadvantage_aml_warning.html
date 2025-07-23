@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+</head>
+
+<body>
+
+<div th:replace="mail-templates/ko/fragments/header :: header"></div>
+
+<div style="background-color:white; padding:16px; line-height:1.5em;">
+    <div style="font-size:1em;">
+        다음과 같은 AML 정보가 변경되었으니 변경된 결과를 확인바랍니다.<br>
+        &nbsp;<br>
+        - <a th:text="${fristDetail}"></a><br>
+        - <a th:text="${secoundDetail}"></a><br>
+        - <a th:text="${thirdDetail}"></a><br>
+        &nbsp;<br>
+    </div>
+</div>
+
+<div th:replace="mail-templates/ko/fragments/footer :: footer"></div>
+
+</body>
+</html>

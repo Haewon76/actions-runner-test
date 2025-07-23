@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- Mybatis 사용법: http://www.mybatis.org/mybatis-3/ko/index.html -->
+
+<mapper namespace="com.cashmallow.api.domain.model.edd.UserEddLogMapper">
+
+    <!-- 조회 -->
+    <select id="getUserEddLogList" resultType="com.cashmallow.api.domain.model.edd.UserEddLog" parameterType="hashmap">
+        SELECT *
+        FROM user_edd_log
+        <where>
+            <if test="userId != null and userId != ''">
+                AND user_id = #{userId}
+            </if>
+            <if test="limited != null and limited != ''">
+                AND limited = #{limited}
+            </if>
+            <if test="userEddId != null and userEddId != ''">
+                AND user_edd_id = #{userEddId}
+            </if>
+            <if test="id != null and id != ''">
+                AND id = #{id}
+            </if>
+        </where>
+        Order by id desc
+    </select>
+
+    <!-- 조회 -->
+    <select id="getUserEddLogJoinList" resultType="com.cashmallow.api.domain.model.edd.UserEddLog"
+            parameterType="hashmap">
+        SELECT ue.id,
+        ue.user_edd_id
+        ue.user_id,
+        ue.amount,
+        ue.count,
+        ue.limited,
+        ue.created_at,
+        ue.init_at,
+        ue.creator_id,
+        ue.search_start_at,
+        ue.search_end_at,
+        u.first_name,
+        u.last_name,
+        u.email,
+        c.kor_name,
+        (select count(*) from memo m where ue.user_edd_id = m.ref_id and m.type = 'EDD') as memo_count,
+        (select count(*) from user_edd_image uei where uei.user_edd_id = ue.user_edd_id) as image_count
+        FROM user_edd_log ue
+        join user u on ue.user_id = u.id
+        join country c on u.country = c.id
+        <where>
+            <if test="userId != null and userId != ''">
+                AND ue.user_id = #{userId}
+            </if>
+            <if test="limited != null and limited != ''">
+                AND ue.limited = #{limited}
+            </if>
+            <if test="id != null and id != ''">
+                AND ue.id = #{id}
+            </if>
+            <if test="userEddId != null and userEddId != ''">
+                AND ue.user_edd_id = #{userEddId}
+            </if>
+            <if test="email != null and email != ''">
+                AND u.email like CONCAT('%',#{email},'%')
+            </if>
+        </where>
+        Order by id desc
+    </select>
+
+    <insert id="registerUserEddLog" parameterType="com.cashmallow.api.domain.model.edd.UserEddLog">
+        INSERT INTO user_edd_log (user_edd_id,
+                                  user_id,
+                                  amount,
+                                  count,
+                                  limited,
+                                  creator_id,
+                                  init_at,
+                                  created_at,
+                                  search_start_at,
+                                  search_end_at,
+                                  init_ip)
+        VALUES (#{userEddId},
+                #{userId},
+                #{amount},
+                #{count},
+                #{limited},
+                #{creatorId},
+                #{initAt},
+                #{createdAt},
+                #{searchStartAt},
+                #{searchEndAt},
+                #{initIp})
+    </insert>
+
+</mapper>

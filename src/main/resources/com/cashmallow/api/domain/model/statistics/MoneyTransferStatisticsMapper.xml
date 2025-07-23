@@ -1,0 +1,306 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- Mybatis 사용법: http://www.mybatis.org/mybatis-3/ko/index.html -->
+
+<mapper namespace="com.cashmallow.api.domain.model.statistics.MoneyTransferStatisticsMapper">
+    <select id="getMoneyTransferStatistics" parameterType="hashmap" resultType="com.cashmallow.api.domain.model.statistics.MoneyTransferStatistics">
+        <![CDATA[
+        SELECT from_cd                                   AS fromcd
+             , IFNULL(SUM(from_amt), 0)                  AS fromamt
+             , SUM(IFNULL(from_amt, 0) - IFNULL(fee, 0)) AS fromoriamt
+             , to_cd                                     AS tocd
+             , IFNULL(SUM(to_amt), 0)                    AS toamt
+             , IFNULL(SUM(fee), 0)                       AS fee
+             , IFNULL(SUM(fee_per_amt), 0)               AS feeperamt
+             , IFNULL(SUM(fee_rate_amt), 0)              AS feerateamt
+             , COUNT(*)                                  AS totcnt
+             , 'EXCHANGE'                                AS type
+             , IFNULL(SUM(t.amount), 0)                  AS mappedamt
+        FROM exchange e
+             LEFT JOIN (SELECT related_txn_id
+                             , SUM(amount) AS amount
+                        FROM transaction_record
+                        WHERE related_txn_type = 'EXCHANGE'
+                        GROUP BY related_txn_id) t ON t.related_txn_id = e.id
+        WHERE from_cd = #{fromCd}
+          AND ex_status = 'CF'
+          AND ex_status_date >= #{date}
+          AND ex_status_date < #{date} + INTERVAL 1 DAY
+        GROUP BY to_cd
+
+        UNION ALL
+
+        SELECT from_cd                                   AS fromcd
+             , IFNULL(SUM(from_amt), 0)                  AS fromamt
+             , SUM(IFNULL(from_amt, 0) - IFNULL(fee, 0)) AS fromoriamt
+             , to_cd                                     AS tocd
+             , IFNULL(SUM(to_amt), 0)                    AS toamt
+             , IFNULL(SUM(fee), 0)                       AS fee
+             , IFNULL(SUM(fee_per_amt), 0)               AS feeperamt
+             , IFNULL(SUM(fee_rate_amt), 0)              AS feerateamt
+             , COUNT(*)                                  AS totcnt
+             , 'REMITTANCE_CF'                           AS type
+             , IFNULL(SUM(t.amount), 0)                  AS mappedamt
+        FROM remittance r
+             JOIN (SELECT related_txn_id
+                        , IFNULL(SUM(amount), 0) AS amount
+                        , MIN(created_date)      AS created_date
+                   FROM transaction_record
+                   WHERE related_txn_type = 'REMITTANCE'
+                     AND created_date >= #{date}
+                     AND created_date < #{date} + INTERVAL 1 DAY
+                   GROUP BY related_txn_id) t ON t.related_txn_id = r.id
+        WHERE r.from_cd = #{fromCd}
+          AND r.remit_status = 'CF'
+        GROUP BY to_cd
+
+        UNION ALL
+
+        SELECT from_cd                                   AS fromcd
+             , IFNULL(SUM(from_amt), 0)                  AS fromamt
+             , SUM(IFNULL(from_amt, 0) - IFNULL(fee, 0)) AS fromoriamt
+             , to_cd                                     AS tocd
+             , IFNULL(SUM(to_amt), 0)                    AS toamt
+             , IFNULL(SUM(fee), 0)                       AS fee
+             , IFNULL(SUM(fee_per_amt), 0)               AS feeperamt
+             , IFNULL(SUM(fee_rate_amt), 0)              AS feerateamt
+             , COUNT(*)                                  AS totcnt
+             , 'REMITTANCE'                        AS type
+             , IFNULL(SUM(t.amount), 0)                  AS mappedamt
+        FROM remittance r
+             JOIN (SELECT related_txn_id
+                        , IFNULL(SUM(amount), 0) AS amount
+                        , MIN(created_date)      AS created_date
+                   FROM transaction_record
+                   WHERE related_txn_type = 'REMITTANCE'
+                     AND created_date >= #{date}
+                     AND created_date < #{date} + INTERVAL 1 DAY
+                   GROUP BY related_txn_id) t ON t.related_txn_id = r.id
+        WHERE r.from_cd = #{fromCd}
+          AND r.remit_status IN ('CF', 'RR', 'DP', 'RC', 'RF')
+        GROUP BY to_cd
+
+        UNION ALL
+
+        SELECT country                                 AS fromcd
+             , SUM(IFNULL(amount, 0) + IFNULL(fee, 0)) AS fromamt
+             , IFNULL(SUM(amount), 0)                  AS fromoriamt
+             , from_cd                                 AS tocd
+             , IFNULL(SUM(from_amt), 0)                AS toamt
+             , IFNULL(SUM(fee), 0)                     AS fee
+             , IFNULL(SUM(fee_per_amt), 0)             AS feeperamt
+             , IFNULL(SUM(fee_rate_amt), 0)            AS feerateamt
+             , COUNT(*)                                AS totcnt
+             , 'REFUND_RM'                             AS type
+             , 0                                       AS mappedamt
+        FROM refund r
+        WHERE r.country = #{fromCd}
+          AND related_txn_type = 'REMITTANCE'
+          AND rf_request_status = 'CF'
+          AND updated_date >= #{date}
+          AND updated_date < #{date} + INTERVAL 1 DAY
+        GROUP BY from_cd
+
+        UNION ALL
+
+        SELECT country                                 AS fromcd
+             , SUM(IFNULL(amount, 0) + IFNULL(fee, 0)) AS fromamt
+             , IFNULL(SUM(amount), 0)                  AS fromoriamt
+             , from_cd                                 AS tocd
+             , IFNULL(SUM(from_amt), 0)                AS toamt
+             , IFNULL(SUM(fee), 0)                     AS fee
+             , IFNULL(SUM(fee_per_amt), 0)             AS feeperamt
+             , IFNULL(SUM(fee_rate_amt), 0)            AS feerateamt
+             , COUNT(*)                                AS totcnt
+             , 'REFUND_EX'                             AS type
+             , 0                                       AS mappedamt
+        FROM refund
+        WHERE country = #{fromCd}
+          AND related_txn_type = 'EXCHANGE'
+          AND rf_request_status = 'CF'
+          AND updated_date >= #{date}
+          AND updated_date < #{date} + INTERVAL 1 DAY
+        GROUP BY from_cd
+
+        UNION ALL
+
+        SELECT e.from_cd                     AS fromcd
+             , 0                             AS totfromamt
+             , 0                             AS totfromoriamt
+             , co.country                    AS tocd
+             , SUM(co.traveler_cash_out_amt) AS tottoamt
+             , SUM(co.traveler_cash_out_fee) AS totfee
+             , 0                             AS totfeeperamt
+             , 0                             AS totfeerateamt
+             , COUNT(*)                      AS totcnt
+             , 'CASH_OUT'                    AS type
+             , 0                             AS mappedamt
+        FROM cash_out co
+             LEFT JOIN exchange e ON e.id = JSON_EXTRACT(co.exchange_ids, '$.exchange_ids[0]')
+        WHERE e.from_cd = #{fromCd}
+          AND co_status = 'CF'
+          AND co_status_date >= #{date}
+          AND co_status_date < #{date} + INTERVAL 1 DAY
+        GROUP BY co.country;
+        ]]>
+    </select>
+
+    <select id="getDailyTransferStatistics" resultType="com.cashmallow.api.domain.model.statistics.MoneyTransferStatistics">
+        <![CDATA[
+        SELECT *
+        FROM money_transfer_statistics mts
+        WHERE from_cd = #{fromCounty}
+          AND created_date = #{date}
+        ]]>
+    </select>
+
+    <select id="getRangeTransferStatistics" resultType="com.cashmallow.api.domain.model.statistics.MoneyTransferStatistics">
+        <![CDATA[
+        SELECT from_cd           AS fromCd,
+               SUM(from_amt)     AS fromAmt,
+               SUM(from_ori_amt) AS fromOriAmt,
+               to_cd             AS toCd,
+               SUM(to_amt)       AS toAmt,
+               SUM(fee)          AS fee,
+               SUM(fee_per_amt)  AS feePerAmt,
+               SUM(fee_rate_amt) AS feeRateAmt,
+               SUM(tot_cnt)      AS totCnt,
+               type              AS type,
+               SUM(mapped_amt)   AS mappedAmt
+        FROM money_transfer_statistics mts
+        WHERE from_cd = #{fromCounty}
+          AND mts.created_date BETWEEN #{startDate} AND #{endDate}
+        GROUP BY mts.to_cd, type;
+        ]]>
+    </select>
+
+    <select id="getDailyTransferStatisticsForDateRange" resultType="hashmap">
+        select from_cd as fromCd,
+        sum(from_amt) as fromAmt,
+        sum(from_ori_amt) as fromOriAmt,
+        sum(fee) as fee,
+        sum(fee_per_amt) as feePerAmt,
+        sum(fee_rate_amt) as feeRateAmt,
+        sum(tot_cnt) as totCnt,
+        type,
+        created_date as createdDate
+        <foreach collection="toCountries" item="country" index="index" open="," separator=",">
+            sum(if(to_cd = #{country.toCountry}, to_amt, 0)) as #{country.currency}
+        </foreach>
+        from money_transfer_statistics
+        where created_date between #{startDate} AND #{endDate}
+        and from_cd = #{fromCountry}
+        and type in ('EXCHANGE', 'REMITTANCE', 'REFUND_EX', 'REFUND_RM')
+        group by type, created_date
+    </select>
+
+
+    <select id="getDailyAllTransferStatisticsForDateRange" resultType="hashmap">
+        select from_cd           as fromCd,
+               sum(from_amt)     as fromAmt,
+               sum(from_ori_amt) as fromOriAmt,
+               sum(fee)          as fee,
+               sum(fee_per_amt)  as feePerAmt,
+               sum(fee_rate_amt) as feeRateAmt,
+               sum(tot_cnt)      as totCnt,
+               created_date      as createdDate
+        from money_transfer_statistics
+        where created_date between #{startDate} AND #{endDate}
+          and from_cd = #{fromCountry}
+          and type in ('EXCHANGE', 'REMITTANCE', 'REFUND_EX', 'REFUND_RM')
+        group by created_date
+    </select>
+
+    <select id="getDailyExchangeAndRemittanceTransferStatisticsForDateRange" resultType="hashmap">
+        select from_cd as fromCd,
+        created_date as createdDate
+        <foreach collection="toCountries" item="country" index="index" open="," separator=",">
+            sum(if(to_cd = #{country.toCountry}, to_amt, 0)) as #{country.currency}
+        </foreach>
+        from money_transfer_statistics
+        where created_date between #{startDate} AND #{endDate}
+        and from_cd = #{fromCountry}
+        and type in ('EXCHANGE', 'REMITTANCE')
+        group by created_date
+    </select>
+
+    <select id="getDistinctToCountryTransferStatistics" resultType="java.lang.String">
+        select distinct(to_cd)
+        from money_transfer_statistics
+        where created_date between #{startDate} AND #{endDate}
+          and from_cd = #{fromCountry}
+          and type in ('EXCHANGE', 'REMITTANCE', 'REFUND_EX', 'REFUND_RM')
+    </select>
+
+    <select id="getMoneyTransferStatisticsDashBoard" resultType="com.cashmallow.api.domain.model.statistics.MoneyTransferStatistics">
+        select from_cd,
+               sum(from_amt)                      as from_amt,
+               sum(from_ori_amt)                  as from_ori_amt,
+               sum(fee)                           as fee,
+               sum(fee_per_amt)                   as fee_per_amt,
+               sum(fee_rate_amt)                  as fee_rate_amt,
+               sum(tot_cnt)                       as tot_cnt,
+               DATE_FORMAT(created_date, '%Y-%m') as created_date_string
+        from money_transfer_statistics
+        where created_date between #{startDate} AND #{endDate}
+          and type in ('EXCHANGE', 'REMITTANCE', 'REFUND_EX', 'REFUND_RM')
+        group by from_cd, DATE_FORMAT(created_date, '%Y-%m')
+    </select>
+
+    <select id="getMoneyTransferStatisticsDashBoardForYear" resultType="com.cashmallow.api.domain.model.statistics.MoneyTransferStatistics">
+        select from_cd,
+               sum(from_amt)                      as from_amt,
+               sum(from_ori_amt)                  as from_ori_amt,
+               sum(fee)                           as fee,
+               sum(fee_per_amt)                   as fee_per_amt,
+               sum(fee_rate_amt)                  as fee_rate_amt,
+               sum(tot_cnt)                       as tot_cnt,
+               DATE_FORMAT(created_date, '%Y')    as created_date_string
+        from money_transfer_statistics
+        where created_date between #{startDate} AND #{endDate}
+          and type in ('EXCHANGE', 'REMITTANCE', 'REFUND_EX', 'REFUND_RM')
+        group by from_cd, DATE_FORMAT(created_date, '%Y')
+    </select>
+
+    <insert id="addMoneyTransferStatistics" parameterType="java.util.List">
+        insert into money_transfer_statistics (
+        from_cd,
+        from_amt,
+        from_ori_amt,
+        to_cd,
+        to_amt,
+        fee,
+        fee_per_amt,
+        fee_rate_amt,
+        tot_cnt,
+        type,
+        mapped_amt,
+        created_date
+        )
+        values
+        <foreach collection="list" item="item" separator=",">
+            (
+            #{item.fromCd},
+            #{item.fromAmt},
+            #{item.fromOriAmt},
+            #{item.toCd},
+            #{item.toAmt},
+            #{item.fee},
+            #{item.feePerAmt},
+            #{item.feeRateAmt},
+            #{item.totCnt},
+            #{item.type},
+            #{item.mappedAmt},
+            #{item.createdDate}
+            )
+        </foreach>
+    </insert>
+
+    <delete id="deleteDailyTransferStatistics">
+        delete
+        from money_transfer_statistics
+        where DATE(created_date) = #{date}
+          and from_cd = #{fromCountry}
+    </delete>
+</mapper>

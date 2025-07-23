@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- Mybatis 사용법: http://www.mybatis.org/mybatis-3/ko/index.html -->
+
+<mapper namespace="com.cashmallow.api.domain.model.fx.FxMapper">
+
+    <select id="getFxQuotation" resultType="com.cashmallow.api.domain.model.fx.FxQuotationEntity" parameterType="hashmap">
+        SELECT id,
+               transaction_id  AS transactionId,
+               exchange_target AS exchangeTarget,
+               end_user_id     AS endUserId,
+               from_currency   AS fromCurrency,
+               to_currency     AS toCurrency,
+               currency_pair   AS currencyPair,
+               from_amount     AS fromAmount,
+               to_amount       AS toAmount,
+               from_account    AS fromAccount,
+               to_account      AS toAccount,
+               status,
+               approve_id      AS approveId,
+               response_json   AS responseJson,
+               created_at      AS createdAt,
+               updated_at      AS updatedAt
+        FROM fx_quotation
+        WHERE id = #{id}
+    </select>
+
+    <select id="getFxQuotationByTransactionId" resultType="com.cashmallow.api.domain.model.fx.FxQuotationEntity" parameterType="hashmap">
+        SELECT id,
+               transaction_id  AS transactionId,
+               exchange_target AS exchangeTarget,
+               end_user_id     AS endUserId,
+               from_currency   AS fromCurrency,
+               to_currency     AS toCurrency,
+               currency_pair   AS currencyPair,
+               from_amount     AS fromAmount,
+               to_amount       AS toAmount,
+               from_account    AS fromAccount,
+               to_account      AS toAccount,
+               status,
+               approve_id      AS approveId,
+               response_json   AS responseJson,
+               created_at      AS createdAt,
+               updated_at      AS updatedAt
+        FROM fx_quotation
+        WHERE transaction_id = #{transactionId}
+    </select>
+
+    <insert id="addFxQuotation"
+            parameterType="com.cashmallow.api.domain.model.fx.FxQuotationEntity"
+            useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO fx_quotation (transaction_id,
+                                  exchange_target,
+                                  end_user_id,
+                                  from_currency,
+                                  to_currency,
+                                  currency_pair,
+                                  from_amount,
+                                  to_amount,
+                                  from_account,
+                                  to_account,
+                                  status,
+                                  approve_id,
+                                  response_json,
+                                  created_at,
+                                  updated_at)
+        VALUES (#{transactionId},
+                #{exchangeTarget},
+                #{endUserId},
+                #{fromCurrency},
+                #{toCurrency},
+                #{currencyPair},
+                #{fromAmount},
+                #{toAmount},
+                #{fromAccount},
+                #{toAccount},
+                #{status},
+                #{approveId},
+                #{responseJson},
+                NOW(),
+                NOW()
+        )
+    </insert>
+
+</mapper>

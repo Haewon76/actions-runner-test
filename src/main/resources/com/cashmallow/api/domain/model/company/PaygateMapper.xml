@@ -1,0 +1,253 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.cashmallow.api.domain.model.company.PaygateMapper">
+
+    <resultMap type="com.cashmallow.api.domain.model.company.DbsRemittance" id="dbsRemittanceMap">
+        <result column="receiver_account_no" property="receiverAccountNo" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+    </resultMap>
+
+    <resultMap type="com.cashmallow.api.domain.model.company.PaygateRecord" id="paygateRecordMap">
+        <result column="sender_account_no" property="senderAccountNo" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+        <result column="sender_name" property="senderName" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+    </resultMap>
+
+    <!-- 62.2. 사용 은행 통장내역 검색 -->
+    <select id="getPaygateRecordList" parameterType="hashmap" resultMap="paygateRecordMap">
+        SELECT *
+        FROM paygate_record
+        WHERE bank_account_id = #{bankAccountId}
+        <if test="description != null and description != ''">
+            AND description = #{description}
+        </if>
+        <if test="amount != null and amount != ''">
+            AND amount = #{amount}
+        </if>
+        <if test="beginExecutedDate != null and beginExecutedDate != ''">
+            AND executed_date BETWEEN #{beginExecutedDate} AND #{endExecutedDate}
+        </if>
+        <if test="executedDate != null and executedDate != ''">
+            AND executed_date >= #{executedDate}
+        </if>
+        <if test="iso4217 != null and iso4217 != ''">
+            AND iso4217 = #{iso4217}
+        </if>
+        <if test="depWdrType != null and depWdrType != ''">
+            AND dep_wdr_type = #{depWdrType}
+        </if>
+        <if test="id != null and id != ''">
+            AND id = #{id}
+        </if>
+        <if test="isMapping != null and isMapping != ''">
+            AND id NOT IN (SELECT paygate_rec_id FROM transaction_mapping)
+            AND work_status  = 'READY'
+        </if>
+        <if test="latestData != null and latestData != ''">
+            ${latestData}
+        </if>
+    </select>
+
+    <select id="getNotMappingPaygateRecordId" parameterType="long" resultMap="paygateRecordMap">
+        SELECT pr.*
+          FROM paygate_record pr
+         WHERE bank_account_id = #{bankAccountId}
+           AND dep_wdr_type = 'DEPOSIT'
+           AND iso4217 = 'HKD'
+           AND id NOT IN (SELECT paygate_rec_id FROM transaction_mapping)
+           AND work_status = 'READY'
+           AND sender_account_no IS NOT NULL
+    </select>
+
+    <select id="getPaygateRecordListByIdList" parameterType="hashmap" resultType="com.cashmallow.api.domain.model.company.PaygateRecord">
+        SELECT *
+        FROM paygate_record
+        WHERE id IN
+        <foreach collection="list" item="item" open="(" close=")" separator=",">
+            #{item.paygateRecId}
+        </foreach>
+    </select>
+
+    <select id="getPaygateRecordById" parameterType="string" resultType="com.cashmallow.api.domain.model.company.PaygateRecord">
+        SELECT *
+        FROM paygate_record
+        WHERE id = #{paygateRecordId}
+    </select>
+
+    <insert id="insertPaygateRecord" parameterType="com.cashmallow.api.domain.model.company.PaygateRecord" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO paygate_record
+        (id, country, bank_account_id, iso4217, dep_wdr_type, amount, description,
+         sender_name, sender_bank, sender_account_no,
+         executed_date, deposit_type, balance, work_status, source_id)
+        VALUES (#{id}, #{country}, #{bankAccountId}, #{iso4217}, #{depWdrType}, #{amount}, #{description},
+                #{senderName, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}, #{senderBank}, #{senderAccountNo, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler},
+                #{executedDate}, #{depositType}, #{balance}, #{workStatus}, #{sourceId})
+        ON DUPLICATE KEY
+            UPDATE id = #{id}
+        <!-- 같은 id값 들어오면 통과 -->
+    </insert>
+
+    <insert id="insertPaygateRecordBulk" parameterType="com.cashmallow.api.domain.model.company.PaygateRecord" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO paygate_record
+        (id, country, bank_account_id, iso4217, dep_wdr_type, amount, description,
+        sender_name, sender_bank, sender_account_no,
+        executed_date, deposit_type, balance, work_status, source_id)
+        VALUES
+        <foreach collection="list" item="deposit" separator=",">
+            (#{deposit.id}, #{deposit.country}, #{deposit.bankAccountId}, #{deposit.iso4217}, #{deposit.depWdrType}, #{deposit.amount}, #{deposit.description},
+            #{deposit.senderName, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}, #{deposit.senderBank}, #{deposit.senderAccountNo, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler},
+            #{deposit.executedDate}, #{deposit.depositType}, #{deposit.balance}, #{deposit.workStatus}, #{deposit.sourceId})
+        </foreach>
+    </insert>
+
+    <update id="updatePaygateRecord" parameterType="com.cashmallow.api.domain.model.company.PaygateRecord">
+        UPDATE paygate_record
+        SET description       = #{description},
+            sender_account_no = #{senderAccountNo},
+            work_status       = #{workStatus}
+        WHERE id = #{id}
+    </update>
+
+    <update id="updatePaygateRecordId" parameterType="com.cashmallow.api.domain.model.company.PaygateRecord">
+        UPDATE paygate_record
+        SET id            = #{newId},
+            executed_date = NOW()
+        WHERE id = #{oldId}
+    </update>
+
+    <update id="deletePaygateRecord">
+        UPDATE paygate_record
+        SET description  = #{description},
+            dep_wdr_type = 'HIDDEN'
+        WHERE id = #{exchangeId}
+    </update>
+
+    <select id="findTempPaygateRecordsByMapped" resultType="com.cashmallow.api.domain.model.company.PaygateRecord">
+        SELECT *
+        FROM paygate_record
+                 JOIN transaction_mapping tm
+                      ON paygate_record.id = tm.paygate_rec_id
+        WHERE dep_wdr_type = 'DEPOSIT'
+          AND id LIKE 'EX%';
+    </select>
+
+    <select id="findTempDbsRecordsByMapped" resultType="com.cashmallow.api.domain.model.company.DbsDto">
+        SELECT en_first_name AS firstName, en_last_name AS lastName, P.amount, P.id, P.iso4217 AS currency
+        FROM paygate_record P
+                 JOIN transaction_mapping tm
+                      ON P.id = tm.paygate_rec_id
+                 JOIN traveler T
+                      ON T.id = tm.traveler_id
+        WHERE dep_wdr_type = 'DEPOSIT'
+          AND (P.id LIKE 'C%' OR P.id LIKE 'EX%')
+          AND P.bank_account_id = ${dbsAccountId}
+    </select>
+
+    <select id="getPaygateRecordForRepayment" parameterType="hashmap" resultType="com.cashmallow.api.domain.model.company.PaygateRecord">
+        SELECT *
+        FROM paygate_record
+        WHERE bank_account_id = #{bankAccountId}
+          AND id NOT IN (SELECT paygate_rec_id FROM transaction_mapping)
+          AND dep_wdr_type = 'DEPOSIT'
+          AND sender_name  IS NOT NULL
+          AND work_status  = 'REPAYMENT'
+     ORDER BY created_date DESC
+    </select>
+
+    <insert id="insertDbsRemittance" parameterType="com.cashmallow.api.domain.model.company.DbsRemittance" keyProperty="id">
+        INSERT INTO dbs_remittance
+            (id, user_id,remittance_type, currency, amount, receiver_name, receiver_account_no,
+             receiver_bank_name, receiver_hongkong_bank_code, receiver_swift_bank_code, response_code, result_status, manager_id,
+             related_txn_type, related_txn_id)
+        VALUES (#{id}, #{userId}, #{remittanceType}, #{currency}, #{amount}, #{receiverName}, #{receiverAccountNo, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler},
+                #{receiverBankName}, #{receiverHongKongBankCode},#{receiverSwiftBankCode}, #{responseCode}, #{resultStatus}, #{managerId},
+                #{relatedTxnType}, #{relatedTxnId})
+    </insert>
+
+    <update id="updateDbsRemittance" parameterType="com.cashmallow.api.domain.model.company.DbsRemittance" keyProperty="id">
+        UPDATE dbs_remittance
+        SET result_status = #{resultStatus},
+            updated_date = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <select id="getDbsRemittance" resultType="com.cashmallow.api.domain.model.company.DbsRemittance">
+        SELECT *
+        FROM dbs_remittance dr
+        WHERE dr.id = #{dbsRemittanceId}
+    </select>
+
+    <select id="getAdminDbsRemittanceList" parameterType="hashmap" resultType="hashmap">
+        SELECT id,
+               user_id as userId,
+               amount,
+               currency,
+               remittance_type as remittanceType,
+               receiver_name as receiverName,
+               receiver_bank_name as receiverBankName,
+               response_code as responseCode,
+               created_date as createdDate
+        FROM dbs_remittance dr
+        WHERE dr.created_date BETWEEN #{beginCreatedDate} AND #{endCreatedDate}
+        <if test="userId != null and userId != ''">
+            AND dr.user_id = #{userId}
+        </if>
+        <if test="id != null and id != ''">
+            AND dr.id = #{id}
+        </if>
+        <if test="amount != null and amount != ''">
+            AND dr.amount = #{amount}
+        </if>
+        <if test="currency != null and currency != ''">
+            AND dr.currency = #{currency}
+        </if>
+        <if test="currency != null and currency != ''">
+            AND dr.currency = #{currency}
+        </if>
+        <if test="relatedTxnType != null and relatedTxnType != ''">
+            AND dr.related_txn_type = #{relatedTxnType}
+        </if>
+        <if test="relatedTxnId != null and relatedTxnId != ''">
+            AND dr.related_txn_id = #{relatedTxnId}
+        </if>
+        <if test='sort != null and (
+               sort.equalsIgnoreCase("created_date DESC")   or sort.equalsIgnoreCase("created_date ASC")
+            or sort.equalsIgnoreCase("user_id ASC")         or sort.equalsIgnoreCase("user_id DESC")
+            or sort.equalsIgnoreCase("amount ASC")          or sort.equalsIgnoreCase("amount DESC")
+        )'>
+            ORDER BY ${sort}
+        </if>
+        LIMIT #{startRow}, #{size}
+    </select>
+
+    <select id="countAdminDbsRemittanceList" parameterType="hashmap" resultType="int">
+        SELECT COUNT(1)
+        FROM dbs_remittance dr
+        WHERE dr.created_date BETWEEN #{beginCreatedDate} AND #{endCreatedDate}
+        <if test="userId != null and userId != ''">
+            AND dr.user_id = #{userId}
+        </if>
+        <if test="id != null and id != ''">
+            AND dr.id = #{id}
+        </if>
+        <if test="amount != null and amount != ''">
+            AND dr.amount = #{amount}
+        </if>
+        <if test="currency != null and currency != ''">
+            AND dr.currency = #{currency}
+        </if>
+        <if test="relatedTxnType != null and relatedTxnType != ''">
+            AND dr.related_txn_type = #{relatedTxnType}
+        </if>
+        <if test="relatedTxnId != null and relatedTxnId != ''">
+            AND dr.related_txn_id = #{relatedTxnId}
+        </if>
+        <if test='sort != null and (
+               sort.equalsIgnoreCase("created_date DESC")   or sort.equalsIgnoreCase("created_date ASC")
+            or sort.equalsIgnoreCase("user_id ASC")         or sort.equalsIgnoreCase("user_id DESC")
+            or sort.equalsIgnoreCase("amount ASC")          or sort.equalsIgnoreCase("amount DESC")
+        )'>
+            ORDER BY ${sort}
+        </if>
+    </select>
+
+</mapper>

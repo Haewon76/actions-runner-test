@@ -1,0 +1,313 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- Mybatis 사용법: http://www.mybatis.org/mybatis-3/ko/index.html -->
+
+<mapper namespace="com.cashmallow.api.domain.model.withdrawalpartnercalc.WithdrawalPartnerCalcMapper">
+
+    <resultMap type="hashmap" id="withdrawalPartnerFeeCalcMap">
+        <result column="first_name" property="first_name" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+        <result column="last_name" property="last_name" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+        <result column="email" property="email" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+    </resultMap>
+
+    <resultMap type="hashmap" id="withdrawalPartnerCalcP2Map">
+        <result column="first_name" property="first_name" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+        <result column="last_name" property="last_name" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+        <result column="email" property="email" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+    </resultMap>
+
+
+    <select id="getWithdrawalPartnerCalc" resultType="com.cashmallow.api.domain.model.withdrawalpartnercalc.WithdrawalPartnerCalc">
+        SELECT *
+        FROM withdrawal_partner_calc
+        WHERE id = #{withdrawalPartnerCalcId}
+    </select>
+
+    <select id="getWithdrawalPartnerFeeCalcInFeeCalc" parameterType="hashmap" resultMap="withdrawalPartnerFeeCalcMap">
+        SELECT u.first_name,
+        u.last_name,
+        u.email,
+        u.profile_photo,
+        u.birth_date,
+        wp.user_id,
+        wp.shop_name,
+        wp.business_no,
+        wp.biz_exp_date,
+        wp.shop_addr,
+        wp.shop_photo,
+        wp.business_photo,
+        wp.biz_no_ok,
+        wp.biz_no_ok_date,
+        wp.account_ok,
+        wp.account_ok_date,
+        wp.shop_contact_number,
+        c.id AS fee_id,
+        c.country,
+        c.withdrawal_partner_id,
+        c.cash_out_amt,
+        c.cash_out_fee,
+        c.bank_name,
+        c.bank_account_no,
+        c.bank_account_name,
+        c.created_date,
+        c.updated_date,
+        c.target_month
+        FROM withdrawal_partner_fee_calc c
+        INNER JOIN withdrawal_partner wp
+        ON c.withdrawal_partner_id = wp.id
+        INNER JOIN user u
+        ON wp.user_id = u.id
+        <where>
+            <if test="country != null and country != ''">
+                AND c.country = #{country}
+            </if>
+            <if test="begin_date != null and end_date != null">
+                <![CDATA[
+    			AND  c.id IN (select sfcr.withdrawal_partner_fee_calc_id from withdrawal_partner_fee_calc_record sfcr 
+    							where sfcr.co_status_date < FROM_UNIXTIME(${end_date}) and sfcr.co_status_date >= FROM_UNIXTIME(${begin_date}))
+		]]>
+            </if>
+            <if test="first_name != null and first_name != ''">
+                AND u.first_name LIKE CONCAT('%', #{first_name, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}, '%')
+            </if>
+            <if test="last_name != null and last_name != ''">
+                AND u.last_name LIKE CONCAT('%', #{last_name, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}, '%')
+            </if>
+            <if test="email != null and email != ''">
+                AND u.email LIKE CONCAT('%', #{email, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}, '%')
+            </if>
+            <if test="user_id != null and user_id != ''">
+                AND wp.user_id = #{user_id}
+            </if>
+            <if test="withdrawal_partner_id != null and withdrawal_partner_id != ''">
+                AND c.withdrawal_partner_id = #{withdrawal_partner_id}
+            </if>
+            <if test="shop_name != null and shop_name != ''">
+                AND wp.shop_name LIKE CONCAT('%', #{shop_name}, '%')
+            </if>
+            <if test="business_no != null and business_no != ''">
+                AND wp.business_no LIKE CONCAT('%', #{business_no}, '%')
+            </if>
+            <if test="shop_addr != null and shop_addr != ''">
+                AND wp.shop_addr LIKE CONCAT('%', #{shop_addr}, '%')
+            </if>
+            <if test="biz_no_ok != null and (biz_no_ok.equalsIgnoreCase('Y') or biz_no_ok.equalsIgnoreCase('N'))">
+                AND wp.biz_no_ok = #{biz_no_ok}
+            </if>
+            <if test="begin_biz_no_ok_date != null and begin_biz_no_ok_date != '' and end_biz_no_ok_date != null and end_biz_no_ok_date != ''">
+                AND wp.biz_no_ok_date BETWEEN FROM_UNIXTIME(${begin_biz_no_ok_date}) AND FROM_UNIXTIME(${end_biz_no_ok_date})
+            </if>
+            <if test="account_ok != null and (account_ok.equalsIgnoreCase('Y') or account_ok.equalsIgnoreCase('N'))">
+                AND wp.account_ok = #{account_ok}
+            </if>
+            <if test="begin_account_ok_date != null and begin_account_ok_date != '' and end_account_ok_date != null and end_account_ok_date != ''">
+                AND wp.account_ok_date BETWEEN FROM_UNIXTIME(${begin_account_ok_date}) AND FROM_UNIXTIME(${end_account_ok_date})
+            </if>
+            <if test="bank_name != null and bank_name != ''">
+                AND c.bank_name LIKE CONCAT('%', #{bank_name}, '%')
+            </if>
+            <if test="bank_account_no != null and bank_account_no != ''">
+                AND c.bank_account_no LIKE CONCAT('%', #{bank_account_no}, '%')
+            </if>
+            <if test="fee_status != null and (fee_status == 'OP' or fee_status == 'BF' or fee_status == 'CF' or fee_status == 'PE')">
+                AND c.fee_status = #{fee_status}
+            </if>
+            <if test="created_date != null and created_date != ''">
+                AND created_date between FROM_UNIXTIME(${created_date}) and DATE_ADD(LAST_DAY(DATE_ADD(FROM_UNIXTIME(${created_date}), interval 1 day)), interval 1 day)
+            </if>
+            <if test="begin_updated_date != null and begin_updated_date != '' and end_updated_date != null and end_updated_date != ''">
+                AND c.updated_date BETWEEN FROM_UNIXTIME(${begin_updated_date}) AND FROM_UNIXTIME(${end_updated_date})
+            </if>
+            <if test="target_month != null and target_month != ''">
+                AND c.target_month = #{target_month}
+            </if>
+        </where>
+        <if test="sort != null and sort != ''">
+            ORDER BY ${sort}
+        </if>
+        LIMIT ${startRow}, ${size}
+    </select>
+
+    <!-- retrieve by withdrawal_partnerId -->
+    <select id="getWithdrawalPartnerCalcListByWithdrawalPartnerId" resultType="com.cashmallow.api.domain.model.withdrawalpartnercalc.WithdrawalPartnerCalc">
+        SELECT *
+        FROM withdrawal_partner_calc
+        WHERE withdrawal_partner_id = #{withdrawalPartnerId}
+    </select>
+
+    <!-- retrieve withdrawal_partner calc in progress by withdrawal_partnerId -->
+    <select id="getWithdrawalPartnerCalcOpListByWithdrawalPartnerId" resultType="com.cashmallow.api.domain.model.withdrawalpartnercalc.WithdrawalPartnerCalc">
+        SELECT *
+        FROM withdrawal_partner_calc
+        WHERE withdrawal_partner_id = #{withdrawalPartnerId}
+          AND ca_status != 'CF'
+    </select>
+
+    <!-- retrieve withdrawal_partner calc in proceeding by country -->
+    <select id="getWithdrawalPartnerCalcListByStatus" parameterType="hashmap" resultType="hashmap">
+        SELECT ca_status, MIN(begin_date) begin_date, MAX(end_date) end_date
+        FROM withdrawal_partner_calc
+        WHERE country = #{country}
+        AND ca_status IN
+        <foreach collection="caStatusList" item="item" index="index" separator="," open="(" close=")">
+            #{item}
+        </foreach>
+        GROUP BY ca_status
+    </select>
+
+    <select id="getWithdrawalPartnerCalcP2Info" parameterType="hashmap" resultMap="withdrawalPartnerCalcP2Map">
+        SELECT u.first_name,
+        u.last_name,
+        u.email,
+        u.profile_photo,
+        u.birth_date,
+        wp.user_id,
+        wp.shop_name,
+        wp.business_no,
+        wp.biz_exp_date,
+        wp.shop_addr,
+        wp.shop_photo,
+        wp.business_photo,
+        wp.biz_no_ok,
+        wp.biz_no_ok_date,
+        wp.account_ok,
+        wp.account_ok_date,
+        wp.shop_contact_number,
+        c.id AS calc_id,
+        c.country,
+        c.withdrawal_partner_id,
+        c.begin_date,
+        c.end_date,
+        c.cash_out_amt,
+        c.cash_out_fee,
+        c.payment_amt,
+        c.total_amt,
+        c.bank_name,
+        c.bank_account_no,
+        c.bank_account_name,
+        c.ca_status,
+        c.created_date,
+        c.updated_date
+        FROM withdrawal_partner_calc c
+        INNER JOIN withdrawal_partner wp
+        ON c.withdrawal_partner_id = wp.id
+        INNER JOIN user u
+        ON wp.user_id = u.id
+        <where>
+            <if test="country != null and country != ''">
+                AND c.country = #{country}
+            </if>
+            <if test="begin_date != null and end_date != null">
+                <![CDATA[
+    			AND  (FROM_UNIXTIME(${begin_date}) <= c.end_date AND c.begin_date <= FROM_UNIXTIME(${end_date}))
+		]]>
+            </if>
+            <if test="first_name != null and first_name != ''">
+                AND u.first_name LIKE CONCAT('%', #{first_name, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}, '%')
+            </if>
+            <if test="last_name != null and last_name != ''">
+                AND u.last_name LIKE CONCAT('%', #{last_name, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}, '%')
+            </if>
+            <if test="email != null and email != ''">
+                AND u.email LIKE CONCAT('%', #{email, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}, '%')
+            </if>
+            <if test="user_id != null and user_id != ''">
+                AND wp.user_id = #{user_id}
+            </if>
+            <if test="withdrawal_partner_id != null and withdrawal_partner_id != ''">
+                AND c.withdrawal_partner_id = #{withdrawal_partner_id}
+            </if>
+            <if test="shop_name != null and shop_name != ''">
+                AND wp.shop_name LIKE CONCAT('%', #{shop_name}, '%')
+            </if>
+            <if test="business_no != null and business_no != ''">
+                AND wp.business_no LIKE CONCAT('%', #{business_no}, '%')
+            </if>
+            <if test="shop_addr != null and shop_addr != ''">
+                AND wp.shop_addr LIKE CONCAT('%', #{shop_addr}, '%')
+            </if>
+            <if test="biz_no_ok != null and (biz_no_ok.equalsIgnoreCase('Y') or biz_no_ok.equalsIgnoreCase('N'))">
+                AND wp.biz_no_ok = #{biz_no_ok}
+            </if>
+            <if test="begin_biz_no_ok_date != null and begin_biz_no_ok_date != '' and end_biz_no_ok_date != null and end_biz_no_ok_date != ''">
+                AND wp.biz_no_ok_date BETWEEN FROM_UNIXTIME(${begin_biz_no_ok_date}) AND FROM_UNIXTIME(${end_biz_no_ok_date})
+            </if>
+            <if test="account_ok != null and (account_ok.equalsIgnoreCase('Y') or account_ok.equalsIgnoreCase('N'))">
+                AND wp.account_ok = #{account_ok}
+            </if>
+            <if test="begin_account_ok_date != null and begin_account_ok_date != '' and end_account_ok_date != null and end_account_ok_date != ''">
+                AND wp.account_ok_date BETWEEN FROM_UNIXTIME(${begin_account_ok_date}) AND FROM_UNIXTIME(${end_account_ok_date})
+            </if>
+            <if test="bank_name != null and bank_name != ''">
+                AND c.bank_name LIKE CONCAT('%', #{bank_name}, '%')
+            </if>
+            <if test="bank_account_no != null and bank_account_no != ''">
+                AND c.bank_account_no LIKE CONCAT('%', #{bank_account_no}, '%')
+            </if>
+            <if test="ca_status != null and (ca_status == 'OP' or ca_status == 'SD' or ca_status == 'PE' or ca_status == 'CF')">
+                AND c.ca_status = #{ca_status}
+            </if>
+            <if test="begin_created_date != null and begin_created_date != '' and end_created_date != null and end_created_date != ''">
+                AND c.created_date BETWEEN FROM_UNIXTIME(${begin_created_date}) AND FROM_UNIXTIME(${end_created_date})
+            </if>
+            <if test="begin_updated_date != null and begin_updated_date != '' and end_updated_date != null and end_updated_date != ''">
+                AND c.updated_date BETWEEN FROM_UNIXTIME(${begin_updated_date}) AND FROM_UNIXTIME(${end_updated_date})
+            </if>
+        </where>
+        <if test="sort != null and sort != ''">
+            ORDER BY ${sort}
+        </if>
+        LIMIT ${startRow}, ${size}
+    </select>
+
+    <!-- 기능: 71.1.6 정산 조회 -->
+    <select id="getPaybackAmountByCountry" parameterType="string" resultType="hashmap">
+        SELECT *
+        FROM (SELECT COUNT(country)                 totalCnt,
+                     COALESCE(SUM(cash_out_amt), 0) totalCashOutAmt,
+                     COALESCE(SUM(cash_out_fee), 0) totalFee,
+                     COALESCE(SUM(payment_amt), 0)  totalPaymentAmt,
+                     COALESCE(SUM(total_amt), 0)    totalTotal
+              FROM withdrawal_partner_calc
+              WHERE country = #{country}) AS cntTotal,
+             (SELECT COUNT(country)                 comCnt,
+                     COALESCE(SUM(cash_out_amt), 0) comCashOutAmt,
+                     COALESCE(SUM(cash_out_fee), 0) comFee,
+                     COALESCE(SUM(payment_amt), 0)  comPaymentAmt,
+                     COALESCE(SUM(total_amt), 0)    comTotal
+              FROM withdrawal_partner_calc
+              WHERE country = #{country}
+                AND ca_status = 'CF') AS cntComplete,
+             (SELECT COUNT(country)                 reqCnt,
+                     COALESCE(SUM(cash_out_amt), 0) reqCashOutAmt,
+                     COALESCE(SUM(cash_out_fee), 0) reqFee,
+                     COALESCE(SUM(payment_amt), 0)  reqPaymentAmt,
+                     COALESCE(SUM(total_amt), 0)    reqTotal
+              FROM withdrawal_partner_calc
+              WHERE country = #{country}
+                AND ca_status IN ('OP', 'SD')) AS cntReq,
+             (SELECT COUNT(country)                 canCnt,
+                     COALESCE(SUM(cash_out_amt), 0) canCashOutAmt,
+                     COALESCE(SUM(cash_out_fee), 0) canFee,
+                     COALESCE(SUM(payment_amt), 0)  canPaymentAmt,
+                     COALESCE(SUM(total_amt), 0)    canTotal
+              FROM withdrawal_partner_calc
+              WHERE country = #{country}
+                AND ca_status = 'PE') AS cntCancel
+    </select>
+
+    <!-- Update withdrawalPartnerCalc -->
+    <update id="updateWithdrawalPartnerCalc" parameterType="com.cashmallow.api.domain.model.withdrawalpartnercalc.WithdrawalPartnerCalc">
+        UPDATE withdrawal_partner_calc
+        SET bank_account_no   = #{bankAccountNo},
+            bank_account_name = #{bankAccountName},
+            ca_status         = #{caStatus},
+            ca_status_date    = #{caStatusDate},
+            updated_date      = #{updatedDate},
+            creator           = #{creator}
+        WHERE id = #{id}
+          AND withdrawal_partner_id = #{withdrawalPartnerId}
+    </update>
+
+</mapper>

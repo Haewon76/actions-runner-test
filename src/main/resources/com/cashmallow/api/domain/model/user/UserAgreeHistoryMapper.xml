@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.cashmallow.api.domain.model.user.UserAgreeHistoryMapper">
+
+    <insert id="insertUserAgreeHistory" parameterType="java.util.List">
+        INSERT INTO user_agree_history (
+        user_id,
+        version,
+        terms_type,
+        created_at,
+        agreed
+        ) VALUES
+        <foreach collection="list" item="item" separator=",">
+            (
+            #{item.userId},
+            #{item.version},
+            #{item.termsType},
+            NOW(),
+            #{item.agreed}
+            )
+        </foreach>
+    </insert>
+
+    <select id="getUserAgreeHistoriesByUserId" parameterType="long" resultType="com.cashmallow.api.domain.model.user.UserAgreeHistory">
+        SELECT id,
+               user_id,
+               version,
+               terms_type,
+               created_at,
+               agreed
+        FROM user_agree_history
+        WHERE user_id = #{userId}
+    </select>
+
+    <select id="getMaxVersionUserAgreeHistories" parameterType="long" resultType="com.cashmallow.api.domain.model.user.UserAgreeHistory">
+        SELECT user_id, terms_type, MAX(version) as version
+        FROM user_agree_history
+        WHERE user_id = #{userId}
+        GROUP BY user_id, terms_type;
+    </select>
+
+    <delete id="deleteUserAgreeHistory" parameterType="long">
+        DELETE
+        FROM user_agree_history
+        WHERE id = #{id}
+    </delete>
+
+</mapper>

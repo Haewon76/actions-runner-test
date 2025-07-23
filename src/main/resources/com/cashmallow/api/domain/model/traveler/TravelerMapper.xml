@@ -1,0 +1,832 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- Mybatis 사용법: http://www.mybatis.org/mybatis-3/ko/index.html -->
+
+<mapper namespace="com.cashmallow.api.domain.model.traveler.TravelerMapper">
+
+    <resultMap type="com.cashmallow.api.domain.model.traveler.Traveler" id="travelerMap">
+        <result column="account_no" property="accountNo" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+        <result column="account_name" property="accountName" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+        <result column="local_first_name" property="localFirstName" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+        <result column="local_last_name" property="localLastName" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+        <result column="en_first_name" property="enFirstName" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+        <result column="en_last_name" property="enLastName" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+        <result column="hanja_first_name" property="hanjaFirstName" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+        <result column="hanja_last_name" property="hanjaLastName" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+        <result column="address" property="address" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+        <result column="address_secondary" property="addressSecondary" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+        <result column="address_en" property="addressEn" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+    </resultMap>
+
+    <resultMap type="hashmap" id="travelerNameMap">
+        <result column="local_first_name" property="local_first_name" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+        <result column="local_last_name" property="local_last_name" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+    </resultMap>
+
+    <!-- Read -->
+
+    <!-- userId로 조회 -->
+    <select id="getTravelerByUserId" resultMap="travelerMap">
+        SELECT *
+        FROM traveler
+        WHERE user_id = #{userId}
+    </select>
+
+    <!-- id로 조회 -->
+    <select id="getTravelerByTravelerId" resultMap="travelerMap">
+        SELECT *
+        FROM traveler
+        WHERE id = #{id}
+    </select>
+
+    <!-- 조건과 일치하는 여행자 본인인증 정보 의 레코드수 카운트: -->
+    <select id="countTravelerCertificationInfo" parameterType="com.cashmallow.api.interfaces.admin.dto.TravelerAskVO" resultType="int">
+        SELECT COUNT(1) AS cnt
+        FROM (
+        SELECT *
+        FROM user
+        WHERE activated = true
+        <if test="country != null and country != ''">
+            AND country = #{country}
+        </if>
+        <if test="user_id != null and user_id != ''">
+            AND id LIKE CONCAT('%', #{user_id}, '%')
+        </if>
+        <if test="email != null and email != ''">
+            AND email LIKE CONCAT('%', #{email, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}, '%')
+        </if>
+        <if test="first_name != null and first_name != ''">
+            AND first_name LIKE CONCAT('%', #{first_name, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}, '%')
+        </if>
+        <if test="last_name != null and last_name != ''">
+            AND last_name LIKE CONCAT('%', #{last_name, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}, '%')
+        </if>
+        <if test="phone_number != null and phone_number != ''">
+            AND phone_number = #{phone_number, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}
+        </if>
+        ) u
+        INNER JOIN (
+        SELECT *
+        FROM traveler
+        <where>
+            <if test="passport_country != null and passport_country != ''">
+                AND passport_country = #{passport_country}
+            </if>
+            <if test="traveler_id != null and traveler_id != ''">
+                AND id LIKE CONCAT('%', #{traveler_id}, '%')
+            </if>
+            <if test="identification_number != null and identification_number != ''">
+                AND identification_number = #{identification_number}
+            </if>
+            <if test="certification_type != null and certification_type != ''">
+                AND certification_type = #{certification_type}
+            </if>
+            <if test="begin_exp_date != null and begin_exp_date != '' and end_exp_date != null and end_exp_date != ''">
+                AND passport_exp_date BETWEEN #{begin_exp_date} AND #{end_exp_date}
+            </if>
+            <if test="certification_ok != null and (certification_ok.equalsIgnoreCase('Y') or certification_ok.equalsIgnoreCase('N') or certification_ok.equalsIgnoreCase('R'))">
+                AND certification_ok = #{certification_ok}
+            </if>
+            <if test="begin_certification_ok_date != null and begin_certification_ok_date != '' and end_certification_ok_date != null and end_certification_ok_date != ''">
+                AND certification_ok_date BETWEEN #{begin_certification_ok_date} AND #{end_certification_ok_date}
+            </if>
+            <if test="account_ok != null and (account_ok.equalsIgnoreCase('Y') or account_ok.equalsIgnoreCase('N') or account_ok.equalsIgnoreCase('R'))">
+                AND account_ok = #{account_ok}
+            </if>
+        </where>
+        ) t ON u.id = t.user_id
+    </select>
+
+    <!-- edited by Alex 20170731 : account_name (예금주) 추가 -->
+    <!-- 여행자 본인인증 읽기 -->
+    <select id="getTravelerCertificationInfo" parameterType="com.cashmallow.api.interfaces.admin.dto.TravelerAskVO" resultType="hashmap">
+        SELECT country, user_id, first_name, last_name, email, allow_recv_email, lang_key, birth_date, cls, profile_photo,
+        traveler_id, passport_country, passport_issue_date, passport_exp_date, certification_ok, identification_number,
+        en_first_name, en_last_name, certification_ok_date, certification_photo, account_bankbook_photo,
+        account_no, account_name, bank_name, account_ok, account_ok_date, paygate_member_id, updated_date,
+        phone_number, address, address_photo, address_secondary, paygate_kyc_ref_id, job, gender
+        FROM (
+        SELECT u.country,
+        u.id AS user_id,
+        u.email,
+        u.first_name,
+        u.last_name,
+        u.allow_recv_email,
+        u.lang_key,
+        u.birth_date,
+        u.cls,
+        u.profile_photo,
+        u.phone_number,
+        t.sex AS gender,
+        t.id AS traveler_id,
+        t.passport_country AS passport_country,
+        t.passport_issue_date,
+        t.passport_exp_date,
+        t.certification_ok,
+        t.identification_number,
+        t.en_first_name,
+        t.en_last_name,
+        t.certification_ok_date,
+        t.certification_photo,
+        t.account_no,
+        t.account_name,
+        t.bank_name,
+        t.account_ok,
+        t.account_bankbook_photo,
+        t.account_ok_date,
+        t.paygate_member_id,
+        t.updated_date,
+        t.address AS address,
+        IFNULL(t.address_secondary, '') AS address_secondary,
+        t.address_photo,
+        t.paygate_kyc_ref_id,
+        t.job
+        FROM (
+        SELECT *
+        FROM user
+        WHERE activated = true
+        AND agree_privacy = 'Y'
+        AND agree_terms = 'Y'
+        <if test="country != null and country != ''">
+            AND country = #{country}
+        </if>
+        <if test="first_name != null and first_name != ''">
+            AND first_name LIKE CONCAT('%', #{first_name, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}, '%')
+        </if>
+        <if test="last_name != null and last_name != ''">
+            AND last_name LIKE CONCAT('%', #{last_name, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}, '%')
+        </if>
+        <if test="user_id != null and user_id != ''">
+            AND id LIKE CONCAT('%', #{user_id}, '%')
+        </if>
+        <if test="email != null and email != ''">
+            AND email LIKE CONCAT('%', #{email, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}, '%')
+        </if>
+        <if test="phone_number != null and phone_number != ''">
+            AND phone_number = #{phone_number, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}
+        </if>
+        ) u INNER JOIN (
+        SELECT *
+        FROM traveler
+        <where>
+            <if test="passport_country != null and passport_country != ''">
+                AND passport_country = #{passport_country}
+            </if>
+            <if test="traveler_id != null and traveler_id != ''">
+                AND id LIKE CONCAT('%', #{traveler_id}, '%')
+            </if>
+            <if test="identification_number != null and identification_number != ''">
+                AND identification_number = #{identification_number}
+            </if>
+            <if test="certification_type != null and certification_type != ''">
+                AND certification_type = #{certification_type}
+            </if>
+            <if test="begin_exp_date != null and begin_exp_date != '' and end_exp_date != null and end_exp_date != ''">
+                AND passport_exp_date BETWEEN #{begin_exp_date} AND #{end_exp_date}
+            </if>
+            <if test="certification_ok != null and (certification_ok.equalsIgnoreCase('Y') or certification_ok.equalsIgnoreCase('N') or certification_ok.equalsIgnoreCase('R'))">
+                AND certification_ok = #{certification_ok}
+            </if>
+            <if test="begin_certification_ok_date != null and begin_certification_ok_date != '' and end_certification_ok_date != null and end_certification_ok_date != ''">
+                AND certification_ok_date BETWEEN #{begin_certification_ok_date} AND #{end_certification_ok_date}
+            </if>
+            <if test="account_ok != null and (account_ok.equalsIgnoreCase('Y') or account_ok.equalsIgnoreCase('N') or account_ok.equalsIgnoreCase('R'))">
+                AND account_ok = #{account_ok}
+            </if>
+        </where>
+        ) t ON u.id = t.user_id
+        <if test='sort != null and (
+	                sort.equalsIgnoreCase("country DESC")                 or sort.equalsIgnoreCase("country ASC")
+	             or sort.equalsIgnoreCase("passport_country DESC")        or sort.equalsIgnoreCase("passport_country ASC")
+	             or sort.equalsIgnoreCase("user_id DESC")                 or sort.equalsIgnoreCase("user_id ASC")
+	             or sort.equalsIgnoreCase("first_name DESC")              or sort.equalsIgnoreCase("first_name ASC")
+	             or sort.equalsIgnoreCase("last_name DESC")               or sort.equalsIgnoreCase("last_name ASC")
+	             or sort.equalsIgnoreCase("email DESC")                   or sort.equalsIgnoreCase("email ASC")
+	             or sort.equalsIgnoreCase("traveler_id DESC")             or sort.equalsIgnoreCase("traveler_id ASC")
+	             or sort.equalsIgnoreCase("identification_number DESC")   or sort.equalsIgnoreCase("identification_number ASC")
+	             or sort.equalsIgnoreCase("passport_exp_date DESC")       or sort.equalsIgnoreCase("passport_exp_date ASC")
+	             or sort.equalsIgnoreCase("certification_ok DESC")        or sort.equalsIgnoreCase("certification_ok ASC")
+	             or sort.equalsIgnoreCase("certification_ok_date DESC")   or sort.equalsIgnoreCase("certification_ok_date ASC")
+	             or sort.equalsIgnoreCase("account_ok DESC")              or sort.equalsIgnoreCase("account_ok ASC")
+	             or sort.equalsIgnoreCase("account_ok_date DESC")         or sort.equalsIgnoreCase("account_ok_date ASC")
+	            )'>
+            ORDER BY ${sort}
+        </if>
+        LIMIT #{start_row}, #{size}
+        ) x
+    </select>
+
+    <!-- 조건과 일치하는 여행자 통장정보의 레코드수 카운트 -->
+    <select id="countTravelerAccountInfo" parameterType="com.cashmallow.api.interfaces.admin.dto.TravelerAskVO" resultType="int">
+        SELECT COUNT(1) AS cnt
+        FROM (
+        SELECT *
+        FROM user
+        WHERE activated = true
+        <if test="country != null and country != ''">
+            AND country = #{country}
+        </if>
+        <if test="user_id != null and user_id != ''">
+            AND id LIKE CONCAT('%', #{user_id}, '%')
+        </if>
+        <if test="email != null and email != ''">
+            AND email LIKE CONCAT('%', #{email, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}, '%')
+        </if>
+        <if test="first_name != null and first_name != ''">
+            AND first_name LIKE CONCAT('%', #{first_name, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}, '%')
+        </if>
+        <if test="last_name != null and last_name != ''">
+            AND last_name LIKE CONCAT('%', #{last_name, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}, '%')
+        </if>
+        ) u
+        INNER JOIN (
+        SELECT *
+        FROM traveler
+        WHERE account_no IS NOT NULL AND bank_name IS NOT NULL AND account_name IS NOT NULL
+        <if test="certification_ok != null and (certification_ok.equalsIgnoreCase('Y') or certification_ok.equalsIgnoreCase('N') or certification_ok.equalsIgnoreCase('R'))">
+            AND certification_ok = #{certification_ok}
+        </if>
+        <if test="begin_certification_ok_date != null and begin_certification_ok_date != '' and end_certification_ok_date != null and end_certification_ok_date != ''">
+            AND certification_ok_date BETWEEN #{begin_certification_ok_date} AND #{end_certification_ok_date}
+        </if>
+        <if test="account_no != null and account_no != ''">
+            AND account_no LIKE CONCAT('%', #{account_no}, '%')
+        </if>
+        <if test="bank_name != null and bank_name != ''">
+            AND bank_name LIKE CONCAT('%', #{bank_name}, '%')
+        </if>
+        <if test="account_ok != null and (account_ok.equalsIgnoreCase('Y') or account_ok.equalsIgnoreCase('N') or account_ok.equalsIgnoreCase('R'))">
+            AND account_ok = #{account_ok}
+        </if>
+        <if test="begin_account_ok_date != null and begin_account_ok_date != '' and end_account_ok_date != null and end_account_ok_date != ''">
+            AND account_ok_date BETWEEN #{begin_account_ok_date} AND #{end_account_ok_date}
+        </if>
+        ) t ON u.id = t.user_id
+    </select>
+
+    <!-- edited by Alex 20170731 : account_name (예금주) 추가 -->
+    <!-- 여행자 통장정보 읽기: -->
+    <select id="getTravelerAccountInfo" parameterType="com.cashmallow.api.interfaces.admin.dto.TravelerAskVO" resultType="hashmap">
+        SELECT country, user_id, first_name, last_name, email, allow_recv_email, lang_key, birth_date, cls, profile_photo,
+        traveler_id, passport_country, passport_exp_date, certification_ok, identification_number,
+        en_first_name, en_last_name, certification_ok_date, certification_photo, account_bankbook_photo,
+        account_no, account_name, bank_name, account_ok, account_ok_date, paygate_member_id, updated_date,
+        phone_number, address, address_secondary, address_photo, paygate_kyc_ref_id, bank_info_id
+        FROM (
+        SELECT u.country,
+        u.id AS user_id,
+        u.email,
+        u.first_name,
+        u.last_name,
+        u.allow_recv_email,
+        u.lang_key,
+        u.birth_date,
+        u.cls,
+        u.profile_photo,
+        u.phone_number,
+        t.id AS traveler_id,
+        t.passport_country AS passport_country,
+        t.passport_exp_date,
+        t.certification_ok,
+        t.identification_number,
+        t.en_first_name,
+        t.en_last_name,
+        t.certification_ok_date,
+        t.certification_photo,
+        t.account_no,
+        t.account_name,
+        t.bank_name,
+        t.account_ok,
+        t.account_bankbook_photo,
+        t.account_ok_date,
+        t.paygate_member_id,
+        t.updated_date,
+        t.address,
+        t.address_secondary,
+        t.address_photo,
+        t.paygate_kyc_ref_id,
+        t.bank_info_id
+        FROM (
+        SELECT *
+        FROM user
+        WHERE activated = true
+        <if test="country != null and country != ''">
+            AND country = #{country}
+        </if>
+        <if test="first_name != null and first_name != ''">
+            AND first_name LIKE CONCAT('%', #{first_name, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}, '%')
+        </if>
+        <if test="last_name != null and last_name != ''">
+            AND last_name LIKE CONCAT('%', #{last_name, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}, '%')
+        </if>
+        <if test="user_id != null and user_id != ''">
+            AND id LIKE CONCAT('%', #{user_id}, '%')
+        </if>
+        <if test="email != null and email != ''">
+            AND email LIKE CONCAT('%', #{email, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}, '%')
+        </if>
+        ) u INNER JOIN (
+        SELECT *
+        FROM traveler
+        WHERE account_no IS NOT NULL AND bank_name IS NOT NULL AND account_name IS NOT NULL
+        <if test="certification_ok != null and (certification_ok.equalsIgnoreCase('Y') or certification_ok.equalsIgnoreCase('N') or certification_ok.equalsIgnoreCase('R'))">
+            AND certification_ok = #{certification_ok}
+        </if>
+        <if test="begin_certification_ok_date != null and begin_certification_ok_date != '' and end_certification_ok_date != null and end_certification_ok_date != ''">
+            AND certification_ok_date BETWEEN #{begin_certification_ok_date} AND #{end_certification_ok_date}
+        </if>
+        <if test="account_no != null and account_no != ''">
+            AND account_no LIKE CONCAT('%', #{account_no}, '%')
+        </if>
+        <if test="bank_name != null and bank_name != ''">
+            AND bank_name LIKE CONCAT('%', #{bank_name}, '%')
+        </if>
+        <if test="account_ok != null and (account_ok.equalsIgnoreCase('Y') or account_ok.equalsIgnoreCase('N') or account_ok.equalsIgnoreCase('R'))">
+            AND account_ok = #{account_ok}
+        </if>
+        <if test="begin_account_ok_date != null and begin_account_ok_date != '' and end_account_ok_date != null and end_account_ok_date != ''">
+            AND account_ok_date BETWEEN #{begin_account_ok_date} AND #{end_account_ok_date}
+        </if>
+        ) t ON u.id = t.user_id
+        <if test='sort != null and (
+	                sort.equalsIgnoreCase("country DESC")                 or sort.equalsIgnoreCase("country ASC")
+	             or sort.equalsIgnoreCase("user_id DESC")                 or sort.equalsIgnoreCase("user_id ASC")
+	             or sort.equalsIgnoreCase("first_name DESC")              or sort.equalsIgnoreCase("first_name ASC")
+	             or sort.equalsIgnoreCase("last_name DESC")               or sort.equalsIgnoreCase("last_name ASC")
+	             or sort.equalsIgnoreCase("email DESC")                   or sort.equalsIgnoreCase("email ASC")
+	             or sort.equalsIgnoreCase("traveler_id DESC")             or sort.equalsIgnoreCase("traveler_id ASC")
+	             or sort.equalsIgnoreCase("certification_ok DESC")        or sort.equalsIgnoreCase("certification_ok ASC")
+	             or sort.equalsIgnoreCase("certification_ok_date DESC")   or sort.equalsIgnoreCase("certification_ok_date ASC")
+	             or sort.equalsIgnoreCase("account_no DESC")              or sort.equalsIgnoreCase("account_no ASC")
+	             or sort.equalsIgnoreCase("bank_name DESC")               or sort.equalsIgnoreCase("bank_name ASC")
+	             or sort.equalsIgnoreCase("account_ok DESC")              or sort.equalsIgnoreCase("account_ok ASC")
+	             or sort.equalsIgnoreCase("account_ok_date DESC")         or sort.equalsIgnoreCase("account_ok_date ASC")
+	            )'>
+            ORDER BY ${sort}
+        </if>
+        LIMIT #{start_row}, #{size}
+        ) x
+    </select>
+
+    <!-- 기능: 71.1.2 여권신청 현황 조회 -->
+    <select id="getConfirmCntByCountry" parameterType="string" resultType="hashmap">
+        SELECT COUNT(*)                                                                    total,
+               IFNULL(SUM(IF(certification_ok = 'Y', 1, 0)), 0)                         AS Y,
+               IFNULL(SUM(IF(certification_ok = 'N', 1, 0)), 0)                         AS N,
+               IFNULL(SUM(IF(certification_ok = 'R', 1, 0)), 0)                         AS R,
+               IFNULL(SUM(IF(certification_ok = 'Y' AND u.activated = FALSE, 1, 0)), 0) AS ina_Y,
+               IFNULL(SUM(IF(certification_ok = 'N' AND u.activated = FALSE, 1, 0)), 0) AS ina_N,
+               IFNULL(SUM(IF(certification_ok = 'R' AND u.activated = FALSE, 1, 0)), 0) AS ina_R
+        FROM traveler t,
+             user u
+        WHERE t.user_id = u.id
+          AND t.certification_ok IN ('Y', 'N', 'R')
+          AND u.country = #{country}
+    </select>
+
+
+    <!-- Write -->
+
+    <insert id="insertTraveler" parameterType="com.cashmallow.api.domain.model.traveler.Traveler">
+        INSERT INTO traveler
+        (id, user_id, passport_issue_date, passport_exp_date, passport_country, local_first_name, local_last_name, en_first_name, en_last_name,
+         certification_type, identification_number, address, address_photo, address_country, address_city, approval_type,
+         address_secondary, job, sex, fund_purpose, fund_source, creator, updated_date, hanja_first_name, hanja_last_name, account_name, address_en)
+        VALUES (#{userId},
+                #{userId},
+                #{passportIssueDate},
+                #{passportExpDate},
+                #{passportCountry},
+                #{localFirstName, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler},
+                #{localLastName, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler},
+                #{enFirstName, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler},
+                #{enLastName, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler},
+                #{certificationType},
+                #{identificationNumber},
+                #{address, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler},
+                #{addressPhoto},
+                #{addressCountry},
+                #{addressCity},
+                #{approvalType},
+                #{addressSecondary, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler},
+                #{job},
+                #{sex},
+                #{fundPurpose},
+                #{fundSource},
+                #{creator},
+                NOW(),
+                #{hanjaFirstName, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler},
+                #{hanjaLastName, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler},
+                #{accountName, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler},
+                #{addressEn, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}
+               )
+    </insert>
+
+    <!-- 2.2.2. 여행자 등록/수정 -->
+    <insert id="registerTraveler" parameterType="hashmap">
+        INSERT INTO traveler (user_id,
+                              local_first_name,
+                              local_last_name,
+                              en_first_name,
+                              en_last_name,
+                              passport_exp_date,
+                              passport_country,
+                              certification_photo,
+                              certification_ok,
+                              certification_ok_date,
+                              account_no,
+                              account_name,
+                              bank_name,
+                              account_ok,
+                              account_ok_date,
+                              creator)
+        SELECT *
+        FROM (SELECT #{user_id}                                                                                       AS user_id,
+                     #{o.local_first_name, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler} AS local_first_name,
+                     #{o.local_last_name, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}  AS local_last_name,
+                     #{o.en_first_name, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}    AS en_first_name,
+                     #{o.en_last_name, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}     AS en_last_name,
+                     #{o.passport_exp_date}                                                                           AS passport_exp_date,
+                     #{o.passport_country}                                                                            AS passport_country,
+                     #{o.certification_photo}                                                                         AS certification_photo,
+                     #{o.identification_number}                                                                       AS identification_number,
+                     #{o.certification_type}                                                                          AS certification_type,
+                     'N'                                                                                              AS certification_ok,
+                     NULL                                                                                             AS certification_ok_date,
+                     #{o.account_no, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}       AS account_no,
+                     #{o.account_name, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}     AS account_name,
+                     #{o.bank_name}                                                                                   AS bank_name,
+                     'N'                                                                                              AS account_ok,
+                     NULL                                                                                             AS account_ok_date,
+                     #{user_id}                                                                                       AS creator) AS t
+        WHERE t.user_id IN (SELECT id FROM user)
+          AND LENGTH(t.passport_country) >= 1
+        ON DUPLICATE KEY
+            UPDATE user_id               = t.user_id,
+                   local_first_name      = t.local_first_name,
+                   local_last_name       = t.local_last_name,
+                   en_first_name         = t.en_first_name,
+                   en_last_name          = t.en_last_name,
+                   passport_exp_date     = t.passport_exp_date,
+                   passport_country      = t.passport_country,
+                   certification_ok      = 'N',
+                   certification_ok_date = NULL,
+                   account_no            = t.account_no,
+                   account_name          = t.account_name,
+                   bank_name             = t.bank_name,
+                   account_ok            = t.account_ok,
+                   account_ok_date       = t.account_ok_date,
+                   updated_date          = NOW()
+    </insert>
+
+    <update id="updateTraveler" parameterType="com.cashmallow.api.domain.model.traveler.Traveler">
+        UPDATE traveler
+        SET local_first_name       = #{localFirstName, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler},
+            local_last_name        = #{localLastName, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler},
+            en_first_name          = #{enFirstName, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler},
+            en_last_name           = #{enLastName, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler},
+            passport_issue_date    = #{passportIssueDate},
+            passport_exp_date      = #{passportExpDate},
+            passport_country       = #{passportCountry},
+            identification_number  = #{identificationNumber},
+            certification_type     = #{certificationType},
+            certification_photo    = #{certificationPhoto},
+            certification_ok       = #{certificationOk},
+            certification_ok_date  = #{certificationOkDate},
+            account_no             = #{accountNo, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler},
+        <if test="accountName != null">
+            account_name           = #{accountName, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler},
+        </if>
+            bank_info_id              = #{bankInfoId},
+            bank_code                 = #{bankCode},
+            bank_name                 = #{bankName},
+            account_ok                = #{accountOk},
+            account_ok_date           = #{accountOkDate},
+            account_bankbook_photo    = #{accountBankbookPhoto},
+            contact_type              = #{contactType},
+            contact_id                = #{contactId},
+            AML_search_id             = #{AMLSearchId},
+            paygate_member_id         = #{paygateMemberId},
+            paygate_kyc_status        = #{paygateKycStatus},
+            address                   = #{address, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler},
+            address_photo             = #{addressPhoto},
+            address_country           = #{addressCountry},
+            address_city              = #{addressCity},
+            address_secondary      = #{addressSecondary, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler},
+            paygate_kyc_ref_id     = #{paygateKycRefId},
+            job                    = #{job},
+            <if test="sex != null">
+            sex                    = #{sex},
+            </if>
+            fund_purpose           = #{fundPurpose},
+            fund_source            = #{fundSource},
+            approval_type          = #{approvalType},
+            updated_date           = NOW(),
+            <if test="addressEn != null and addressEn != ''">
+                address_en = #{addressEn, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler},
+            </if>
+            <if test="zipCode != null and zipCode != ''">
+                zip_code = #{zipCode},
+            </if>
+        creator = #{creator},
+        face_rate = #{faceRate},
+        image_integrity = #{imageIntegrity},
+        visual_authenticity = #{visualAuthenticity},
+        hanja_first_name = #{hanjaFirstName, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler},
+        hanja_last_name = #{hanjaLastName, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler},
+        need_jp_account_register = #{needJpAccountRegister}
+        WHERE id = #{id}
+          AND user_id = #{userId}
+    </update>
+
+    <update id="updateTravelerAddressCheckAndReturnR" parameterType="com.cashmallow.api.domain.model.traveler.Traveler">
+        UPDATE traveler
+        SET certification_ok = 'R'
+        WHERE user_id = #{userId}
+    </update>
+
+    <!-- traveler wallet 조회 -->
+    <select id="getTravelerWallet" resultType="com.cashmallow.api.domain.model.traveler.TravelerWallet">
+        SELECT *
+        FROM traveler_wallet
+        WHERE id = #{travelerWalletId}
+    </select>
+
+    <select id="getTravelerWalletByTravelerId" resultType="com.cashmallow.api.domain.model.traveler.TravelerWallet">
+        SELECT *
+        FROM traveler_wallet
+        WHERE traveler_id = #{travelerId}
+    </select>
+
+    <select id="getTravelerWalletByExchangeIds" parameterType="string" resultType="com.cashmallow.api.domain.model.traveler.TravelerWallet">
+        SELECT *
+        FROM traveler_wallet
+        WHERE JSON_CONTAINS(exchange_ids, #{exchangeId}, '$.exchange_ids')
+    </select>
+
+    <select id="getRelatedWalletsByWalletId" resultType="com.cashmallow.api.domain.model.traveler.TravelerWallet">
+        SELECT *
+        FROM traveler_wallet tw
+        WHERE json_contains(tw.exchange_ids,
+                            (SELECT json_extract(w.exchange_ids, '$.exchange_ids[0]') as exchange_id
+                             FROM traveler_wallet w
+                             WHERE w.id = #{walletId})
+                  , '$.exchange_ids');
+    </select>
+
+    <!-- 기능: 71.1.9 지갑 보유금액  조회. 전체 지급 예정금액 확인을 위해서 인출 예약된 금액도 포함해서 보여주도록 변경. -->
+    <select id="getSumEMoney" parameterType="string" resultType="bigdecimal">
+        SELECT COALESCE(tw.money, 0) + COALESCE(co.money, 0) AS money
+        FROM (SELECT SUM(e_money) AS money
+              FROM traveler_wallet
+              WHERE e_money > 0
+                AND country = #{country}) tw,
+             (SELECT SUM(traveler_cash_out_amt) AS money
+              FROM cash_out
+              WHERE co_status = 'OP'
+                AND country = #{country}) co
+    </select>
+
+    <select id="getSumRMoney" parameterType="string" resultType="bigdecimal">
+        SELECT ROUND(SUM(r_money)) AS money
+        FROM traveler_wallet
+        WHERE r_money > 0
+          AND country = #{country}
+    </select>
+
+    <!-- insert traveler_wallet -->
+    <insert id="insertTravelerWallet" parameterType="com.cashmallow.api.domain.model.traveler.TravelerWallet">
+        INSERT traveler_wallet (traveler_id, root_cd, country, e_money, created_date, creator, exchange_ids)
+        VALUES ( #{travelerId}
+               , #{rootCd}
+               , #{country}
+               , #{eMoney}
+               , NOW()
+               , #{creator}
+               , #{exchangeIds})
+    </insert>
+
+    <!-- update traveler wallet -->
+    <update id="updateTravelerWallet" parameterType="com.cashmallow.api.domain.model.traveler.TravelerWallet">
+        UPDATE traveler_wallet
+        SET e_money      = #{eMoney},
+            r_money      = #{rMoney},
+            root_cd      = #{rootCd},
+            updated_date = NOW(),
+            creator      = #{creator},
+            c_money      = #{cMoney},
+            exchange_ids = #{exchangeIds},
+            can_refund   = #{canRefund},
+            expired      = #{expired}
+        WHERE id = #{id}
+          AND traveler_id = #{travelerId}
+          AND country = #{country}
+    </update>
+
+    <delete id="deleteTravelerWallet" parameterType="long">
+        DELETE
+        FROM traveler_wallet
+        WHERE id = #{id}
+    </delete>
+
+    <insert id="insertTravelerVerificationStatus" parameterType="com.cashmallow.api.domain.model.traveler.TravelerVerificationStatusRequest">
+        INSERT INTO traveler_verification_status (traveler_id, verification_type, verification_value, verification_hold_reason, creater, file_name)
+        VALUES (#{travelerId}, #{verificationType}, #{verificationValue}, #{verificationHoldReason}, #{creater}, #{fileName})
+    </insert>
+
+    <select id="getTravelerVerificationStatuses" parameterType="long" resultType="com.cashmallow.api.domain.model.traveler.TravelerVerificationStatusResponse">
+        SELECT verification_type as verificationType,
+               verification_value as verificationValue,
+               verification_hold_reason as verificationHoldReason,
+               file_name as fileName,
+               creater as creater,
+               DATE_FORMAT(CONVERT_TZ(created_date, '+00:00', '+09:00'), '%Y-%m-%d %H:%i:%s') as createdDate
+        FROM traveler_verification_status
+        WHERE traveler_id = #{travelerId}
+        ORDER BY id desc
+    </select>
+
+    <select id="getLastTravelerVerificationStatus" parameterType="long" resultType="hashmap">
+        SELECT *
+        FROM traveler_verification_status
+        WHERE traveler_id = #{travelerId}
+        AND verification_type != 'ADDRESS_PHOTO'
+        ORDER BY id desc
+        LIMIT 1
+    </select>
+
+    <select id="getCountNewTravelers" resultType="java.lang.Integer">
+		<![CDATA[
+        SELECT count(*)
+        FROM traveler t
+        INNER JOIN user u
+        ON t.user_id = u.id
+        WHERE u.country NOT IN ('004')
+          AND t.account_ok_date >= CONVERT_TZ(DATE_FORMAT(#{startDate}, '%Y-%m-%d 00:00:00'), '+09:00', '+00:00')
+          AND t.account_ok_date
+            <= CONVERT_TZ(DATE_FORMAT(#{endDate}, '%Y-%m-%d 23:59:59'), '+09:00', '+00:00')
+          AND t.certification_ok = 'Y'
+          AND t.account_ok = 'Y'
+        ]]>
+	</select>
+
+    <select id="getNameByTravelerId" resultMap="travelerNameMap">
+        SELECT c.is_family_name_after_first_name, t.local_first_name, t.local_last_name
+        FROM traveler t
+                 INNER JOIN
+             `user` u
+             ON t.user_id = u.id
+                 INNER JOIN
+             country c
+             ON u.country = c.code
+        WHERE t.id = #{travelerId};
+    </select>
+
+    <select id="getTravelerLimit" parameterType="hashmap" resultType="com.cashmallow.api.domain.model.traveler.Traveler">
+        SELECT *
+        FROM traveler
+        ORDER BY id asc
+        LIMIT #{start}, #{size}
+    </select>
+
+    <select id="getVerifiedTravelerById" parameterType="hashmap" resultMap="travelerMap">
+        SELECT *
+          FROM traveler t
+    INNER JOIN user u
+            ON t.user_id = u.id
+         WHERE certification_ok = 'Y'
+           AND certification_ok_date > DATE_SUB(NOW(), interval 1 year)
+           AND t.local_last_name IS NOT NULL
+           AND t.local_last_name != ''
+           AND t.certification_type = 'ID_CARD'
+           AND NOT EXISTS (select user_id from complyadvantage_customer cc where cc.user_id = t.user_id)
+    </select>
+
+    <select id="getVerifiedTravelerByPassport" parameterType="hashmap" resultMap="travelerMap">
+        SELECT *
+          FROM traveler t
+    INNER JOIN user u
+            ON t.user_id = u.id
+         WHERE certification_ok = 'Y'
+           AND certification_ok_date > DATE_SUB(NOW(), interval 1 year)
+           AND t.en_last_name IS NOT NULL
+           AND t.en_last_name != ''
+           AND t.certification_type = 'PASSPORT'
+           AND NOT EXISTS (select user_id from complyadvantage_customer cc where cc.user_id = t.user_id)
+    </select>
+
+    <select id="getTravelerFirstVerification" resultType="com.cashmallow.api.domain.model.traveler.TravelerVerificationHistory">
+        select traveler_id AS travelerId, traveler_json AS travelerJson, user_json as userJson, worker
+        from traveler_verification_history
+        where traveler_id = #{travelerId}
+        order by created_at DESC
+        LIMIT 1
+    </select>
+
+    <insert id="addTravelerVerificationHistory" parameterType="com.cashmallow.api.domain.model.traveler.TravelerVerificationHistory">
+        INSERT INTO traveler_verification_history (traveler_id, traveler_json, user_json, worker, created_at)
+        VALUES (#{travelerId}, #{travelerJson}, #{userJson}, #{worker}, NOW())
+    </insert>
+
+    <insert id="addTravelerImage" parameterType="com.cashmallow.api.interfaces.authme.dto.TravelerImage">
+        insert into traveler_image (traveler_id, file_name, type, created_at)
+        values (#{travelerId}, #{fileName}, #{type}, now())
+        on duplicate key update updated_at = now()
+    </insert>
+
+    <select id="getTravelerBalance" parameterType="long" resultType="com.cashmallow.api.domain.model.traveler.GlobalTravelerWalletBalance">
+        select C.iso_4217, totalMoney
+        from (select country, sum(money) as totalMoney
+              from (select country, (e_money + IFNULL(c_money, 0)) as money
+                    from traveler_wallet
+                    where traveler_id = #{travelerId}) A
+              group by A.country) F
+                 inner join country C
+                            on F.country = C.code
+    </select>
+
+    <select id="getTravelerImages" parameterType="long" resultType="com.cashmallow.api.interfaces.authme.dto.TravelerImage">
+        select traveler_id as travelerId, file_name AS fileName, type,
+               DATE_FORMAT(CONVERT_TZ(created_at, '+00:00', '+09:00'), '%Y-%m-%d %H:%i:%s') as createdAt
+        from traveler_image
+        where traveler_id = #{travelerId}
+        order by  id desc
+    </select>
+
+    <select id="getTravelerImage" parameterType="long" resultType="com.cashmallow.api.interfaces.authme.dto.TravelerImage">
+        select traveler_id as travelerId, file_name AS fileName
+        from traveler_image
+        where traveler_id = #{travelerId}
+        and type in ('IDCARD', 'PASSPORT')
+        order by id desc
+        limit 1
+    </select>
+
+    <insert id="insertComplyadvantageCustomer" parameterType="com.cashmallow.api.interfaces.aml.complyadvantage.dto.ComplyAdvantageCreateCustomerResponse">
+        INSERT INTO complyadvantage_customer (user_id, workflow_instance_id, workflow_type, workflow_status, customer_id, created_date)
+        VALUES (#{userId}, #{workflowInstanceId}, #{workflowType}, #{workflowStatus}, #{customerId} , NOW())
+    </insert>
+
+    <select id="getComplyadvantageCustomerId" parameterType="long" resultType="string">
+        SELECT customer_id
+          FROM complyadvantage_customer
+         WHERE user_id = #{userId}
+        ORDER BY created_date DESC
+        LIMIT 1
+    </select>
+
+    <insert id="insertGlobalTravelerCertificationStep" parameterType="com.cashmallow.api.domain.model.traveler.GlobalTravelerCertificationStep">
+        INSERT INTO global_traveler_certification_step (user_id, certification_type, certification_step,
+                                                        photo_file_name, is_active, created_date)
+        VALUES (#{userId}, #{certificationType}, #{certificationStep},
+                #{photoFileName}, #{isActive}, NOW())
+        <selectKey keyProperty="id" resultType="long" order="AFTER">
+            SELECT LAST_INSERT_ID()
+        </selectKey>
+    </insert>
+    
+    <update id="updateGlobalTravelerCertificationStep" parameterType="com.cashmallow.api.domain.model.traveler.GlobalTravelerCertificationStep">
+        UPDATE global_traveler_certification_step
+           SET is_active = #{isActive}
+         WHERE id = #{id}
+    </update>
+
+    <select id="getActiveGlobalTravelerCertificationSteps" parameterType="long" resultType="com.cashmallow.api.domain.model.traveler.GlobalTravelerCertificationStep">
+        SELECT *
+          FROM global_traveler_certification_step
+         WHERE is_active = 1
+           AND user_id = #{userId}
+    </select>
+
+    <update id="timeoutGlobalTravelerCertificationStep" parameterType="long">
+        UPDATE global_traveler_certification_step
+        SET is_active = 0
+        WHERE is_active = 1
+          AND user_id = #{userId}
+    </update>
+
+    <select id="getGlobalTravelerCertificationSteps" parameterType="map" resultType="com.cashmallow.api.domain.model.traveler.GlobalTravelerCertificationStep">
+        SELECT *
+        FROM global_traveler_certification_step
+        WHERE created_date >= #{createdDate}
+          AND user_id = #{userId}
+     ORDER BY id DESC
+    </select>
+
+    <select id="getGlobalTravelerCertificationStepById" parameterType="long" resultType="com.cashmallow.api.domain.model.traveler.GlobalTravelerCertificationStep">
+        SELECT *
+        FROM global_traveler_certification_step
+        WHERE id = #{id}
+    </select>
+
+    <select id="getTravelersByUserIds" parameterType="map" resultType="com.cashmallow.api.domain.model.traveler.Traveler">
+        SELECT *
+          FROM traveler
+         WHERE user_id IN
+            <foreach collection="userIds" item="userId" separator="," open="(" close=")">
+                #{userId}
+            </foreach>
+    </select>
+
+</mapper>

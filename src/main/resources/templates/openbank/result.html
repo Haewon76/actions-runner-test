@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+    <title></title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center; /* Centers content horizontally */
+            align-items: center; /* Centers content vertically */
+            height: 100vh; /* Sets body height to 100% of the viewport height */
+            margin: 0;
+        }
+    </style>
+    <script>
+        let isAndroid = [[${isAndroid}]];
+        let isSuccess = [[${isSuccess}]];
+
+        window.onload = function () {
+            //실행될 코드
+            callApp();
+        }
+
+        function callApp() {
+            const jsonString = {"success": isSuccess};
+            if (isAndroid) {
+                Cashmallow.openbankAuth(jsonString);
+            } else {
+                webkit.messageHandlers.openbankAuth.postMessage(jsonString);
+            }
+        }
+
+        // setInterval(() => callApp(), 1000);
+    </script>
+
+</head>
+<body>
+<div style="text-align: center; margin: 0 15% 0 15%;">
+    <div th:unless="${isSuccess}">
+        <div th:if="${#strings.isEmpty(errorMsg)}">내부 시스템 오류입니다.<br>재시도 바랍니다.</div>
+        <div th:unless="${#strings.isEmpty(errorMsg)}" th:utext="${#strings.replace(errorMsg,'. ','.<br>')}">앱으로 돌아가 주세요.</div>
+    </div>
+    <div th:if="${isSuccess}">
+        인증 완료되었습니다.
+    </div>
+    <br>
+    <br>
+    <a th:href="@{cashmallow://openbank(success=${isSuccess})}" style="background-color: #0e70f9; border-radius: 6px; border: 1px solid #337fed; display: inline-block; cursor: pointer; color: #ffffff; font-size: 15px; padding: 6px 24px; text-decoration: none;" onmouseover="this.style.backgroundColor='#1e62d0';" onmouseout="this.style.backgroundColor='#0e70f9';">
+        앱으로 돌아가기
+    </a>
+</div>
+</body>
+</html>

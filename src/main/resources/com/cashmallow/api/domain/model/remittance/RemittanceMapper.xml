@@ -1,0 +1,897 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- Mybatis 사용법: http://www.mybatis.org/mybatis-3/ko/index.html -->
+
+<mapper namespace="com.cashmallow.api.domain.model.remittance.RemittanceMapper">
+
+    <resultMap type="com.cashmallow.api.domain.model.remittance.RemittanceTraverlerInfo" id="remittanceTravelerInfoMap">
+        <result column="account_no" property="accountNo" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+        <result column="account_name" property="accountName" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+        <result column="receiver_bank_account_no" property="receiverBankAccountNo" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+        <result column="receiver_address" property="receiverAddress" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+        <result column="receiver_address_secondary" property="receiverAddressSecondary" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+        <result column="receiver_email" property="receiverEmail" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+        <result column="receiver_first_name" property="receiverFirstName" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+        <result column="receiver_last_name" property="receiverLastName" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+        <result column="receiver_phone_no" property="receiverPhoneNo" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+        <result column="receiver_account_type" property="receiverAccountType"/>
+        <result column="receiver_iban_code" property="receiverIbanCode" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+        <result column="receiver_swift_code" property="receiverSwiftCode" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+        <result column="receiver_routing_number" property="receiverRoutingNumber" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+        <result column="receiver_ifsc_code" property="receiverIfscCode" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+        <result column="receiver_card_number" property="receiverCardNumber" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+        <result column="receiver_zip_code" property="receiverZipCode"/>
+        <result column="receiver_bank_code" property="receiverTypeCode"/>
+        <result column="receiver_bank_account_no" property="receiverTypeNumber" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+        <result column="receiver_bank_code" property="receiverBankCode"/>
+    </resultMap>
+
+    <resultMap type="com.cashmallow.api.domain.model.remittance.Remittance" id="remittanceMap">
+        <result column="receiver_zip_code" property="receiverZipCode"/>
+        <result column="receiver_bank_code" property="receiverBankCode"/>
+        <result column="receiver_bank_account_no" property="receiverBankAccountNo" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+        <result column="receiver_address" property="receiverAddress" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+        <result column="receiver_address_secondary" property="receiverAddressSecondary" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+        <result column="receiver_account_type" property="receiverAccountType"/>
+        <result column="receiver_iban_code" property="receiverIbanCode" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+        <result column="receiver_swift_code" property="receiverSwiftCode" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+        <result column="receiver_routing_number" property="receiverRoutingNumber" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+        <result column="receiver_ifsc_code" property="receiverIfscCode" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+        <result column="receiver_card_number" property="receiverCardNumber" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+        <result column="receiver_email" property="receiverEmail" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+        <result column="receiver_first_name" property="receiverFirstName" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+        <result column="receiver_last_name" property="receiverLastName" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+        <result column="receiver_phone_no" property="receiverPhoneNo" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+    </resultMap>
+
+    <resultMap type="com.cashmallow.api.domain.model.remittance.RemittanceTravelerSnapshot" id="remittanceSnapshotMap">
+        <result column="account_no" property="accountNo" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+        <result column="account_name" property="accountName" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+        <result column="address" property="address" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+        <result column="address_secondary" property="addressSecondary" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+        <result column="phone_number" property="phoneNumber" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+    </resultMap>
+
+    <resultMap type="com.cashmallow.api.domain.model.remittance.RemitReceiverAml" id="remitReceiverAmlMap">
+        <result column="receiver_first_name" property="receiverFirstName" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+        <result column="receiver_last_name" property="receiverLastName" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+    </resultMap>
+
+
+    <select id="getRemittanceFromAmtSumByPeriod" parameterType="hashmap" resultType="hashmap">
+        SELECT IFNULL(SUM(rm.from_amt), 0) fromAmtSum, COUNT(rm.id) cnt
+        FROM remittance rm
+        INNER JOIN remittance_status rms
+        ON rm.id = rms.remit_id
+        AND rms.remit_status = 'CF'
+        WHERE rm.traveler_id = #{travelerId}
+        AND rm.from_cd = ${fromCd}
+        <if test="fromDate != '' and fromDate != null">
+            <![CDATA[
+        		AND rms.created_date >= #{fromDate}
+    		]]>
+        </if>
+        <if test="toDate != '' and toDate != null">
+            <![CDATA[
+        		AND rms.created_date <= #{toDate}
+    		]]>
+        </if>
+    </select>
+
+    <!-- grdr 조인 컬럼은 ADMIN 화면에 여러개 띄울려면 삭제해야함  -->
+    <select id="searchAdminRemittanceForMapping" parameterType="hashmap" resultType="hashmap">
+        SELECT *
+        FROM (
+        SELECT
+        u.id as user_id,
+        u.lang_key as lang_key,
+        u.email,
+        t.id as traveler_id,
+        rts.account_no as tr_account_no,
+        rm.id as remit_id,
+        rm.from_cd,
+        rm.from_amt,
+        rm.to_cd,
+        rm.to_amt,
+        rm.exchange_rate,
+        rm.fee,
+        rm.fee_per_amt as fee_per,
+        rm.fee_rate_amt as fee_rate,
+        rm.remit_status,
+        rm.refund_fee,
+        rm.created_date,
+        rm.updated_date,
+        rm.bank_account_id,
+        b.bank_code,
+        b.bank_name,
+        b.bank_account_no,
+        concat(b.last_name, b.first_name) AS bank_account_name,
+        rm.receiver_country,
+        rm.receiver_phone_no,
+        rm.receiver_phone_country,
+        rm.receiver_first_name,
+        rm.receiver_last_name,
+        rm.receiver_bank_name,
+        rm.receiver_bank_account_no,
+        rm.receiver_address_country,
+        rm.receiver_address,
+        rm.receiver_address_secondary,
+        rm.receiver_birth_date,
+        rm.coupon_user_id,
+        rm.coupon_discount_amt
+        FROM remittance rm
+        INNER JOIN traveler t ON rm.traveler_id = t.id
+        INNER JOIN user u ON t.user_id = u.id
+        INNER JOIN bank_account b ON rm.bank_account_id = b.id
+        JOIN remittance_traveler_snapshot rts ON rm.id = rts.remit_id
+        <where>
+            <if test="searchValue != '' and searchValue != null">
+                AND (rm.from_amt = #{searchValue}
+                OR rts.account_name LIKE CONCAT('%', #{searchValue, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}, '%')
+                OR rts.account_no LIKE CONCAT('%', #{searchValue, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}, '%'))
+            </if>
+            <if test="isExistTxn != '' and isExistTxn != null">
+                AND rm.id NOT IN (SELECT txn.related_txn_id from transaction_record txn WHERE txn.related_txn_type = 'REMITTANCE'
+                AND txn.root_id IS NULL AND txn.created_date >= #{begin_created_date})
+            </if>
+            <if test="country != null and country != ''">
+                AND u.country = #{country}
+            </if>
+            <if test="user_id != null and user_id != ''">
+                AND u.id = #{user_id}
+            </if>
+            <if test="first_name != null and first_name != ''">
+                AND u.first_name LIKE CONCAT('%', #{first_name, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}, '%')
+            </if>
+            <if test="last_name != null and last_name != ''">
+                AND u.last_name LIKE CONCAT('%', #{last_name, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}, '%')
+            </if>
+            <if test="email != null and email != ''">
+                AND u.email LIKE CONCAT('%', #{email, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}, '%')
+            </if>
+            <if test="traveler_id != null and traveler_id != ''">
+                AND t.id = #{traveler_id}
+            </if>
+            <if test="remit_id != null and remit_id != ''">
+                AND rm.id = #{remit_id}
+            </if>
+            <if test="bank_account_id != null and bank_account_id != ''">
+                AND rm.bank_account_id = #{bank_account_id}
+            </if>
+            <if test="from_cd != null and from_cd != ''">
+                AND rm.from_cd = #{from_cd}
+            </if>
+            <if test="begin_from_amt != null and begin_from_amt != '' and end_from_amt != null and end_from_amt != ''">
+                AND rm.from_amt BETWEEN #{begin_from_amt} AND #{end_from_amt}
+            </if>
+            <if test="to_cd != null and to_cd != ''">
+                AND rm.to_cd = #{to_cd}
+            </if>
+            <if test="begin_to_amt != null and begin_to_amt != '' and end_to_amt != null and end_to_amt != ''">
+                AND rm.to_amt BETWEEN #{begin_to_amt} AND #{end_to_amt}
+            </if>
+            <if test="begin_fee != null and begin_fee != '' and end_fee != null and end_fee != ''">
+                AND rm.fee BETWEEN #{begin_fee} AND #{end_fee}
+            </if>
+            <if test="remit_status != null and (
+	                remit_status.equalsIgnoreCase('OP') 
+	             or remit_status.equalsIgnoreCase('DP') 
+	             or remit_status.equalsIgnoreCase('RR')
+	             or remit_status.equalsIgnoreCase('RF') 
+	             or remit_status.equalsIgnoreCase('CF')
+	             or remit_status.equalsIgnoreCase('DR')
+	            )">
+                AND rm.remit_status = #{remit_status}
+            </if>
+            <if test="remit_status != null and remit_status.equalsIgnoreCase('AC')">
+                AND rm.remit_status IN ('TC', 'CC')
+            </if>
+            <if test="remit_status != null and remit_status.equalsIgnoreCase('OC')">
+                AND rm.remit_status IN ('OP', 'CC')
+            </if>
+            <if test="begin_created_date != null and end_created_date != null">
+                AND (rm.created_date BETWEEN #{begin_created_date} AND #{end_created_date}
+                OR rm.updated_date BETWEEN #{begin_created_date} AND #{end_created_date})
+            </if>
+            <if test="bank_code != null and bank_code != ''">
+                AND b.bank_code = #{bank_code}
+            </if>
+            <if test="bank_name != null and bank_name != ''">
+                AND b.bank_name LIKE CONCAT('%', #{bank_name}, '%')
+            </if>
+            <if test="bank_account_no != null and bank_account_no != ''">
+                AND b.bank_account_no LIKE CONCAT('%', #{bank_account_no}, '%')
+            </if>
+        </where>
+        ) x
+        <if test='sort != null and (
+               sort.equalsIgnoreCase("country DESC")        or sort.equalsIgnoreCase("country ASC")
+            or sort.equalsIgnoreCase("user_id ASC")         or sort.equalsIgnoreCase("user_id DESC")
+            or sort.equalsIgnoreCase("first_name ASC")      or sort.equalsIgnoreCase("first_name DESC")
+            or sort.equalsIgnoreCase("last_name ASC")       or sort.equalsIgnoreCase("last_name DESC")
+            or sort.equalsIgnoreCase("email ASC")           or sort.equalsIgnoreCase("email DESC")
+            or sort.equalsIgnoreCase("traveler_id ASC")     or sort.equalsIgnoreCase("traveler_id DESC")
+            or sort.equalsIgnoreCase("tr_bank_name ASC")    or sort.equalsIgnoreCase("tr_bank_name DESC")
+            or sort.equalsIgnoreCase("tr_account_name ASC") or sort.equalsIgnoreCase("tr_account_name DESC")
+            or sort.equalsIgnoreCase("tr_account_no ASC")   or sort.equalsIgnoreCase("tr_account_no DESC")
+            or sort.equalsIgnoreCase("remit_id ASC")     or sort.equalsIgnoreCase("remit_id DESC")
+            or sort.equalsIgnoreCase("from_cd ASC")         or sort.equalsIgnoreCase("from_cd DESC")
+            or sort.equalsIgnoreCase("from_amt ASC")        or sort.equalsIgnoreCase("from_amt DESC")
+            or sort.equalsIgnoreCase("to_cd ASC")           or sort.equalsIgnoreCase("to_cd DESC")
+            or sort.equalsIgnoreCase("to_amt ASC")          or sort.equalsIgnoreCase("to_amt DESC")
+            or sort.equalsIgnoreCase("exchange_rate ASC")   or sort.equalsIgnoreCase("exchange_rate DESC")
+            or sort.equalsIgnoreCase("fee ASC")             or sort.equalsIgnoreCase("fee DESC")
+            or sort.equalsIgnoreCase("remit_status ASC")    or sort.equalsIgnoreCase("remit_status DESC")
+            or sort.equalsIgnoreCase("created_date ASC")    or sort.equalsIgnoreCase("created_date DESC")
+            or sort.equalsIgnoreCase("updated_date ASC")    or sort.equalsIgnoreCase("updated_date DESC")
+        )'>
+            ORDER BY ${sort}
+        </if>
+        LIMIT #{start_row}, #{size}
+    </select>
+
+    <select id="countAdminRemittanceForReport" parameterType="hashmap" resultType="int">
+        SELECT count(1)
+        FROM remittance rm
+        INNER JOIN traveler t ON rm.traveler_id = t.id
+        INNER JOIN user u ON t.user_id = u.id
+        INNER JOIN bank_account b ON rm.bank_account_id = b.id
+        <if test="remit_status != null and (
+                        remit_status.equalsIgnoreCase('DP')
+                     or remit_status.equalsIgnoreCase('RR')
+                     or remit_status.equalsIgnoreCase('RF')
+                     or remit_status.equalsIgnoreCase('CF'))">
+            inner join (SELECT MIN(created_date) min_date, remit_id from remittance_status where remit_status = 'DP' group by remit_id) rs on rm.id = rs.remit_id
+        </if>
+        JOIN remittance_traveler_snapshot rts ON rm.id = rts.remit_id
+        <where>
+            <if test="searchValue != '' and searchValue != null">
+                AND (rm.from_amt = #{searchValue}
+                OR rts.account_name LIKE CONCAT('%', #{searchValue, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}, '%')
+                OR rts.account_no LIKE CONCAT('%', #{searchValue, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}, '%'))
+            </if>
+            <if test="isExistTxn != '' and isExistTxn != null">
+                AND rm.id NOT IN (SELECT txn.related_txn_id from transaction_record txn WHERE txn.related_txn_type = 'REMITTANCE'
+                AND txn.root_id IS NULL AND txn.created_date >= #{begin_created_date})
+            </if>
+            <if test="country != null and country != ''">
+                AND u.country = #{country}
+            </if>
+            <if test="user_id != null and user_id != ''">
+                AND u.id = #{user_id}
+            </if>
+            <if test="first_name != null and first_name != ''">
+                AND u.first_name LIKE CONCAT('%', #{first_name, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}, '%')
+            </if>
+            <if test="last_name != null and last_name != ''">
+                AND u.last_name LIKE CONCAT('%', #{last_name, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}, '%')
+            </if>
+            <if test="email != null and email != ''">
+                AND u.email LIKE CONCAT('%', #{email, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}, '%')
+            </if>
+            <if test="traveler_id != null and traveler_id != ''">
+                AND t.id = #{traveler_id}
+            </if>
+            <if test="remit_id != null and remit_id != ''">
+                AND rm.id = #{remit_id}
+            </if>
+            <if test="bank_account_id != null and bank_account_id != ''">
+                AND rm.bank_account_id = #{bank_account_id}
+            </if>
+            <if test="from_cd != null and from_cd != ''">
+                AND rm.from_cd = #{from_cd}
+            </if>
+            <if test="begin_from_amt != null and begin_from_amt != '' and end_from_amt != null and end_from_amt != ''">
+                AND rm.from_amt BETWEEN #{begin_from_amt} AND #{end_from_amt}
+            </if>
+            <if test="to_cd != null and to_cd != ''">
+                AND rm.to_cd = #{to_cd}
+            </if>
+            <if test="begin_to_amt != null and begin_to_amt != '' and end_to_amt != null and end_to_amt != ''">
+                AND rm.to_amt BETWEEN #{begin_to_amt} AND #{end_to_amt}
+            </if>
+            <if test="begin_fee != null and begin_fee != '' and end_fee != null and end_fee != ''">
+                AND rm.fee BETWEEN #{begin_fee} AND #{end_fee}
+            </if>
+            <if test="remit_status != null and (
+	                remit_status.equalsIgnoreCase('OP')
+	             or remit_status.equalsIgnoreCase('DR')
+	             or remit_status.equalsIgnoreCase('DP')
+	             or remit_status.equalsIgnoreCase('RR')
+	             or remit_status.equalsIgnoreCase('RC')
+	             or remit_status.equalsIgnoreCase('RF')
+	             or remit_status.equalsIgnoreCase('CF')
+	             or remit_status.equalsIgnoreCase('DR')
+	            )">
+                AND rm.remit_status = #{remit_status}
+            </if>
+            <if test="remit_status != null and remit_status.equalsIgnoreCase('AC')">
+                AND rm.remit_status IN ('TC', 'CC')
+            </if>
+            <if test="remit_status != null and remit_status.equalsIgnoreCase('OC')">
+                AND rm.remit_status IN ('OP', 'CC')
+            </if>
+            <if test="begin_created_date != null and end_created_date != null">
+                AND (rm.created_date BETWEEN #{begin_created_date} AND #{end_created_date}
+                OR rm.updated_date BETWEEN #{begin_created_date} AND #{end_created_date})
+            </if>
+            <if test="bank_code != null and bank_code != ''">
+                AND b.bank_code = #{bank_code}
+            </if>
+            <if test="bank_name != null and bank_name != ''">
+                AND b.bank_name LIKE CONCAT('%', #{bank_name}, '%')
+            </if>
+            <if test="bank_account_no != null and bank_account_no != ''">
+                AND b.bank_account_no LIKE CONCAT('%', #{bank_account_no}, '%')
+            </if>
+            <if test="paygate_rec_id != null and paygate_rec_id != ''">
+                AND EXISTS(SELECT 1 FROM transaction_mapping tm INNER JOIN transaction_record tr ON tm.transaction_rec_id = tr.id WHERE tr.related_txn_id = rm.id AND tm.paygate_rec_id = #{paygate_rec_id})
+            </if>
+            <if test="paygate_rec_amount != null and paygate_rec_amount != ''">
+                AND EXISTS(SELECT 1 FROM transaction_record tr WHERE tr.related_txn_id = rm.id AND tr.amount = #{paygate_rec_amount})
+            </if>
+        </where>
+    </select>
+
+    <select id="getRemittanceByRemittanceId" parameterType="long" resultMap="remittanceMap">
+        SELECT *
+        FROM remittance
+        WHERE id = #{id}
+    </select>
+
+    <select id="getRemittanceBeforeMapping" parameterType="long" resultMap="remittanceTravelerInfoMap">
+        SELECT rm.*, rts.remit_id, rts.bank_name, rts.account_no, rts.account_name, bi.code AS bank_code
+        FROM remittance rm
+  INNER JOIN remittance_traveler_snapshot rts
+          ON rm.id = rts.remit_id
+  INNER JOIN traveler t
+          ON rm.traveler_id = t.id
+   LEFT JOIN bank_info bi
+          ON t.bank_info_id = bi.id
+        WHERE rm.remit_status IN ('OP', 'DR')
+          AND rm.id = #{id}
+    </select>
+
+    <select id="getRemittanceBeforeMappingList" resultMap="remittanceTravelerInfoMap">
+        SELECT rm.*, rts.remit_id, rts.bank_name, rts.account_no, rts.account_name, bi.code AS bank_code
+        FROM remittance rm
+  INNER JOIN remittance_traveler_snapshot rts
+          ON rm.id = rts.remit_id
+  INNER JOIN traveler t
+          ON rm.traveler_id = t.id
+   LEFT JOIN bank_info bi
+          ON t.bank_info_id = bi.id
+       WHERE rm.remit_status = 'OP'
+         AND rts.account_no = #{accountNo, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}
+    </select>
+
+    <select id="getRemittanceTravelerSnapshotByRemittanceId" parameterType="long" resultMap="remittanceSnapshotMap">
+        SELECT *
+        FROM remittance_traveler_snapshot
+        WHERE remit_id = #{remitId}
+    </select>
+
+    <select id="getRemitReceiverAmlById" parameterType="long" resultMap="remitReceiverAmlMap">
+        SELECT *
+        FROM remit_receiver_aml
+        WHERE id = #{id}
+    </select>
+
+    <select id="searchAdminRemittanceForReport" parameterType="hashmap" resultType="hashmap">
+        SELECT *
+        FROM (
+        SELECT
+        u.id as user_id,
+        u.lang_key as lang_key,
+        u.email,
+        t.id as traveler_id,
+        rts.account_no as tr_account_no,
+        rts.account_name as tr_account_name,
+        rts.bank_name as tr_bank_name,
+        rm.id as remit_id,
+        rm.from_cd,
+        rm.from_amt,
+        rm.to_cd,
+        rm.to_amt,
+        rm.exchange_rate,
+        rm.fee - IFNULL(rm.coupon_discount_amt, 0) AS fee,
+        rm.fee_per_amt - IFNULL(rm.coupon_discount_amt, 0) as fee_per,
+        rm.fee_rate_amt as fee_rate,
+        ROUND(rm.to_amt * rm.exchange_rate, 2) AS principal,
+        rm.remit_status,
+        rm.refund_fee,
+        rm.created_date,
+        rm.updated_date,
+        <if test="remit_status != null and (
+	                remit_status.equalsIgnoreCase('DP')
+	             or remit_status.equalsIgnoreCase('RR')
+	             or remit_status.equalsIgnoreCase('RC')
+	             or remit_status.equalsIgnoreCase('RF')
+	             or remit_status.equalsIgnoreCase('CF'))">
+            mp_rs.min_date as mapping_date,
+        </if>
+        <if test="remit_status != null and remit_status.equalsIgnoreCase('CF')">
+            cf_rs.min_date as completed_date,
+        </if>
+        rm.bank_account_id,
+        b.bank_code,
+        b.bank_name,
+        b.bank_account_no,
+        concat(b.last_name, b.first_name) AS bank_account_name,
+        rm.receiver_country,
+        rm.receiver_phone_no,
+        rm.receiver_phone_country,
+        rm.receiver_first_name,
+        rm.receiver_last_name,
+        rm.receiver_bank_name,
+        rm.receiver_bank_account_no,
+        rm.receiver_address_country,
+        rm.receiver_address,
+        rm.receiver_address_secondary,
+        <if test="remit_status != null and remit_status.equalsIgnoreCase('CF')">
+            GROUP_CONCAT(tm.paygate_rec_id SEPARATOR ', ') AS paygate_rec_id,
+            GROUP_CONCAT(pr.amount SEPARATOR ', ') AS paygate_rec_amount,
+            <if test="to_cd != null and to_cd != ''">
+                <choose>
+                    <when test="'003'.equals(to_cd)">
+                        <!-- 003 : 한국 -->
+                        IF(ISNULL(rp.sm_tid), rmlink.transaction_id, rp.sm_tid) AS sm_tid,
+                    </when>
+                    <when test="'009'.equals(to_cd)">
+                        <!-- 009 : 싱가폴 -->
+                        IF(ISNULL(rss.quotation_id), rmlink.transaction_id, rss.quotation_id) AS sm_tid,
+                    </when>
+                    <otherwise>
+                        rmlink.transaction_id AS sm_tid,
+                    </otherwise>
+                </choose>
+            </if>
+        </if>
+        rm.receiver_birth_date,
+        rm.coupon_user_id,
+        rm.coupon_discount_amt,
+        rm.remit_purpose,
+        rm.remit_fund_source
+        FROM remittance rm
+        INNER JOIN traveler t ON rm.traveler_id = t.id
+        INNER JOIN user u ON t.user_id = u.id
+        INNER JOIN bank_account b ON rm.bank_account_id = b.id
+        <if test="remit_status != null and (
+	                remit_status.equalsIgnoreCase('DP')
+	             or remit_status.equalsIgnoreCase('RR')
+	             or remit_status.equalsIgnoreCase('RC')
+	             or remit_status.equalsIgnoreCase('RF')
+	             or remit_status.equalsIgnoreCase('CF'))">
+            inner join (SELECT MIN(created_date) min_date, remit_id from remittance_status where remit_status = 'DP' group by remit_id) mp_rs on rm.id = mp_rs.remit_id
+        </if>
+        <if test="remit_status != null and remit_status.equalsIgnoreCase('CF')">
+            inner join (SELECT MIN(created_date) min_date, remit_id from remittance_status where remit_status = 'CF' group by remit_id) cf_rs on rm.id = cf_rs.remit_id
+        </if>
+        JOIN remittance_traveler_snapshot rts ON rm.id = rts.remit_id
+        <if test="remit_status != null and remit_status.equalsIgnoreCase('CF')">
+            LEFT OUTER JOIN transaction_record tr ON tr.related_txn_id = rm.id
+            LEFT OUTER JOIN transaction_mapping tm ON tm.transaction_rec_id = tr.id
+            INNER JOIN paygate_record pr ON tm.paygate_rec_id = pr.id
+            <if test="to_cd != null and to_cd != ''">
+                <if test="'003'.equals(to_cd)">
+                    /* to_cd : 한국 */
+                    LEFT OUTER JOIN remittance_paygate rp ON rp.remit_id = rm.id
+                </if>
+                <if test="'009'.equals(to_cd)">
+                    /* to_cd : 싱가폴 */
+                    LEFT OUTER JOIN remittance_sentbe rss ON rss.remit_id = rm.id AND rss.status = 'COMPLETED'
+                </if>
+            LEFT OUTER JOIN remittance_mallowlink rmlink ON rmlink.remit_id = rm.id
+            </if>
+        </if>
+        <where>
+            <if test="searchValue != '' and searchValue != null">
+                AND (rm.from_amt = #{searchValue}
+                OR rts.account_name LIKE CONCAT('%', #{searchValue, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}, '%')
+                OR rts.account_no LIKE CONCAT('%', #{searchValue, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}, '%'))
+            </if>
+            <if test="isExistTxn != '' and isExistTxn != null">
+                AND rm.id NOT IN (SELECT txn.related_txn_id from transaction_record txn WHERE txn.related_txn_type = 'REMITTANCE'
+                AND txn.root_id IS NULL AND txn.created_date >= #{begin_created_date})
+            </if>
+            <if test="country != null and country != ''">
+                AND u.country = #{country}
+            </if>
+            <if test="user_id != null and user_id != ''">
+                AND u.id = #{user_id}
+            </if>
+            <if test="first_name != null and first_name != ''">
+                AND u.first_name LIKE CONCAT('%', #{first_name, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}, '%')
+            </if>
+            <if test="last_name != null and last_name != ''">
+                AND u.last_name LIKE CONCAT('%', #{last_name, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}, '%')
+            </if>
+            <if test="email != null and email != ''">
+                AND u.email LIKE CONCAT('%', #{email, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}, '%')
+            </if>
+            <if test="traveler_id != null and traveler_id != ''">
+                AND t.id = #{traveler_id}
+            </if>
+            <if test="remit_id != null and remit_id != ''">
+                AND rm.id = #{remit_id}
+            </if>
+            <if test="bank_account_id != null and bank_account_id != ''">
+                AND rm.bank_account_id = #{bank_account_id}
+            </if>
+            <if test="from_cd != null and from_cd != ''">
+                AND rm.from_cd = #{from_cd}
+            </if>
+            <if test="begin_from_amt != null and begin_from_amt != '' and end_from_amt != null and end_from_amt != ''">
+                AND rm.from_amt BETWEEN #{begin_from_amt} AND #{end_from_amt}
+            </if>
+            <if test="to_cd != null and to_cd != ''">
+                AND rm.to_cd = #{to_cd}
+            </if>
+            <if test="begin_to_amt != null and begin_to_amt != '' and end_to_amt != null and end_to_amt != ''">
+                AND rm.to_amt BETWEEN #{begin_to_amt} AND #{end_to_amt}
+            </if>
+            <if test="begin_fee != null and begin_fee != '' and end_fee != null and end_fee != ''">
+                AND rm.fee BETWEEN #{begin_fee} AND #{end_fee}
+            </if>
+            <if test="remit_status != null and (
+	                remit_status.equalsIgnoreCase('OP')
+	             or remit_status.equalsIgnoreCase('DR')
+	             or remit_status.equalsIgnoreCase('DP')
+	             or remit_status.equalsIgnoreCase('RR')
+	             or remit_status.equalsIgnoreCase('RC')
+	             or remit_status.equalsIgnoreCase('RF')
+	             or remit_status.equalsIgnoreCase('CF')
+	             or remit_status.equalsIgnoreCase('DR')
+	            )">
+                AND rm.remit_status = #{remit_status}
+            </if>
+            <if test="remit_status != null and remit_status.equalsIgnoreCase('AC')">
+                AND rm.remit_status IN ('TC', 'CC')
+            </if>
+            <if test="remit_status != null and remit_status.equalsIgnoreCase('OC')">
+                AND rm.remit_status IN ('OP', 'CC')
+            </if>
+            <if test="begin_created_date != null and end_created_date != null">
+                AND (rm.created_date BETWEEN #{begin_created_date} AND #{end_created_date}
+                OR rm.updated_date BETWEEN #{begin_created_date} AND #{end_created_date})
+            </if>
+            <if test="bank_code != null and bank_code != ''">
+                AND b.bank_code = #{bank_code}
+            </if>
+            <if test="bank_name != null and bank_name != ''">
+                AND b.bank_name LIKE CONCAT('%', #{bank_name}, '%')
+            </if>
+            <if test="bank_account_no != null and bank_account_no != ''">
+                AND b.bank_account_no LIKE CONCAT('%', #{bank_account_no}, '%')
+            </if>
+        </where>
+        <if test="remit_status != null and remit_status.equalsIgnoreCase('CF')">
+            GROUP BY user_id, u.email, traveler_id, tr_account_no, tr_account_name, tr_bank_name, remit_id, rm.from_cd, rm.from_amt, rm.to_cd, rm.to_amt, rm.exchange_rate, rm.fee, fee_per, fee_rate, rm.remit_status, rm.refund_fee, rm.created_date, rm.updated_date, rm.bank_account_id, b.bank_code, bank_name, b.bank_account_no, bank_account_name, rm.receiver_country, rm.receiver_phone_no, rm.receiver_phone_country, rm.receiver_first_name, rm.receiver_last_name, rm.receiver_bank_name,
+            rm.receiver_bank_account_no, rm.receiver_address_country, rm.receiver_address, rm.receiver_address_secondary, rm.receiver_birth_date
+            <if test="to_cd != null and to_cd != ''">
+                <if test="'009'.equals(to_cd)">
+                    , rss.quotation_id
+                </if>
+            </if>
+        </if>
+        ) x
+        WHERE 1 = 1
+        <if test="paygate_rec_id != null and paygate_rec_id != ''">
+            AND EXISTS(SELECT 1 FROM transaction_mapping tm INNER JOIN transaction_record tr ON tm.transaction_rec_id = tr.id WHERE tr.related_txn_id = x.remit_id AND tm.paygate_rec_id = #{paygate_rec_id})
+        </if>
+        <if test="paygate_rec_amount != null and paygate_rec_amount != ''">
+            AND EXISTS(SELECT 1 FROM transaction_record tr WHERE tr.related_txn_id = x.remit_id AND tr.amount = #{paygate_rec_amount})
+        </if>
+        <if test='sort != null and (
+               sort.equalsIgnoreCase("country DESC")        or sort.equalsIgnoreCase("country ASC")
+            or sort.equalsIgnoreCase("user_id ASC")         or sort.equalsIgnoreCase("user_id DESC")
+            or sort.equalsIgnoreCase("first_name ASC")      or sort.equalsIgnoreCase("first_name DESC")
+            or sort.equalsIgnoreCase("last_name ASC")       or sort.equalsIgnoreCase("last_name DESC")
+            or sort.equalsIgnoreCase("email ASC")           or sort.equalsIgnoreCase("email DESC")
+            or sort.equalsIgnoreCase("traveler_id ASC")     or sort.equalsIgnoreCase("traveler_id DESC")
+            or sort.equalsIgnoreCase("tr_bank_name ASC")    or sort.equalsIgnoreCase("tr_bank_name DESC")
+            or sort.equalsIgnoreCase("tr_account_name ASC") or sort.equalsIgnoreCase("tr_account_name DESC")
+            or sort.equalsIgnoreCase("tr_account_no ASC")   or sort.equalsIgnoreCase("tr_account_no DESC")
+            or sort.equalsIgnoreCase("tr_from_amt ASC")     or sort.equalsIgnoreCase("tr_from_amt DESC")
+            or sort.equalsIgnoreCase("remit_id ASC")     or sort.equalsIgnoreCase("remit_id DESC")
+            or sort.equalsIgnoreCase("bank_account_id ASC") or sort.equalsIgnoreCase("bank_account_id DESC")
+            or sort.equalsIgnoreCase("from_cd ASC")         or sort.equalsIgnoreCase("from_cd DESC")
+            or sort.equalsIgnoreCase("from_amt ASC")        or sort.equalsIgnoreCase("from_amt DESC")
+            or sort.equalsIgnoreCase("to_cd ASC")           or sort.equalsIgnoreCase("to_cd DESC")
+            or sort.equalsIgnoreCase("to_amt ASC")          or sort.equalsIgnoreCase("to_amt DESC")
+            or sort.equalsIgnoreCase("exchange_rate ASC")   or sort.equalsIgnoreCase("exchange_rate DESC")
+            or sort.equalsIgnoreCase("fee ASC")             or sort.equalsIgnoreCase("fee DESC")
+            or sort.equalsIgnoreCase("bank_name ASC")       or sort.equalsIgnoreCase("bank_name DESC")
+            or sort.equalsIgnoreCase("remit_status ASC")    or sort.equalsIgnoreCase("remit_status DESC")
+            or sort.equalsIgnoreCase("created_date ASC")    or sort.equalsIgnoreCase("created_date DESC")
+            or sort.equalsIgnoreCase("updated_date ASC")    or sort.equalsIgnoreCase("updated_date DESC")
+        )'>
+            ORDER BY ${sort}
+        </if>
+        LIMIT #{start_row}, #{size}
+    </select>
+
+    <select id="getRemitReceiverAml" parameterType="hashmap" resultMap="remitReceiverAmlMap">
+        SELECT *
+        FROM remit_receiver_aml
+        WHERE traveler_id = #{traveler_id}
+        <if test="receiverLastName != '' and receiverLastName != null">
+            AND receiver_last_name = #{receiverLastName, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}
+        </if>
+        <if test="receiverLastName != '' and receiverLastName != null">
+            AND birth_date = #{birthDate}
+        </if>
+        <if test="receiverLastName != '' and receiverLastName != null">
+            AND receiver_first_name = #{receiverFirstName, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}
+        </if>
+    </select>
+
+    <select id="getRemittanceInProgress" parameterType="long" resultMap="remittanceMap">
+        SELECT *
+        FROM remittance
+        WHERE traveler_id = #{id}
+          AND remit_status In ('OP', 'DP', 'RP', 'RR', 'DR', 'RC')
+    </select>
+
+    <select id="getRemittancePaygateByRemitId" parameterType="long" resultType="com.cashmallow.api.domain.model.remittance.RemittancePaygate">
+        SELECT *
+        FROM remittance_paygate
+        WHERE remit_id = #{remitId}
+    </select>
+
+    <select id="countRemittanceListByTravelerId" parameterType="long" resultType="int">
+        SELECT COUNT(1) AS count
+        FROM remittance
+        WHERE traveler_id = #{travelerId}
+    </select>
+
+    <select id="getRemittanceListByTravelerId" parameterType="map" resultMap="remittanceMap">
+        SELECT *
+        FROM remittance
+        WHERE traveler_id = #{travelerId}
+        ORDER BY id DESC
+        LIMIT #{startRow}, #{size}
+    </select>
+
+    <!-- 여러 travelerId 로 traveler remittance list 조회 -->
+    <select id="countRemittanceListByTravelerIds" parameterType="map" resultType="java.lang.Integer">
+        SELECT count(*)
+        FROM remittance
+        WHERE traveler_id IN
+        <foreach collection="travelerIds" item="travelerId" open="(" close=")" separator=",">
+            #{travelerId}
+        </foreach>
+    </select>
+
+    <update id="updateRemittance" parameterType="com.cashmallow.api.domain.model.remittance.Remittance">
+        UPDATE remittance
+        SET receiver_country           = #{receiverCountry},
+            receiver_birth_date        = #{receiverBirthDate},
+            receiver_phone_no          = #{receiverPhoneNo, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler},
+            receiver_phone_country     = #{receiverPhoneCountry},
+            receiver_first_name        = #{receiverFirstName, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler},
+            receiver_last_name         = #{receiverLastName, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler},
+            receiver_bank_name         = #{receiverBankName},
+            receiver_bank_branch_name  = #{receiverBankBranchName},
+            receiver_bank_code         = #{receiverBankCode},
+            receiver_bank_account_no   = #{receiverBankAccountNo, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler},
+            receiver_address           = #{receiverAddress, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler},
+            receiver_address_country   = #{receiverAddressCountry},
+            receiver_address_city      = #{receiverAddressCity},
+            receiver_address_secondary = #{receiverAddressSecondary, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler},
+            receiver_account_type      = #{receiverAccountType},
+            receiver_iban_code         = #{receiverIbanCode, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler},
+            receiver_swift_code        = #{receiverSwiftCode, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler},
+            receiver_routing_number    = #{receiverRoutingNumber, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler},
+            receiver_ifsc_code         = #{receiverIfscCode, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler},
+            receiver_card_number         = #{receiverCardNumber, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler},
+            remit_status               = #{remitStatus},
+            updated_date               = NOW(),
+            refund_fee                 = #{refundFee},
+            receiver_email             = #{receiverEmail, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler},
+            is_confirmed_receiver_aml  = #{isConfirmedReceiverAml}
+        WHERE id = #{id}
+    </update>
+
+    <insert id="insertRemittance" parameterType="com.cashmallow.api.domain.model.remittance.Remittance" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO remittance
+        (traveler_id, bank_account_id, from_cd, from_amt, to_cd, to_amt, exchange_rate, fee, fee_per_amt, fee_rate_amt, fee_rate,
+         remit_purpose, remit_fund_source, remit_relationship, finance_partner_id, receiver_country, receiver_phone_no, receiver_phone_country,
+         receiver_first_name, receiver_last_name, receiver_bank_name, receiver_bank_branch_name, receiver_bank_code, receiver_bank_account_no,
+         receiver_address, receiver_address_country, receiver_address_city, receiver_address_state_province, receiver_address_secondary,
+         remit_status, updated_date, receiver_birth_date,
+         receiver_email, coupon_user_id, coupon_discount_amt,
+         receiver_account_type, receiver_iban_code, receiver_swift_code, receiver_routing_number, receiver_ifsc_code, receiver_card_number, remittance_type, receiver_zip_code)
+        VALUES ( #{travelerId}
+               , #{bankAccountId}
+               , #{fromCd}
+               , #{fromAmt}
+               , #{toCd}
+               , #{toAmt}
+               , #{exchangeRate}
+               , #{fee}
+               , #{feePerAmt}
+               , #{feeRateAmt}
+               , #{feeRate}
+               , #{remitPurpose}
+               , #{remitFundSource}
+               , #{remitRelationship}
+               , #{financePartnerId}
+               , #{receiverCountry}
+               , #{receiverPhoneNo, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}
+               , #{receiverPhoneCountry}
+               , #{receiverFirstName, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}
+               , #{receiverLastName, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}
+               , #{receiverBankName}
+               , #{receiverBankBranchName}
+               , #{receiverBankCode}
+               , #{receiverBankAccountNo, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}
+               , #{receiverAddress, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}
+               , #{receiverAddressCountry}
+               , #{receiverAddressCity}
+               , #{receiverAddressStateProvince}
+               , #{receiverAddressSecondary, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}
+               , #{remitStatus}
+               , NOW()
+               , #{receiverBirthDate}
+               , #{receiverEmail, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}
+               , #{couponUserId}
+               , #{couponDiscountAmt}
+               , #{receiverAccountType}
+               , #{receiverIbanCode, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}
+               , #{receiverSwiftCode, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}
+               , #{receiverRoutingNumber, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}
+               , #{receiverIfscCode, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}
+               , #{receiverCardNumber, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}
+               , #{remittanceType}
+               , #{receiverZipCode}
+               )
+    </insert>
+
+    <insert id="insertRemittanceStatus" parameterType="hashmap">
+        INSERT INTO remittance_status(remit_id, remit_status, message)
+        VALUES (#{remitId}, #{remitStatus}, #{message})
+    </insert>
+
+    <insert id="insertRemittancePaygate" parameterType="hashmap">
+        INSERT INTO remittance_paygate(remit_id, member_id)
+        VALUES (#{remitId}, #{memberId})
+    </insert>
+
+    <update id="updateRemittancePaygate" parameterType="com.cashmallow.api.domain.model.remittance.RemittancePaygate">
+        UPDATE remittance_paygate
+        SET member_id=#{memberId},
+            kyc_ref_id=#{kycRefId},
+            sma_id=#{smaId},
+            sm_tid=#{smTid},
+            kyc_status=#{kycStatus},
+            sendmoney_status=#{sendmoneyStatus},
+            updated_date = NOW(),
+            sma_ref_id=#{smaRefId}
+        WHERE remit_id = #{remitId}
+    </update>
+
+    <update id="updateRemittanceRR" parameterType="map">
+        UPDATE remittance
+        SET remit_status = 'RR'
+        WHERE id = #{id}
+    </update>
+
+
+    <insert id="insertRemittancePaygateStatus" parameterType="hashmap">
+        INSERT INTO remittance_paygate_status(remit_paygate_id, status, kyc_ref_id, sma_ref_id, remarks)
+        VALUES (#{remitId}, #{status}, #{kycRefId}, #{smaRefId}, #{remarks})
+    </insert>
+
+    <insert id="insertRemitTravelerSnapshot" parameterType="com.cashmallow.api.domain.model.remittance.RemittanceTravelerSnapshot">
+        INSERT INTO remittance_traveler_snapshot
+        (remit_id, traveler_id, identification_number, bank_name, account_no, account_name, address, address_country, address_city,
+         address_state_province, address_state_province_en, address_secondary, phone_number, phone_country)
+        VALUES ( #{remitId}
+               , #{travelerId}
+               , #{identificationNumber}
+               , #{bankName}
+               , #{accountNo, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}
+               , #{accountName, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}
+               , #{address, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}
+               , #{addressCountry}
+               , #{addressCity}
+               , #{addressStateProvince}
+               , #{addressStateProvinceEn}
+               , #{addressSecondary, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}
+               , #{phoneNumber, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}
+               , #{phoneCountry})
+    </insert>
+
+    <update id="updateRemitTravelerSnapshot" parameterType="com.cashmallow.api.domain.model.remittance.RemittanceTravelerSnapshot">
+        UPDATE remittance_traveler_snapshot
+        SET identification_number = #{identificationNumber},
+            bank_name             = #{bankName},
+            account_no            = #{accountNo, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler},
+            account_name          = #{accountName, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler},
+            address               = #{address, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler},
+            address_country       = #{addressCountry},
+            address_city          = #{addressCity},
+            address_secondary     = #{addressSecondary, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler},
+            phone_number          = #{phoneNumber, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler},
+            phone_country         = #{phoneCountry}
+        WHERE remit_id = #{remitId}
+          AND traveler_id = #{travelerId}
+    </update>
+
+    <insert id="insertRemitReceiverAml" parameterType="com.cashmallow.api.domain.model.remittance.RemitReceiverAml" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO remit_receiver_aml
+            (traveler_id, receiver_first_name, receiver_last_name, birth_date, aml_search_id)
+        VALUES ( #{travelerId}
+               , #{receiverFirstName, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}
+               , #{receiverLastName, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}
+               , #{birthDate}
+               , #{amlSearchId})
+    </insert>
+
+    <update id="updateRemitReceiverAml" parameterType="com.cashmallow.api.domain.model.remittance.RemitReceiverAml">
+        UPDATE remit_receiver_aml
+        SET receiver_first_name = #{receiverFirstName, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler},
+            receiver_last_name  = #{receiverLastName, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler},
+            birth_date          = #{birthDate},
+            aml_search_id       = #{amlSearchId}
+        WHERE id = #{id}
+    </update>
+
+    <!-- remittance_deposit_receipt table -->
+    <select id="getRemittanceDepositReceiptList" parameterType="long" resultType="com.cashmallow.api.domain.model.remittance.RemittanceDepositReceipt">
+        SELECT *
+        FROM remittance_deposit_receipt
+        WHERE remit_id = #{remitId}
+    </select>
+
+    <select id="getAllRemittanceDoing" resultType="com.cashmallow.api.domain.model.remittance.RemittancesDoing">
+        SELECT from_cd                  AS from_cd,
+               IFNULL(SUM(from_amt), 0) AS from_amt,
+               to_cd                    AS to_cd,
+               IFNULL(SUM(to_amt), 0)   AS to_amt
+        FROM remittance r
+        WHERE r.remit_status IN ('DP', 'RR', 'RC')
+          AND r.from_cd = #{fromCd}
+        GROUP BY r.to_cd;
+    </select>
+
+    <insert id="insertRemittanceDepositReceipt" parameterType="com.cashmallow.api.domain.model.remittance.RemittanceDepositReceipt">
+        INSERT INTO remittance_deposit_receipt (remit_id, receipt_photo, created_date)
+        VALUES (#{remitId}, #{receiptPhoto}, #{createdDate})
+
+        <selectKey keyProperty="id" resultType="long" order="AFTER">
+            SELECT LAST_INSERT_ID()
+        </selectKey>
+    </insert>
+
+    <select id="findReservedRemittances" resultMap="remittanceMap">
+        SELECT *
+        FROM remittance r
+                 JOIN remittance_paygate_reserve rpr ON r.id = rpr.remit_id
+        WHERE rpr.status = 'OP';
+    </select>
+
+    <select id="getReservedRemittances" resultMap="remittanceMap">
+        SELECT *
+        FROM remittance r
+                 JOIN remittance_paygate_reserve rpr ON r.id = rpr.remit_id
+        WHERE r.id = #{remittanceId}
+          AND rpr.status = 'OP';
+    </select>
+
+    <update id="updateRemittanceBankAccountId" parameterType="com.cashmallow.api.domain.model.remittance.Remittance">
+        UPDATE remittance
+        SET bank_account_id = #{bankAccountId}
+        WHERE id = #{id}
+    </update>
+
+    <select id="getUnpaidListForGlobal" resultType="com.cashmallow.api.domain.model.remittance.Remittance">
+        SELECT *
+          FROM remittance
+         WHERE from_cd = #{fromCountryCode}
+           AND remit_status IN ('DP', 'RR', 'RC', 'RP');
+    </select>
+
+</mapper>

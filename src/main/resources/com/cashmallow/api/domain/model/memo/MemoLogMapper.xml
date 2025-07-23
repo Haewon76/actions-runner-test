@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- Mybatis 사용법: http://www.mybatis.org/mybatis-3/ko/index.html -->
+
+<mapper namespace="com.cashmallow.api.domain.model.memo.MemoLogMapper">
+
+    <!-- 조회 -->
+    <select id="getMemoLogList" resultType="com.cashmallow.api.domain.model.memo.MemoLog" parameterType="hashmap">
+        SELECT *
+        FROM memo_log
+        <where>
+            <if test="id != null and id != ''">
+                AND id = #{id}
+            </if>
+            <if test="memoId != null and memoId != ''">
+                AND memo_id = #{memoId}
+            </if>
+            <if test="refId != null and refId != ''">
+                AND ref_id = #{refId}
+            </if>
+            <if test="type != null and type != ''">
+                AND type = #{type}
+            </if>
+            <if test="creatorId != null and creatorId != ''">
+                AND creator_id = #{creatorId}
+            </if>
+        </where>
+        Order by id desc
+    </select>
+
+    <insert id="registerMemoLog" parameterType="com.cashmallow.api.domain.model.memo.MemoLog">
+        INSERT INTO memo_log (memo_id,
+                              ref_id,
+                              type,
+                              memo,
+                              created_at,
+                              creator_id)
+        VALUES (#{memoId},
+                #{refId},
+                #{type},
+                #{memo},
+                #{createdAt},
+                #{creatorId})
+    </insert>
+
+</mapper>

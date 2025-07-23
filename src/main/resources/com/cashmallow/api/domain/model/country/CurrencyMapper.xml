@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.cashmallow.api.domain.model.country.CurrencyMapper">
+    <resultMap id="CurrencyRateResult" type="com.cashmallow.api.domain.model.country.CurrencyRate">
+        <id column="currency_id" property="currencyId"/>
+        <result column="source" property="source"/>
+        <result column="target" property="target"/>
+        <result column="rate" property="rate"/>
+        <result column="base_rate" property="baseRate"/>
+        <result column="adjust_rate" property="adjustRate"/>
+    </resultMap>
+
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+    <!-- 5. 환율정보 API                                           -->
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+    <select id="getCurrencyRate" resultMap="CurrencyRateResult">
+        SELECT r.currency_id, c.source, r.target, r.rate, r.base_rate, r.adjust_rate
+        FROM currency c,
+             currency_rate r
+        WHERE c.id = r.currency_id
+          AND c.source = UPPER(#{source})
+          AND r.target = UPPER(#{target})
+        ORDER BY c.id DESC
+        LIMIT 1
+    </select>
+
+    <select id="getCurrencyRates" resultMap="CurrencyRateResult">
+        SELECT r.currency_id, c.source, r.target, r.rate, r.base_rate, r.adjust_rate
+        FROM currency_rate r,
+             (SELECT id, source
+              FROM currency
+              WHERE source = UPPER(#{source})
+              ORDER BY created_date DESC
+              LIMIT 1
+             ) c
+        WHERE r.currency_id = c.id
+    </select>
+
+    <insert id="insertCurrency" parameterType="com.cashmallow.api.domain.model.country.CMCurrency">
+        INSERT INTO currency (
+        source,
+        tstamp,
+        tstamp_string
+        )
+        VALUES (
+        #{source},
+        #{tstamp},
+        #{tstampString}
+        )
+
+        <selectKey keyProperty="id" resultType="long" order="AFTER">
+            SELECT LAST_INSERT_ID()
+        </selectKey>
+    </insert>
+
+    <insert id="insertCurrencyRate" parameterType="com.cashmallow.api.domain.model.country.CurrencyRate">
+        INSERT INTO currency_rate (currency_id, target, rate, base_rate, adjust_rate)
+        VALUES (#{currencyId}, #{target}, #{rate}, #{baseRate}, #{adjustRate})
+    </insert>
+
+    <resultMap id="CurrencyRateByKrwAndUsd" type="com.cashmallow.api.domain.model.country.CurrencyRate">
+        <id column="target" property="target"/>
+        <result column="source" property="source"/>
+        <result column="rate" property="rate"/>
+        <result column="base_rate" property="baseRate"/>
+        <result column="adjust_rate" property="adjustRate"/>
+    </resultMap>
+
+    <select id="getCurrencyRateByKrwAndUsd" resultMap="CurrencyRateByKrwAndUsd">
+        SELECT /* id: CurrencyMapper.getCurrencyRateByKrwAndUsd */
+            r.target,
+            c.source,
+            r.rate,
+            r.base_rate,
+            r.adjust_rate
+        FROM currency c
+        JOIN currency_rate r ON c.id = r.currency_id
+        JOIN (
+            SELECT MAX(id) as max_id
+            FROM currency
+            WHERE created_date &lt; #{createdDate} AND source = #{source}
+        ) subq ON c.id = subq.max_id
+        WHERE r.target IN ('KRW', 'USD')
+    </select>
+
+</mapper>

@@ -1,0 +1,60 @@
+/IP2LOCATION-LITE-DB11.IPV6.BIN
+HELP.md
+.gradle
+build/
+!gradle/wrapper/gradle-wrapper.jar
+!**/src/main/**
+!**/src/test/**
+
+### STS ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+
+### Eclipse ###
+.metadata
+bin/
+tmp/
+*.tmp
+*.bak
+*.swp
+*~.nib
+local.properties
+.settings/
+.loadpath
+.recommenders
+
+### IntelliJ IDEA ###
+.idea/*
+!.idea/codeStyles/
+*.iws
+*.iml
+*.ipr
+out/
+
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+### VS Code ###
+.vscode/
+
+### macOS ###
+.DS_Store
+
+### Cashmallow ###
+bin/
+logs/
+LOG_PATH_IS_UNDEFINED/
+var/
+
+DATAHDD/
+cashmallow-api/
+codeStyleConfig.xml

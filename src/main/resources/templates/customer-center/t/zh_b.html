@@ -1,0 +1,52 @@
+<html>
+<head>
+    <style>
+        td {
+            padding: 4px;
+        }
+    </style>
+</head>
+
+<body>
+<b>您好，這裡是Cashmallow安心換錢中心</b><br>
+<br>
+當您需要客服服務時請點選下列連結，加入客服帳號為好友後諮詢。<br>
+<br>
+使用方法及常見問題您可以在FAQ(<a href="https://www.cashmallow.com/zh-hant/faq/">click here</a>)查看。<br>
+<br>
+謝謝<br>
+<br>
+<br>
+<table>
+    <tr>
+        <td>
+            <img th:src="${@environment.getProperty('host.cdn.url')} + '/static/images/kakaotalkPlusFriends.png'" height="56" align="left"/>
+        </td>
+        <td>
+            <b>KakaoTalk PlusFriends</b><br>
+            ID : cashmallow<br>
+            <a href="https://pf.kakao.com/_cmukxl">click here</a><br>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <img th:src="${@environment.getProperty('host.cdn.url')} + '/static/images/line.png'" height="56" align="left"/>
+        </td>
+        <td>
+            <b>LINE@</b><br>
+            ID : @cashmallow<br>
+            <a href="https://line.me/R/ti/p/%40yoy2312r">click here</a><br>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <img th:src="${@environment.getProperty('host.cdn.url')} + '/static/images/whatsapp.png'" height="56" align="left"/>
+        </td>
+        <td>
+            <b>WhatsApp</b><br>
+            ID : +821051445439<br>
+        </td>
+    </tr>
+</table>
+</body>
+</html>

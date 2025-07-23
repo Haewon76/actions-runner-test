@@ -1,0 +1,715 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- Mybatis 사용법: http://www.mybatis.org/mybatis-3/ko/index.html -->
+
+<mapper namespace="com.cashmallow.api.domain.model.cashout.CashOutMapper">
+
+    <resultMap type="com.cashmallow.api.interfaces.admin.dto.AdminCashOutVO" id="adminCashOutVOMap">
+        <result column="s_first_name" property="s_first_name" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+        <result column="s_last_name" property="s_last_name" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+        <result column="first_name" property="first_name" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+        <result column="last_name" property="last_name" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+        <result column="email" property="email" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+    </resultMap>
+
+    <resultMap type="hashmap" id="cashOutMap">
+        <result column="s_first_name" property="s_first_name" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+        <result column="s_last_name" property="s_last_name" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+    </resultMap>
+
+    <!-- cashout 조회 -->
+    <select id="getCashOut" resultType="com.cashmallow.api.domain.model.cashout.CashOut">
+        SELECT *
+        FROM cash_out
+        WHERE id = #{cashOutId}
+    </select>
+
+    <select id="getCashOutByExchangeId" parameterType="hashmap" resultType="com.cashmallow.api.domain.model.cashout.CashOut">
+        SELECT *
+        FROM cash_out
+        WHERE co_status NOT IN ('CC', 'TC', 'SC')
+          AND JSON_CONTAINS(exchange_ids, #{exchangeId}, '$.exchange_ids')
+          AND traveler_id = #{travelerId}
+    </select>
+
+    <select id="getCashOutByQrCodeValue" parameterType="hashmap" resultType="com.cashmallow.api.domain.model.cashout.CashOut">
+        SELECT *
+        FROM cash_out
+        <where>
+            <if test="country != '' and country != null">
+                AND country = #{country}
+            </if>
+            <if test="withdrawalPartnerId != '' and withdrawalPartnerId != null">
+                AND withdrawal_partner_id = #{withdrawalPartnerId}
+            </if>
+            <if test="coStatus != '' and coStatus != null">
+                AND co_status = #{coStatus}
+            </if>
+            AND qr_code_value = #{qrCodeValue}
+        </where>
+    </select>
+
+    <!-- edited by Alex 20170525 (수정) c.withdrawal_partner_cash_out_fee 로 인출/결제 여부 
+		확인 -->
+    <select id="findAdminCashOut" parameterType="com.cashmallow.api.interfaces.admin.dto.AdminCashOutAskVO" resultMap="adminCashOutVOMap">
+        SELECT *
+        FROM (
+        SELECT tu.country AS u_country,
+        tu.id AS user_id,
+        tu.first_name,
+        tu.last_name,
+        tu.email,
+        tu.birth_date,
+        tu.profile_photo,
+        tu.cls,
+        tu.activated,
+        t.id AS traveler_id,
+        t.contact_type,
+        t.contact_id,
+        su.country AS s_country,
+        su.id AS s_user_id,
+        s.id AS withdrawal_partner_id,
+        s.shop_name,
+        s.business_no,
+        s.shop_addr,
+        su.first_name AS s_first_name,
+        su.last_name AS s_last_name,
+        s.fx_possible_amt AS s_fx_possible_amt,
+        c.id AS cashout_id,
+        c.country AS country,
+        c.cashout_reserved_date AS cashOutReservedDate,
+        c.flight_arrival_date,
+        c.flight_no,
+        c.traveler_cash_out_amt,
+        c.traveler_cash_out_fee,
+        c.traveler_total_cost,
+        c.withdrawal_partner_cash_out_amt,
+        c.withdrawal_partner_cash_out_fee,
+        c.withdrawal_partner_total_cost,
+        c.co_status,
+        c.created_date,
+        c.updated_date,
+        c.casm_txn_id as mallowlinkTxnId,
+        json_extract(c.exchange_ids, '$.exchange_ids[0]') as exchange_id
+        FROM cash_out c
+        INNER JOIN traveler t
+        ON c.traveler_id = t.id
+        INNER JOIN user tu
+        ON t.user_id = tu.id
+        INNER JOIN withdrawal_partner s
+        ON c.withdrawal_partner_id = s.id
+        INNER JOIN user su
+        ON s.user_id = su.id
+        WHERE su.country = #{s_country}
+        <if test="searchValue != null">
+            AND (tu.email LIKE CONCAT(#{searchValue, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}, '%')
+            OR s.id = #{searchValue} OR tu.id = #{searchValue})
+        </if>
+        <if test="u_country != null">
+            AND tu.country = #{u_country}
+        </if>
+        <if test="user_id != null">
+            AND tu.id = #{user_id}
+        </if>
+        <if test="first_name != null">
+            AND tu.first_name LIKE CONCAT('%', #{first_name, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}, '%')
+        </if>
+        <if test="last_name != null">
+            AND tu.last_name LIKE CONCAT('%', #{last_name, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}, '%')
+        </if>
+        <if test="email != null">
+            AND tu.email LIKE CONCAT('%', #{email, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}, '%')
+        </if>
+        <if test="traveler_id != null">
+            AND t.id = #{traveler_id}
+        </if>
+        <if test="contact_type != null">
+            AND t.contact_type LIKE CONCAT(#{contact_type}, '%')
+        </if>
+        <if test="contact_id != null">
+            AND t.contact_id LIKE CONCAT(#{contact_id}, '%')
+        </if>
+        <if test="cashout_reserved_date != null">
+            AND c.cashout_reserved_date LIKE CONCAT(#{cashout_reserved_date}, '%')
+        </if>
+        <if test="flight_arrival_date != null">
+            AND c.flight_arrival_date LIKE CONCAT(#{flight_arrival_date}, '%')
+        </if>
+        <if test="flight_no != null">
+            AND c.flight_no LIKE CONCAT(#{flight_no}, '%')
+        </if>
+        <if test="s_user_id != null">
+            AND su.id = #{s_user_id}
+        </if>
+        <if test="withdrawal_partner_id != null">
+            AND s.id LIKE CONCAT(#{withdrawal_partner_id}, '%')
+        </if>
+        <if test="shop_name != null">
+            AND s.shop_name LIKE CONCAT('%', #{shop_name}, '%')
+        </if>
+        <if test="business_no != null">
+            AND s.business_no LIKE CONCAT('%', #{business_no}, '%')
+        </if>
+        <if test="shop_addr != null">
+            AND s.shop_addr LIKE CONCAT('%', #{shop_addr}, '%')
+        </if>
+        <if test="s_first_name != null">
+            AND su.first_name LIKE CONCAT('%', #{s_first_name, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}, '%')
+        </if>
+        <if test="s_last_name != null">
+            AND su.last_name LIKE CONCAT('%', #{s_last_name, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}, '%')
+        </if>
+        <if test="begin_fx_possible_amt != null and begin_fx_possible_amt != '' and end_fx_possible_amt != null and end_fx_possible_amt != ''">
+            AND s.fx_possible_amt BETWEEN #{begin_fx_possible_amt} AND #{end_fx_possible_amt}
+        </if>
+        <if test="cashout_id != null">
+            AND c.id = #{cashout_id}
+        </if>
+        <if test="country != null">
+            AND c.country = #{country}
+        </if>
+        <if test="begin_traveler_total_cost != null and begin_traveler_total_cost != '' and end_traveler_total_cost != null and end_traveler_total_cost != ''">
+            AND c.traveler_total_cost BETWEEN #{begin_traveler_total_cost} AND #{end_traveler_total_cost}
+        </if>
+        <if test="begin_withdrawal_partner_total_cost != null and begin_withdrawal_partner_total_cost != '' and end_withdrawal_partner_total_cost != null and end_withdrawal_partner_total_cost != ''">
+            AND c.withdrawal_partner_total_cost BETWEEN #{begin_withdrawal_partner_total_cost} AND #{end_withdrawal_partner_total_cost}
+        </if>
+        <if test="begin_withdrawal_partner_cash_out_fee != null and begin_withdrawal_partner_cash_out_fee != '' and end_withdrawal_partner_cash_out_fee != null and end_withdrawal_partner_cash_out_fee != ''">
+            AND c.withdrawal_partner_cash_out_fee BETWEEN #{begin_withdrawal_partner_cash_out_fee} AND #{end_withdrawal_partner_cash_out_fee}
+        </if>
+
+        <if test="co_status != null and (
+                    co_status.equalsIgnoreCase('OP') 
+                 or co_status.equalsIgnoreCase('CC') 
+                 or co_status.equalsIgnoreCase('TC') 
+                 or co_status.equalsIgnoreCase('SC') 
+                 or co_status.equalsIgnoreCase('CF')
+                 or co_status.equalsIgnoreCase('PO')
+                 or co_status.equalsIgnoreCase('PT')
+                 or co_status.equalsIgnoreCase('PC')
+                 or co_status.equalsIgnoreCase('PF')
+                )">
+            AND c.co_status = #{co_status}
+        </if>
+        <if test="co_status != null and co_status.equalsIgnoreCase('AC')">
+            AND c.co_status IN ('CC', 'TC', 'SC')
+        </if>
+        <if test="co_status != null and co_status.equalsIgnoreCase('ACA')">
+            AND c.co_status IN ('PT', 'PC')
+        </if>
+        <if test="begin_created_date != null and end_created_date != null">
+            AND (c.created_date BETWEEN #{begin_created_date} AND #{end_created_date}
+            OR c.updated_date BETWEEN #{begin_created_date} AND #{end_created_date})
+        </if>
+        ) x
+
+        <if test='sort != null'>
+            <!-- 		and (
+                        sort.equalsIgnoreCase("u_country DESC")                or sort.equalsIgnoreCase("u_country ASC")
+                     or sort.equalsIgnoreCase("user_id DESC")                  or sort.equalsIgnoreCase("user_id ASC")
+                     or sort.equalsIgnoreCase("first_name DESC")               or sort.equalsIgnoreCase("first_name ASC")
+                     or sort.equalsIgnoreCase("last_name DESC")                or sort.equalsIgnoreCase("last_name ASC")
+                     or sort.equalsIgnoreCase("email DESC")                    or sort.equalsIgnoreCase("email ASC")
+                     or sort.equalsIgnoreCase("traveler_id DESC")              or sort.equalsIgnoreCase("traveler_id ASC")
+                     or sort.equalsIgnoreCase("s_country DESC")                or sort.equalsIgnoreCase("s_country ASC")
+                     or sort.equalsIgnoreCase("s_user_id DESC")                or sort.equalsIgnoreCase("s_user_id ASC")
+                     or sort.equalsIgnoreCase("withdrawal_partner_id DESC")           or sort.equalsIgnoreCase("withdrawal_partner_id ASC")
+                     or sort.equalsIgnoreCase("shop_name DESC")                or sort.equalsIgnoreCase("shop_name ASC")
+                     or sort.equalsIgnoreCase("s_first_name DESC")             or sort.equalsIgnoreCase("s_first_name ASC")
+                     or sort.equalsIgnoreCase("s_last_name DESC")              or sort.equalsIgnoreCase("s_last_name ASC")
+                     or sort.equalsIgnoreCase("s_fx_possible_amt DESC")        or sort.equalsIgnoreCase("s_fx_possible_amt ASC")
+                     or sort.equalsIgnoreCase("cash_out_id DESC")              or sort.equalsIgnoreCase("cash_out_id ASC")
+                     or sort.equalsIgnoreCase("country DESC")                  or sort.equalsIgnoreCase("country ASC")
+                     or sort.equalsIgnoreCase("traveler_total_cost DESC")      or sort.equalsIgnoreCase("traveler_total_cost ASC")
+                     or sort.equalsIgnoreCase("withdrawal_partner_total_cost DESC")   or sort.equalsIgnoreCase("withdrawal_partner_total_cost ASC")
+                     or sort.equalsIgnoreCase("withdrawal_partner_cash_out_fee DESC") or sort.equalsIgnoreCase("withdrawal_partner_cash_out_fee ASC")
+                     or sort.equalsIgnoreCase("co_status DESC")                or sort.equalsIgnoreCase("co_status ASC")
+                     or sort.equalsIgnoreCase("created_date DESC")             or sort.equalsIgnoreCase("created_date ASC")
+                     or sort.equalsIgnoreCase("updated_date DESC")             or sort.equalsIgnoreCase("updated_date ASC")
+                     or sort.equalsIgnoreCase("contact_type DESC")             or sort.equalsIgnoreCase("contact_type ASC")
+                     or sort.equalsIgnoreCase("contact_id DESC")               or sort.equalsIgnoreCase("contact_id ASC")
+                     or sort.equalsIgnoreCase("cashout_reserved_date DESC")    or sort.equalsIgnoreCase("cashout_reserved_date ASC")
+                     or sort.equalsIgnoreCase("flight_arrival_date DESC")      or sort.equalsIgnoreCase("flight_arrival_date ASC")
+                     or sort.equalsIgnoreCase("flight_no DESC")                or sort.equalsIgnoreCase("flight_no ASC")
+                    )'> -->
+            ORDER BY ${sort}
+        </if>
+        LIMIT #{start_row}, #{size}
+    </select>
+
+    <!-- edited by Alex 20170525 (수정) c.withdrawal_partner_cash_out_fee 로 인출/결제 조회
+        확인 -->
+    <!-- 12.9. 관리자용 인출 정보 조회 -->
+    <select id="countAdminCashOut" parameterType="com.cashmallow.api.interfaces.admin.dto.AdminCashOutAskVO" resultType="int">
+        SELECT COUNT(1)
+        FROM cash_out c
+        INNER JOIN traveler t
+        ON c.traveler_id = t.id
+        INNER JOIN user tu
+        ON t.user_id = tu.id
+        INNER JOIN withdrawal_partner s
+        ON c.withdrawal_partner_id = s.id
+        INNER JOIN user su
+        ON s.user_id = su.id
+        WHERE su.country = #{s_country}
+        <if test="searchValue != null">
+            AND (tu.email LIKE CONCAT(#{searchValue, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}, '%')
+            OR s.id = #{searchValue} OR tu.id = #{searchValue})
+        </if>
+        <if test="u_country != null">
+            AND tu.country = #{u_country}
+        </if>
+        <if test="user_id != null">
+            AND tu.id = #{user_id}
+        </if>
+        <if test="first_name != null">
+            AND tu.first_name LIKE CONCAT('%', #{first_name, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}, '%')
+        </if>
+        <if test="last_name != null">
+            AND tu.last_name LIKE CONCAT('%', #{last_name, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}, '%')
+        </if>
+        <if test="email != null">
+            AND tu.email LIKE CONCAT('%', #{email, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}, '%')
+        </if>
+        <if test="traveler_id != null">
+            AND t.id = #{traveler_id}
+        </if>
+        <if test="contact_type != null">
+            AND t.contact_type LIKE CONCAT(#{contact_type}, '%')
+        </if>
+        <if test="contact_id != null">
+            AND t.contact_id LIKE CONCAT(#{contact_id}, '%')
+        </if>
+        <if test="cashout_reserved_date != null">
+            AND c.cashout_reserved_date LIKE CONCAT(#{cashout_reserved_date}, '%')
+        </if>
+        <if test="flight_arrival_date != null">
+            AND c.flight_arrival_date LIKE CONCAT(#{flight_arrival_date}, '%')
+        </if>
+        <if test="flight_no != null">
+            AND c.flight_no LIKE CONCAT(#{flight_no}, '%')
+        </if>
+        <if test="s_user_id != null">
+            AND su.id = #{s_user_id}
+        </if>
+        <if test="withdrawal_partner_id != null">
+            AND s.id LIKE CONCAT(#{withdrawal_partner_id}, '%')
+        </if>
+        <if test="shop_name != null">
+            AND s.shop_name LIKE CONCAT('%', #{shop_name}, '%')
+        </if>
+        <if test="business_no != null">
+            AND s.business_no LIKE CONCAT('%', #{business_no}, '%')
+        </if>
+        <if test="shop_addr != null">
+            AND s.shop_addr LIKE CONCAT('%', #{shop_addr}, '%')
+        </if>
+        <if test="s_first_name != null">
+            AND su.first_name LIKE CONCAT('%', #{s_first_name, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}, '%')
+        </if>
+        <if test="s_last_name != null">
+            AND su.last_name LIKE CONCAT('%', #{s_last_name, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}, '%')
+        </if>
+        <if test="begin_fx_possible_amt != null and begin_fx_possible_amt != '' and end_fx_possible_amt != null and end_fx_possible_amt != ''">
+            AND s.fx_possible_amt BETWEEN #{begin_fx_possible_amt} AND #{end_fx_possible_amt}
+        </if>
+        <if test="cashout_id != null">
+            AND c.id = #{cashout_id}
+        </if>
+        <if test="country != null">
+            AND c.country = #{country}
+        </if>
+        <if test="begin_traveler_total_cost != null and begin_traveler_total_cost != '' and end_traveler_total_cost != null and end_traveler_total_cost != ''">
+            AND c.traveler_total_cost BETWEEN #{begin_traveler_total_cost} AND #{end_traveler_total_cost}
+        </if>
+        <if test="begin_withdrawal_partner_total_cost != null and begin_withdrawal_partner_total_cost != '' and end_withdrawal_partner_total_cost != null and end_withdrawal_partner_total_cost != ''">
+            AND c.withdrawal_partner_total_cost BETWEEN #{begin_withdrawal_partner_total_cost} AND #{end_withdrawal_partner_total_cost}
+        </if>
+        <if test="begin_withdrawal_partner_cash_out_fee != null and begin_withdrawal_partner_cash_out_fee != '' and end_withdrawal_partner_cash_out_fee != null and end_withdrawal_partner_cash_out_fee != ''">
+            AND c.withdrawal_partner_cash_out_fee BETWEEN #{begin_withdrawal_partner_cash_out_fee} AND #{end_withdrawal_partner_cash_out_fee}
+        </if>
+
+        <if test="co_status != null and (
+                    co_status.equalsIgnoreCase('OP') 
+                 or co_status.equalsIgnoreCase('CC') 
+                 or co_status.equalsIgnoreCase('TC') 
+                 or co_status.equalsIgnoreCase('SC') 
+                 or co_status.equalsIgnoreCase('CF')
+                 or co_status.equalsIgnoreCase('PO')
+                 or co_status.equalsIgnoreCase('PT')
+                 or co_status.equalsIgnoreCase('PC')
+                 or co_status.equalsIgnoreCase('PF')
+                )">
+            AND c.co_status = #{co_status}
+        </if>
+        <if test="co_status != null and co_status.equalsIgnoreCase('AC')">
+            AND c.co_status IN ('CC', 'TC', 'SC')
+        </if>
+        <if test="co_status != null and co_status.equalsIgnoreCase('ACA')">
+            AND c.co_status IN ('PT', 'PC')
+        </if>
+        <if test="begin_created_date != null and end_created_date != null">
+            AND (c.created_date BETWEEN #{begin_created_date} AND #{end_created_date}
+            OR c.updated_date BETWEEN #{begin_created_date} AND #{end_created_date})
+        </if>
+    </select>
+
+    <!-- exchange/payment 진행 중 여부 조회 -->
+    <select id="getCashOutOpListByTravelerId" resultType="com.cashmallow.api.domain.model.cashout.CashOut">
+        SELECT *
+        FROM cash_out
+        WHERE co_status IN ('OP', 'PO')
+          AND traveler_id = #{travelerId}
+    </select>
+
+    <!-- exchange/payment 진행 중 여부 조회 -->
+    <select id="getCashOutOpListByWithdrawalPartnerId" resultType="com.cashmallow.api.domain.model.cashout.CashOut">
+        SELECT *
+        FROM cash_out
+        WHERE (co_status IN ('OP', 'PO')
+            OR (co_status IN ('CF', 'PF') AND ca_status IN ('BF', 'P1')))
+          AND withdrawal_partner_id = #{withdrawalPartnerId}
+    </select>
+
+    <!-- 인출 데이터 검색  -->
+    <select id="findCashOutList" parameterType="hashmap" resultType="com.cashmallow.api.domain.model.cashout.CashOut">
+        SELECT *
+        FROM cash_out
+        <where>
+            <if test="travelerId != '' and travelerId != null">
+                AND traveler_id = #{travelerId}
+            </if>
+            <if test="withdrawalPartnerId != '' and withdrawalPartnerId != null">
+                AND withdrawal_partner_id = #{withdrawalPartnerId}
+            </if>
+            <if test="coStatus != '' and coStatus != null">
+                AND co_status IN ${coStatus}
+            </if>
+            <if test="cashoutReservedDate != '' and cashoutReservedDate != null">
+                AND cashout_reserved_date LIKE CONCAT(#{cashoutReservedDate}, '%')
+            </if>
+            <if test="flightArrivalDate != '' and flightArrivalDate != null">
+                AND flight_arrival_date LIKE CONCAT(#{flightArrivalDate}, '%')
+            </if>
+        </where>
+        ORDER BY id DESC
+    </select>
+
+    <!-- 기능: 71.1.4 인출 조회 -->
+    <select id="getCashOutAmountByCountry" parameterType="hashmap" resultType="hashmap">
+        SELECT *
+        FROM (
+        SELECT COUNT(country) totalCnt ,
+        COALESCE(SUM(withdrawal_partner_cash_out_amt),0) totalAmt,
+        COALESCE(SUM(withdrawal_partner_cash_out_fee),0) totalFee,
+        COALESCE(SUM(withdrawal_partner_total_cost),0) totalTotal
+        FROM cash_out
+        WHERE country = #{country}
+        AND co_status IN ('OP','CF','CC','SC','TC')
+        <if test="beginDate != null and beginDate != '' and endDate != null and endDate != ''">
+            <![CDATA[
+			AND    #{beginDate} <= co_status_date  
+			AND    co_status_date <= #{endDate} 
+			]]>
+        </if>
+        ) AS cntTotal,
+        (
+        SELECT COUNT(country) comCnt,
+        COALESCE(SUM(withdrawal_partner_cash_out_amt),0) comAmt,
+        COALESCE(SUM(withdrawal_partner_cash_out_fee),0) comFee,
+        COALESCE(SUM(withdrawal_partner_total_cost),0) comTotal
+        FROM cash_out
+        WHERE country = #{country}
+        AND co_status = 'CF'
+        <if test="beginDate != null and beginDate != '' and endDate != null and endDate != ''">
+            <![CDATA[
+			AND    #{beginDate} <= co_status_date  
+			AND    co_status_date <= #{endDate} ]]>
+        </if>
+        ) AS cntComplete,
+        (
+        SELECT COUNT(country) reqCnt,
+        COALESCE(SUM(withdrawal_partner_cash_out_amt),0) reqAmt,
+        COALESCE(SUM(withdrawal_partner_cash_out_fee),0) reqFee,
+        COALESCE(SUM(withdrawal_partner_total_cost),0) reqTotal
+        FROM cash_out
+        WHERE country = #{country}
+        AND co_status = 'OP'
+        <if test="beginDate != null and beginDate != '' and endDate != null and endDate != ''">
+            <![CDATA[
+			AND    #{beginDate} <= co_status_date  
+			AND    co_status_date <= #{endDate} ]]>
+        </if>
+        ) AS cntReq,
+        (
+        SELECT COUNT(country) canCnt,
+        COALESCE(SUM(withdrawal_partner_cash_out_amt),0) canAmt,
+        COALESCE(SUM(withdrawal_partner_cash_out_fee),0) canFee,
+        COALESCE(SUM(withdrawal_partner_total_cost),0) canTotal
+        FROM cash_out
+        WHERE country = #{country}
+        AND co_status IN ('SC','TC','CC')
+        <if test="beginDate != null and beginDate != '' and endDate != null and endDate != ''">
+            <![CDATA[
+			AND    #{beginDate} <= co_status_date  
+			AND    co_status_date <= #{endDate} ]]>
+        </if>
+        ) AS cntCancel
+    </select>
+
+    <!-- 기능: 71.1.5 결제 조회 -->
+    <select id="getPaymentAmountByCountry" parameterType="hashmap" resultType="hashmap">
+        SELECT *
+        FROM (
+        SELECT COUNT(country) totalCnt ,
+        COALESCE(SUM(withdrawal_partner_cash_out_amt),0) totalAmt,
+        COALESCE(SUM(withdrawal_partner_cash_out_fee),0) totalFee,
+        COALESCE(SUM(withdrawal_partner_total_cost),0) totalTotal
+        FROM cash_out
+        WHERE country = #{country}
+        AND co_status IN ('PF','PC','PT','PO')
+        <if test="beginDate != null and beginDate != '' and endDate != null and endDate != ''">
+            <![CDATA[
+            AND    #{beginDate} <= co_status_date  
+            AND    co_status_date <= #{endDate} ]]>
+        </if>
+        ) AS cntTotal,
+        (
+        SELECT COUNT(country) comCnt,
+        COALESCE(SUM(withdrawal_partner_cash_out_amt),0) comAmt,
+        COALESCE(SUM(withdrawal_partner_cash_out_fee),0) comFee,
+        COALESCE(SUM(withdrawal_partner_total_cost),0) comTotal
+        FROM cash_out
+        WHERE country = #{country}
+        AND co_status = 'PF'
+        <if test="beginDate != null and beginDate != '' and endDate != null and endDate != ''">
+            <![CDATA[
+            AND    #{beginDate} <= co_status_date  
+            AND    co_status_date <= #{endDate} ]]>
+        </if>
+        ) AS cntComplete,
+        (
+        SELECT COUNT(country) reqCnt,
+        COALESCE(SUM(withdrawal_partner_cash_out_amt),0) reqAmt,
+        COALESCE(SUM(withdrawal_partner_cash_out_fee),0) reqFee,
+        COALESCE(SUM(withdrawal_partner_total_cost),0) reqTotal
+        FROM cash_out
+        WHERE country = #{country}
+        AND co_status = 'PO'
+        <if test="beginDate != null and beginDate != '' and endDate != null and endDate != ''">
+            <![CDATA[
+            AND    #{beginDate} <= co_status_date  
+            AND    co_status_date <= #{endDate} ]]>
+        </if>
+        ) AS cntReq,
+        (
+        SELECT COUNT(country) canCnt,
+        COALESCE(SUM(withdrawal_partner_cash_out_amt),0) canAmt,
+        COALESCE(SUM(withdrawal_partner_cash_out_fee),0) canFee,
+        COALESCE(SUM(withdrawal_partner_total_cost),0) canTotal
+        FROM cash_out
+        WHERE country = #{country}
+        AND co_status IN ('PC','PT')
+        <if test="beginDate != null and beginDate != '' and endDate != null and endDate != ''">
+            <![CDATA[
+            AND    #{beginDate} <= co_status_date  
+            AND    co_status_date <= #{endDate} ]]>
+        </if>
+        ) AS cntCancel
+    </select>
+
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+    <!-- 50. 가맹점 정산                                        -->
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+    <!-- 50.2. 가맹점이 정산 중 인지 검사한다(국가별 , 기간 무관). -->
+    <select id="isCalcualtingCashOut" parameterType="HashMap" resultType="HashMap">
+        <!--   SELECT '1'               AS kind,
+                 MIN(created_date) AS begin_date,
+                 MAX(created_date) AS end_date,
+                 MIN(co_status)    AS ca_status
+          FROM   cash_out c
+          WHERE  c.country   = #{country}
+          edited by Alex    AND    c.co_status IN ('OP', 'PO'))-> XO 로 변경 : 인출신청이 있을시에는 정산이 안되게 되어 있어 임의 조건값 넣어줌. P1으로 변경해주는 쿼리까지 한번에 진행되기 때문에 문제 없을꺼라 판단된다.
+          AND    c.co_status IN ('XO')
+          AND    c.created_date BETWEEN #{beginDate} AND #{endDate}
+          UNION   -->
+        SELECT '2' AS kind,
+        MIN(begin_date) AS begin_date,
+        MAX(end_date) AS end_date,
+        MIN(ca_status) AS ca_status
+        FROM (
+        SELECT MIN(updated_date) AS begin_date,
+        MAX(updated_date) AS end_date,
+        ca_status
+        FROM cash_out c
+        WHERE c.country = #{country}
+        AND c.ca_status = 'P1'
+        AND c.co_status IN ('CF', 'PF')
+        GROUP BY c.ca_status
+        UNION ALL
+        SELECT MIN(begin_date) AS begin_date,
+        MAX(end_date) AS end_date,
+        ca_status
+        FROM storekeeper_calc s
+        WHERE s.country = #{country}
+        AND s.ca_status IN ('OP', 'SD')
+        GROUP BY s.ca_status
+        ) AS x
+    </select>
+
+    <insert id="insertWithdrawalLog" parameterType="com.cashmallow.api.interfaces.scb.model.dto.SCBLog">
+        INSERT
+            IGNORE
+        INTO withdrawal_log(transaction_id, request_json, request_type, withdrawal_request_time)
+        VALUES (#{transactionId},
+                #{requestJson},
+                #{requestType},
+                #{withdrawalRequestTime})
+    </insert>
+
+    <update id="updateWithdrawalLog" parameterType="com.cashmallow.api.interfaces.scb.model.dto.SCBLog">
+        UPDATE withdrawal_log
+        SET response_json           = #{responseJson},
+            code                    = #{code},
+            withdrawal_request_time = #{withdrawalRequestTime},
+            updated                 = NOW()
+        WHERE transaction_id = #{transactionId}
+          AND request_type = #{requestType}
+    </update>
+
+    <update id="updateConnectionConfirm" parameterType="com.cashmallow.api.interfaces.scb.model.dto.SCBLog">
+        UPDATE withdrawal_log
+        SET connected = NOW()
+        WHERE transaction_id = #{transactionId}
+          AND request_type = #{requestType}
+    </update>
+
+    <insert id="insertCashOut" parameterType="com.cashmallow.api.domain.model.cashout.CashOut">
+        INSERT INTO cash_out (
+        withdrawal_partner_id, traveler_id,
+        traveler_cash_out_amt, traveler_cash_out_fee, traveler_total_cost,
+        country, withdrawal_partner_cash_out_amt, withdrawal_partner_cash_out_fee, withdrawal_partner_total_cost,
+        qr_code_value, qr_code_source, co_status, co_status_date,
+        cashout_reserved_date, flight_arrival_date, flight_no, privacy_sharing_agreement,
+        wallet_id, exchange_ids, casm_txn_id
+        )
+        VALUES (
+        #{withdrawalPartnerId}, #{travelerId},
+        #{travelerCashOutAmt}, #{travelerCashOutFee}, #{travelerTotalCost},
+        #{country}, #{withdrawalPartnerCashOutAmt}, #{withdrawalPartnerCashOutFee}, #{withdrawalPartnerTotalCost},
+        #{qrCodeValue}, #{qrCodeSource}, #{coStatus}, #{coStatusDate},
+        #{cashoutReservedDate}, #{flightArrivalDate}, #{flightNo}, #{privacySharingAgreement},
+        #{walletId}, #{exchangeIds}, #{casmTxnId}
+        )
+
+        <selectKey keyProperty="id" resultType="long" order="AFTER">
+            SELECT LAST_INSERT_ID()
+        </selectKey>
+    </insert>
+
+    <!-- Update CashOut -->
+    <update id="updateCashOut" parameterType="com.cashmallow.api.domain.model.cashout.CashOut">
+        UPDATE cash_out
+        SET qr_code_value              = #{qrCodeValue},
+            qr_code_source             = #{qrCodeSource},
+            co_status                  = #{coStatus},
+            co_status_date             = #{coStatusDate},
+            withdrawal_partner_calc_id = #{withdrawalPartnerCalcId},
+            ca_status                  = #{caStatus},
+            updated_date               = #{updatedDate},
+            partner_txn_id             = #{partnerTxnId},
+            exchange_ids               = #{exchangeIds}
+        WHERE id = #{id}
+          AND withdrawal_partner_id = #{withdrawalPartnerId}
+          AND traveler_id = #{travelerId}
+    </update>
+
+    <select id="getCashoutOpByWalletId" resultType="com.cashmallow.api.domain.model.cashout.CashOut">
+        SELECT *
+        FROM cash_out co
+        WHERE co.wallet_id = #{walletId}
+          AND co.co_status = 'OP'
+        ORDER BY co.id DESC
+        LIMIT 1;
+    </select>
+    <select id="getCashoutByCasmTxnId" resultType="com.cashmallow.api.domain.model.cashout.CashOut">
+        SELECT *
+        FROM cash_out co
+        WHERE co.casm_txn_id = #{casmTxnId}
+    </select>
+
+    <select id="getFirstCashoutDateByTravelerId" resultType="java.sql.Timestamp">
+        SELECT min(co.co_status_date) as firstDate
+        FROM cash_out co
+        WHERE co.traveler_id = #{travelerId}
+        AND co_status IN ('CF', 'PF')
+    </select>
+
+    <select id="findWithdrawalLogInboundByTransactionId"
+            resultType="com.cashmallow.api.interfaces.scb.model.dto.SCBLog">
+        SELECT *
+        FROM withdrawal_log wl
+        WHERE wl.transaction_id = #{transactionId}
+          AND wl.request_type LIKE 'INBOUND%'
+    </select>
+
+    <select id="getPendingBalance" resultType="com.cashmallow.api.domain.model.cashout.PendingBalance">
+        <![CDATA[
+        SELECT ct2.iso_4217                                                                                    AS fromCountry,
+               ct2.kor_name                                                                                    AS fromCountryKorName,
+               SUM(ex.exchange_rate * (IFNULL(tw.e_money, 0) + IFNULL(tw.r_money, 0) + IFNULL(tw.c_money, 0))) AS fromAmount,
+               ct.iso_4217                                                                                     AS toCurrency,
+               (IFNULL(SUM(tw.c_money), 0) + IFNULL(SUM(tw.e_money), 0))                                       AS toAmount,
+               IFNULL(SUM(tw.r_money), 0)                                              AS r,
+               IFNULL(SUM(tw.e_money), 0)                                              AS e,
+               IFNULL(SUM(tw.c_money), 0)                                              AS c
+        FROM traveler_wallet tw
+        INNER JOIN exchange ex
+        ON ex.id = JSON_EXTRACT(tw.exchange_ids, '$.exchange_ids[0]')
+        INNER JOIN country ct
+        ON ct.code = tw.country
+        INNER JOIN country ct2
+        ON ct2.code = tw.root_cd
+        WHERE tw.created_date BETWEEN #{start} AND #{end}
+        GROUP BY tw.root_cd, ct.iso_4217
+        ]]>
+    </select>
+
+    <select id="getPendingBalanceDetails" resultType="com.cashmallow.api.domain.model.cashout.PendingBalanceDetailVo">
+        <![CDATA[
+        SELECT ex.id                                                                                        AS exchangeId,
+               tw.id                                                                                        AS travelerWalletId,
+               DATE_FORMAT(CONVERT_TZ(tw.created_date, '+00:00', '+08:00'), '%Y-%m-%d %H:%i:%s')            AS createdDate,
+               ct2.iso_4217                                                                                 AS fromCountry,
+               ct2.kor_name                                                                                 AS fromCountryKorName,
+               (ex.exchange_rate * (IFNULL(tw.e_money, 0) + IFNULL(tw.r_money, 0) + IFNULL(tw.c_money, 0))) AS fromAmount,
+               ct.iso_4217                                                                                  AS toCurrency,
+               (IFNULL(tw.c_money, 0) + IFNULL(tw.e_money, 0))                                              AS toAmount,
+               IFNULL(tw.r_money, 0)                                                                        AS r,
+               IFNULL(tw.e_money, 0)                                                                        AS e,
+               IFNULL(tw.c_money, 0)                                                                        AS c
+        FROM traveler_wallet tw
+                 INNER JOIN exchange ex
+                            ON ex.id = JSON_EXTRACT(tw.exchange_ids, '$.exchange_ids[0]')
+                 INNER JOIN country ct
+                            ON ct.code = tw.country
+                 INNER JOIN country ct2
+                            ON ct2.code = tw.root_cd
+        WHERE tw.created_date BETWEEN #{start} AND #{end}
+        order by tw.created_date DESC
+        ]]>
+    </select>
+
+    <insert id="insertCashOutAjOtp" parameterType="com.cashmallow.api.domain.model.cashout.CashOutAjOtp">
+        INSERT INTO cash_out_aj_otp (cash_out_id, bank_code_va_number, withdrawal_code, expired_date)
+        VALUES (#{cashOutId}, #{bankCodeVaNumber}, #{withdrawalCode}, #{expiredDate} )
+    </insert>
+
+    <select id="getCashOutAjOtpByCashOutId" resultType="com.cashmallow.api.domain.model.cashout.CashOutAjOtp">
+        SELECT cash_out_id as cashOutId, bank_code_va_number as bankCodeVaNumber, withdrawal_code as withdrawalCode, expired_date as expiredDate
+          FROM cash_out_aj_otp
+         WHERE cash_out_id = #{cashOutId}
+    </select>
+
+</mapper>

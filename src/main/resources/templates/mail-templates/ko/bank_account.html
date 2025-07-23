@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>Cashmallow Mail to confirm user's bank account</title>
+</head>
+
+<body>
+
+<div th:replace="mail-templates/ko/fragments/header :: header"></div>
+
+<div style="background-color:white; padding:16px; line-height:1.5em;">
+    <div style="font-size:1em;">
+        거래금액 환급을 위해 가맹점주께서 등록한 계좌 정보는 아래와 같습니다.<br>
+        &nbsp;<br>
+        - 은행 명 : <strong th:text="${bankName}"></strong><br>
+        - 계좌번호 : <strong th:text="${accountNo}"></strong><br>
+        - 예금주명 : <strong th:text="${accountName}"></strong><br>
+        &nbsp;<br>
+        입력하신 정보가 올바를 경우, 아래 링크를 클릭하여 계좌인증을 완료해주시기 바랍니다. 링크 클릭 후, 정상적으로 확인되면 위 정보로 계좌 등록이 완료됩니다.<br>
+        &nbsp;<br>
+        <a th:href="@{${confirmURL}(id=${id}, accountToken=${accountToken})}" th:text="@{${confirmURL}(id=${id}, accountToken=${accountToken})}"></a><br>
+        &nbsp;<br>
+        정보가 올바르지 않을 경우, 다시 앱으로 돌아가 정보를 다시 입력하신 후 인증 바랍니다.<br>
+    </div>
+    <div style="padding-top:24px; font-size:0.875em;">
+        <strong style="color:red;">[주의]</strong><br>
+        잘못된 계좌 정보 입력으로 인해 발생될 수 있는 모든 책임은 캐시멜로가 책임지지 않습니다. 등록계좌 수정을 원하실 경우 통장 사본을 상담센터로 보내주시기 바랍니다.<br>
+        &nbsp;<br>
+    </div>
+</div>
+
+<div th:replace="mail-templates/ko/fragments/footer :: footer"></div>
+
+</body>
+</html>

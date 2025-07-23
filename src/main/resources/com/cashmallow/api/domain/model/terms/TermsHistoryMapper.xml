@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.cashmallow.api.domain.model.terms.TermsHistoryMapper">
+
+    <select id="getRecentVersionHistories" parameterType="string" resultType="com.cashmallow.api.domain.model.terms.TermsHistory">
+        SELECT max(version) AS version,
+               country_code,
+               type
+        FROM terms_history
+        WHERE country_code = #{countryCode}
+        GROUP BY country_code, type;
+    </select>
+
+    <select id="getRecentVersionHistoriesByShowSignup" resultType="com.cashmallow.api.domain.model.terms.TermsHistory">
+        SELECT th.version,
+        th.type,
+        th.country_code,
+        th.started_at,
+        th.path,
+        th.required_re_agreement as requiredReAgreement,
+        th.required
+        FROM terms_history th
+        JOIN (SELECT MAX(version) as version,
+        country_code,
+        type
+        FROM terms_history
+        WHERE country_code = #{countryCode}
+        AND NOW() >= announced_at
+        <if test="showSignup != null">
+            AND show_signup = #{showSignup}
+        </if>
+        GROUP BY country_code, type) t1
+        ON th.country_code = t1.country_code
+        AND th.type = t1.type
+        AND th.version = t1.version
+    </select>
+
+    <select id="getRecentVersionHistoryPath" resultType="string">
+        SELECT th.path
+        FROM terms_history th
+                 JOIN country c ON th.country_code = c.code
+        WHERE th.type = #{type}
+          AND c.iso_3166 = #{iso3166}
+        ORDER BY th.version DESC
+        LIMIT 1;
+    </select>
+
+    <insert id="insertTermsHistory" parameterType="com.cashmallow.api.domain.model.terms.TermsHistory">
+        INSERT INTO terms_history(version, type, country_code, announced_at, started_at, path, required, required_re_agreement, show_signup)
+        VALUES (#{version}, #{type}, #{countryCode}, #{announcedAt}, #{startedAt}, #{path}, #{required}, #{requiredReAgreement}, #{showSignup})
+    </insert>
+
+</mapper>

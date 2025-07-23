@@ -1,0 +1,174 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link th:href="${@environment.getProperty('host.cdn.url')} + '/static/css/scb/view.css'" rel="stylesheet"/>
+    <script type="text/javascript" src="https://code.jquery.com/jquery-latest.min.js"></script>
+    <script type="text/javascript" th:src="${@environment.getProperty('host.cdn.url')} + '/static/js/scb.js'"></script>
+    <script th:inline="javascript">
+        let isAndroid = [[${isAndroid}]];
+        let successMessage = [[${successMessage}]];
+        let failMessage = [[${failMessage}]];
+
+        function appMessage() {
+            const message = 'SUCCESS';
+            const code = '200';
+            const json = JSON.stringify({code, message});
+            if (isAndroid) {
+                Cashmallow.appMessage(json);
+            } else {
+                webkit.messageHandlers.appMessage.postMessage(json);
+            }
+        }
+
+        function responseOKWithdraw() {
+            const jsonObject = {code: "200", message: successMessage}
+            const jsonString = JSON.stringify(jsonObject);
+            console.log(jsonString);
+            if (isAndroid) {
+                Cashmallow.responseWithdraw(jsonString);
+            } else {
+                webkit.messageHandlers.responseWithdraw.postMessage(jsonString);
+            }
+        }
+
+        function withdrawalError() {
+            const jsonObject = {code: "404", message: failMessage}
+            const jsonString = JSON.stringify(jsonObject)
+            console.log(jsonString);
+            if (isAndroid) {
+                Cashmallow.responseWithdraw(jsonString);
+            } else {
+                webkit.messageHandlers.responseWithdraw.postMessage(jsonString);
+            }
+        }
+
+        function closeView() {
+            const message = '';
+            if (isAndroid) {
+                Cashmallow.closeView(message);
+            } else {
+                webkit.messageHandlers.closeView.postMessage(message);
+            }
+        }
+
+        function cancelWithdrawal() {
+            withdrawalError();
+        }
+
+        window.onload = function () {
+            // closeView();
+            appMessage();
+        }
+    </script>
+
+    <script th:inline="javascript">
+        $(document).ready(function () {
+            /*<![CDATA[*/
+            let count = 14;
+            let interval = setInterval(sTimeCount, 1000);
+
+            const withdrawalRequestNo = [[${withdrawalRequestNo}]];
+            const eventSource = new EventSource('/api/scb/withdraw/inbound/subscribe/' + withdrawalRequestNo);
+            const sseType = [[${sseType}]];
+            eventSource.addEventListener(sseType, function (event) {
+                const data = JSON.parse(event.data);
+                console.log('data.code: ' + data.code);
+                console.log('data.code == 333' + data.code);
+                // check if this is my withdrawalRequestNo
+                if (data.withdrawalRequestNo == withdrawalRequestNo) {
+                    if (data.code == 333) {
+                        // 연결 확인
+                        $.ajax({
+                            type: "POST",
+                            url: "/api/scb/withdraw/inbound/connect/" + withdrawalRequestNo, //요청 할 URL
+                            contentType: "application/json; charset=utf-8",
+                            dataType: "json",
+                            success: function (data) {
+                                console.log('success: ' + JSON.stringify(data));
+                            },
+                            error: function (jqXHR, textStatus, errorThrown) {
+                                console.log('jqXHR: ' + JSON.stringify(jqXHR));
+                                console.log('textStatus: ' + JSON.stringify(textStatus));
+                                console.log('errorThrown: ' + JSON.stringify(errorThrown));
+                            }
+                        });
+                    } else if (data.code == 200) {
+                        // success
+                        clearInterval(interval);
+                        eventSource.close();
+                        responseOKWithdraw();
+                    } else {
+                        // error
+                        clearInterval(interval);
+                        eventSource.close();
+                        cancelWithdrawal();
+                    }
+                }
+                console.log(data);
+            })
+
+            function sTimeCount() {
+
+                if (count == -5) {
+                    clearInterval(interval);
+
+                    $.ajax({
+                        type: "POST",
+                        url: "/api/scb/withdraw/inbound/isComplete/" + withdrawalRequestNo,
+                        contentType: "application/json; charset=utf-8",
+                        dataType: "json",
+                        success: function (data) {
+                            console.log('data: ' + data);
+                            if (data == true) {
+                                responseOKWithdraw();
+                                eventSource.close();
+                            } else {
+                                cancelWithdrawal();
+                                eventSource.close();
+                            }
+                        },
+                        error: function (data, textStatus, errorThrown) {
+                            console.log('data: ' + data);
+                            console.log('textStatus: ' + JSON.stringify(textStatus));
+                            console.log('errorThrown: ' + JSON.stringify(errorThrown));
+                        }
+                    });
+                } else if (count >= 0) {
+                    $("#sTime").text(count);
+                }
+                count--;
+            }
+
+            /*]]>*/
+        });
+    </script>
+</head>
+<body>
+
+<div class="m-[32px]">
+    <h1 class="text-[20px] mt-[72px] flex justify-center" th:text="${SCB_WITHDRAWAL_INBOUND_TITLE}">인출확인</h1>
+    <div class="flex items-center justify-center">
+        <h2 class="max-w-[300px] text-center text-[14px] mt-[12px] mb-[35px] flex justify-center items-center" th:text="${SCB_WITHDRAWAL_INBOUND_DESCRIPTION}">
+            ATM 화면에서 'Confirm / Receive Slip' 을 누르면 현금이 출금됩니다
+        </h2>
+    </div>
+    <div class="flex justify-center items-center">
+        <img th:src="${@environment.getProperty('host.cdn.url')} + '/static/images/atm/scb_atm_request_complete.png'" alt="Cashmallow" width="190px"/>
+    </div>
+    <div class="text-center flex-col justify-center items-center rounded-[20px] bg-[#F1F3F5] mt-[35px] px-[24px] py-[24px] text-[14px]">
+        <div class="flex justify-center items-center mb-[12px]">
+            <img th:src="${@environment.getProperty('host.cdn.url')} + '/static/images/atm/scb_ic_timer.png'" alt="Cashmallow" width="20px"/>
+        </div>
+        <th:block th:text="${SCB_WITHDRAWAL_INBOUND_COUNTDOWN_PRE}">Press confirm within</th:block>
+        <span id="sTime">15</span>
+        <th:block th:utext="${SCB_WITHDRAWAL_INBOUND_COUNTDOWN_POST}">seconds.<br/></th:block>
+        <span th:text="${SCB_WITHDRAWAL_INBOUND_COUNTDOWN}">If not, the transaction will be canceled.</span>
+    </div>
+
+    <div class="h-[100px]"></div>
+</div>
+</body>
+</html>

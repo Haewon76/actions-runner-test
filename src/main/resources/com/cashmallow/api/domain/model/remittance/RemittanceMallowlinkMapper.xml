@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- Mybatis 사용법: http://www.mybatis.org/mybatis-3/ko/index.html -->
+
+<mapper namespace="com.cashmallow.api.domain.model.remittance.RemittanceMallowlinkMapper">
+
+    <insert id="insertRemittanceMallowlink">
+        INSERT INTO remittance_mallowlink (remit_id, transaction_id, end_user_id, status)
+        VALUES (#{remitId}, #{transactionId}, #{endUserId}, #{status})
+        ON DUPLICATE KEY UPDATE transaction_id = #{transactionId},
+                                end_user_id    = #{endUserId},
+                                status         = #{status}
+    </insert>
+
+    <select id="selectRemittanceMallowlinkByTransactionId" resultType="com.cashmallow.api.domain.model.remittance.RemittanceMallowlink">
+        SELECT *
+        FROM remittance_mallowlink rm
+        WHERE transaction_id = #{transaction_id};
+    </select>
+
+    <select id="getRemittanceMallowlinkByRemitId" resultType="com.cashmallow.api.domain.model.remittance.RemittanceMallowlink">
+        SELECT *
+        FROM remittance_mallowlink rm
+        WHERE remit_id = #{remitId};
+    </select>
+
+    <update id="updateStatusOfRemittanceMallowlink">
+        UPDATE remittance_mallowlink
+        SET status = #{status}
+        WHERE remit_id = #{remitId};
+    </update>
+
+    <insert id="insertRemittanceMallowlinkStatus">
+        INSERT INTO remittance_mallowlink_status (remit_id, transaction_id, status)
+        VALUES (#{remitId}, #{transactionId}, #{status});
+    </insert>
+
+    <select id="getRemitIdByMallowlinkTransactionId" resultType="long">
+        SELECT rm.remit_id
+        FROM remittance_mallowlink rm
+        WHERE rm.transaction_id = #{transactionId};
+    </select>
+
+    <select id="getRecentRemittanceMallowlinkStatus" resultType="com.cashmallow.api.domain.model.remittance.RemittanceMallowlinkStatus">
+        SELECT *
+          FROM remittance_mallowlink_status rms
+         WHERE rms.transaction_id = #{transactionId}
+         ORDER BY create_at DESC
+         LIMIT 1
+    </select>
+
+</mapper>

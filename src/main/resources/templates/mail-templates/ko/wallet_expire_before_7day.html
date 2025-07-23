@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>Cashmallow Mail to confirm a mail address</title>
+</head>
+
+<body>
+
+<div th:replace="mail-templates/ko/fragments/header :: header"></div>
+
+<div style="background-color:white; padding:16px; line-height:1.5em;">
+    <div style="font-size:1em;">
+        아직 인출하지 않은 외화가 있습니다. 7일 내 인출하지 않으면 자동 재환전됩니다.<br>
+        &nbsp;<br>
+        여러분의 즐거운 여행의 시작을 캐시멜로와 함께하세요.<br>
+        &nbsp;<br>
+    </div>
+</div>
+
+<div th:replace="mail-templates/ko/fragments/footer :: footer"></div>
+
+</body>
+</html>

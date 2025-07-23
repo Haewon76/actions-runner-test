@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>Cashmallow Mail to confirm user's new device</title>
+</head>
+
+<body>
+
+<div th:replace="mail-templates/ja/fragments/header :: header"></div>
+
+<div style="background-color:white; padding:16px; line-height:1.5em;">
+    <div style="font-size:1em;">
+
+        CASHMALLOWをご利用いただき、誠にありがとうございます。<br>
+        機器変更のためには新しい機器で認証する必要があります。<br>
+        <br>
+        認証コード : <strong th:text="${code}"></strong><br>
+        <br>
+        アプリ画面に認証コードを入力してください。<br>
+        何卒宜しくお願い致します。<br>
+    </div>
+
+    <br>もし、本人のログインではいない場合は安全のため、すぐパスワードを変更してください。
+    <br>&nbsp;
+    <br> <span style="font-size:1.1em; font-weight: bold; line-height:2em;">CASHMALLOWアカウント</span>
+    <br> <a th:text="${accountEmail}"></a>
+    <br>&nbsp;
+    <br> <span style="font-size:1.1em; font-weight: bold; line-height:2em;">New device</span>
+    <br> <strong><span th:text="${deviceInfo}"></span></strong>
+    <br> <span th:text="${accessTime}"></span>
+    <br> <span th:text="${location}"></span>
+    <br> <span th:text="${ip}"></span> (IP Address)
+
+    <div style="padding-top:24px; font-size:0.875em;">
+        <strong style="color:red;">「注意」</strong><br>
+        既存の機器でご利用続ける場合はこのメッセージは無視してください。<br>
+        &nbsp;<br>
+    </div>
+</div>
+
+<div th:replace="mail-templates/ja/fragments/footer :: footer"></div>
+
+</body>
+</html>

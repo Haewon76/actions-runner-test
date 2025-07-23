@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>Confirm user's new device</title>
+</head>
+
+<body>
+
+<div th:replace="mail-templates/en/fragments/header :: header"></div>
+
+<div id="success" style="background-color:white; padding:16px; line-height:1.5em; font-size:1em;">
+    The initialization process for using new devices is completed.<br>
+    &nbsp;<br>
+    Please log in with your new device and register your passport information.<br>
+    &nbsp;<br>
+    &nbsp;<br>
+</div>
+
+<div id="failure" style="background-color:white; padding:16px; line-height:1.5em; font-size:1em;">
+    There was a problem during the initialization process to use the new device. Please contact customer center. <br>
+    &nbsp;<br>
+    &nbsp;<br>
+</div>
+
+<script>
+    /*<![CDATA[*/
+    var successDIV = document.getElementById("success");
+    var failureDIV = document.getElementById("failure");
+    if ("Y" == "[[${isSuccess}]]") {
+        successDIV.style.display = "block";
+        failureDIV.style.display = "none";
+    } else {
+        successDIV.style.display = "none";
+        failureDIV.style.display = "block";
+    }
+    /*]]>*/
+</script>
+
+<div th:replace="mail-templates/en/fragments/footer :: footer-confirm"></div>
+
+</body>
+</html>

@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+
+<mapper namespace="com.cashmallow.api.domain.model.coupon.CouponMobileV2Mapper">
+    <!-- 유저의 쿠폰 정보를 할인금액, 사용가능기간 계산하여 조회 -->
+    <select id="getCouponListIssueUsers" parameterType="com.cashmallow.api.interfaces.coupon.dto.req.CouponMobileUserRequest" resultType="com.cashmallow.api.domain.model.coupon.vo.CouponMobileUser">
+        SELECT u.id as coupon_user_id
+             , u.target_user_id as user_id
+             , u.invite_user_id
+             , u.coupon_issue_id
+             , u.coupon_id
+             , c.from_country_code
+             , c.is_system
+             , c.is_active
+             , c.service_type
+             , c.coupon_code
+             , c.coupon_name
+             , c.coupon_description
+             , (CASE WHEN c.expire_type = 'dateRange' THEN c.coupon_start_date
+                     ELSE i.issue_date
+                     END) as coupon_cal_start_date
+             , (CASE WHEN c.expire_type = 'dateRange' THEN c.coupon_end_date
+                     ELSE DATE_ADD(i.issue_date, INTERVAL c.expire_period_days-1 DAY)
+                     END) as coupon_cal_end_date
+             , (CASE WHEN c.coupon_discount_type = 'fixedAmount' THEN c.coupon_discount_value
+                     WHEN c.coupon_discount_type = 'rateAmount' THEN c.max_discount_amount / 100 * c.coupon_discount_value
+                     WHEN c.coupon_discount_type = 'feeWaiver' THEN #{fee}
+                     ELSE c.coupon_discount_value
+                     END) as coupon_cal_discount_value
+             , c.coupon_discount_type
+             , c.coupon_discount_value
+             , c.max_discount_amount
+             , c.min_required_amount
+             , c.expire_type
+             , i.job_key
+             , i.issue_date
+             , i.issue_date_utc
+             , c.expire_period_days
+             , c.coupon_start_date
+             , c.coupon_end_date
+             , u.created_date
+           --  , i.created_id
+          FROM coupon_user_v2 u
+          INNER JOIN coupon_issue_v2 i
+                       ON u.coupon_issue_id = i.id
+                      AND u.coupon_id = i.coupon_id
+          INNER JOIN coupon_v2 c
+                       ON u.coupon_id = c.id
+          WHERE u.available_status = #{availableStatus}
+
+        <if test="isActive != null and !''.equals(isActive)">
+            AND c.is_active = #{isActive}  -- 활성화 하면 유저 쿠폰함에서 다시 보임
+        </if>
+        <if test="currentDate != null and !''.equals(currentDate)">
+            AND (CASE WHEN c.expire_type = 'dateRange' THEN c.coupon_end_date
+                      ELSE DATE_ADD(i.issue_date, INTERVAL c.expire_period_days-1 DAY)
+                      END) <![CDATA[ >= ]]> #{currentDate}
+        </if>
+        <if test="userId != null and !''.equals(userId)">
+            AND u.target_user_id = #{userId}
+        </if>
+        <if test="fromCountryCode != null and !''.equals(fromCountryCode)">
+            AND c.from_country_code = #{fromCountryCode}
+        </if>
+        <if test="sendType != null and !''.equals(sendType)">
+            AND i.send_type = #{sendType}
+        </if>
+        <if test="issueId != null and !''.equals(issueId)">
+            AND i.id = #{issueId}
+        </if>
+        <if test="couponUserId != null and !''.equals(couponUserId)">
+            AND u.id = #{couponUserId}
+        </if>
+        <if test="serviceType != null and !''.equals(serviceType)">
+          AND c.service_type IN ('all', #{serviceType})
+        </if>
+          ORDER
+             BY coupon_cal_end_date ASC
+    </select>
+
+    <!-- 유저의 쿠폰 사용 -->
+    <update id="useCouponUser" parameterType="com.cashmallow.api.interfaces.coupon.dto.req.CouponUseUpdateRequest">
+        UPDATE coupon_user_v2
+           SET available_status = #{availableStatus}
+             , coupon_used_amount = #{discountAmount}
+             , coupon_used_date = #{couponUsedDate}
+             , coupon_used_date_utc = NOW()
+         WHERE available_status = 'AVAILABLE'
+           AND id = #{couponUserId}
+    </update>
+
+    <!-- 유저 쿠폰 취소 -->
+    <update id="cancelCouponUser" parameterType="java.lang.Long">
+        UPDATE coupon_user_v2
+           SET coupon_used_amount = 0
+             , coupon_used_date = null
+             , coupon_used_date_utc = null
+             , available_status = 'AVAILABLE'
+             , updated_date = NOW()
+         WHERE id = #{couponUserId}
+    </update>
+
+    <!-- 쿠폰의 상태 업데이트.
+        1) 예약에서 사용기한 시작되어 사용가능 처리
+        2) 사용기한 지나 만료처리
+        3) 회수처리
+    -->
+    <update id="updateCouponStatus" parameterType="map">
+        UPDATE coupon_user_v2
+           SET available_status = #{availableStatus}
+             , updated_date = NOW()
+         WHERE id = #{couponUserId}
+    </update>
+
+    <update id="updateListCouponStatus" parameterType="map">
+        UPDATE coupon_user_v2
+        SET available_status = #{availableStatus}
+          , updated_date = NOW()
+        WHERE id IN
+              <foreach collection="couponUserIds" item="couponUserId" separator="," open="(" close=")">
+                    #{couponUserId}
+              </foreach>
+    </update>
+
+    <!-- 쿠폰 ID 로 유저의 쿠폰 조회 -->
+    <select id="getUserCouponByUserIdAndCouponId" parameterType="map" resultType="com.cashmallow.api.domain.model.coupon.entity.CouponUser">
+        SELECT id
+             , coupon_issue_id
+             , coupon_id
+             , target_user_id
+             , invite_user_id
+             , available_status
+             , coupon_used_amount
+             , coupon_used_date
+             , coupon_used_date_utc
+             , created_date
+             , updated_date
+          FROM coupon_user_v2
+         WHERE coupon_id = #{couponId} AND target_user_id = #{userId}
+    </select>
+
+    <!-- Unique 한 쿠폰 고유 ID 로 조회 -->
+    <select id="getUserCouponById" parameterType="java.lang.Long" resultType="com.cashmallow.api.domain.model.coupon.entity.CouponUser">
+        SELECT id
+             , coupon_issue_id
+             , coupon_id
+             , target_user_id
+             , invite_user_id
+             , available_status
+             , coupon_used_amount
+             , coupon_used_date
+             , coupon_used_date_utc
+             , created_date
+             , updated_date
+        FROM coupon_user_v2
+        WHERE id = #{couponUserId}
+    </select>
+
+</mapper>

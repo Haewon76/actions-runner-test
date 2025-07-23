@@ -1,0 +1,51 @@
+<html>
+<head>
+    <style>
+        td {
+            padding: 4px;
+        }
+    </style>
+</head>
+<body>
+<b>안녕하세요. 캐시멜로 고객센터 입니다.</b><br>
+<br>
+궁금하신 점은 아래 URL에서 캐시멜로 고객센터 ID를 친구 추가하시고 연락 주세요.<br>
+<br>
+사용 방법 및 자주 묻는 질문은 FAQ(<a href="https://www.cashmallow.com/ko/faq/">click here</a>)에서도 확인 가능합니다. <br>
+<br>
+감사합니다. <br>
+<br>
+<br>
+<table>
+    <tr>
+        <td>
+            <img th:src="${@environment.getProperty('host.cdn.url')} + '/static/images/kakaotalkPlusFriends.png'" height="56"/>
+        </td>
+        <td>
+            <b>KakaoTalk PlusFriends</b><br>
+            ID : cashmallow<br>
+            <a href="https://pf.kakao.com/_cmukxl">click here</a><br>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <img th:src="${@environment.getProperty('host.cdn.url')} + '/static/images/line.png'" height="56" align="left"/>
+        </td>
+        <td>
+            <b>LINE@</b><br>
+            ID : @cashmallow<br>
+            <a href="https://line.me/R/ti/p/%40yoy2312r">click here</a>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <img th:src="${@environment.getProperty('host.cdn.url')} + '/static/images/whatsapp.png'" height="56" align="left"/>
+        </td>
+        <td>
+            <b>WhatsApp</b><br>
+            ID : +821051445439
+        </td>
+    </tr>
+</table>
+</body>
+</html>

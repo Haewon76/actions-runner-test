@@ -1,0 +1,757 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- Mybatis 사용법: http://www.mybatis.org/mybatis-3/ko/index.html -->
+
+<mapper namespace="com.cashmallow.api.domain.model.exchange.ExchangeMapper">
+
+    <resultMap type="com.cashmallow.api.domain.model.exchange.Exchange" id="exchangeMap">
+        <result column="tr_account_name" property="trAccountName" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+        <result column="tr_account_no" property="trAccountNo" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+        <result column="tr_address" property="trAddress" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+        <result column="tr_address_secondary" property="trAddressSecondary" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+        <result column="tr_phone_number" property="trPhoneNumber" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+    </resultMap>
+
+    <!-- exchange.id의 환전정보 읽기 -->
+    <select id="getExchangeByExchangeId" parameterType="long" resultMap="exchangeMap">
+        SELECT *
+        FROM exchange
+        WHERE id = #{id}
+    </select>
+
+    <select id="getExchangeListByExchangeIds" parameterType="long" resultMap="exchangeMap">
+        SELECT *
+        FROM exchange
+        WHERE id IN
+        <foreach collection="list" item="id" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+    </select>
+
+    <!-- exchange/payment 진행 중 여부 조회 -->
+    <select id="getExchangeOpListByTravelerId" resultMap="exchangeMap">
+        SELECT *
+        FROM exchange
+        WHERE ex_status IN ('OP', 'PO')
+          AND traveler_id = #{travelerId}
+        ORDER BY created_date DESC
+    </select>
+
+    <select id="getLastestExchangeInProgressByTravelerId" resultMap="exchangeMap">
+        SELECT *
+        FROM exchange
+        WHERE ex_status IN ('OP', 'PO', 'DR')
+          AND traveler_id = #{travelerId}
+        ORDER BY created_date DESC
+    </select>
+
+    <!-- traveler exchange list 조회 -->
+    <select id="getExchangeListByTravelerId" parameterType="hashmap" resultMap="exchangeMap">
+        SELECT *
+        FROM exchange
+        WHERE traveler_id = #{travelerId}
+    </select>
+
+    <!-- 여러 travelerId 로 traveler exchange list 조회 -->
+    <select id="countExchangeListByTravelerIds" parameterType="hashmap" resultType="java.lang.Integer">
+        SELECT count(*)
+        FROM exchange
+        WHERE traveler_id IN
+        <foreach collection="travelerIds" item="travelerId" open="(" close=")" separator=",">
+            #{travelerId}
+        </foreach>
+    </select>
+
+    <!-- traveler exchange 기간에 대한 총 환전 금액, 횟수 조회 -->
+    <select id="getExchangeFromAmtSumByPeriod" parameterType="hashmap" resultType="hashmap">
+        SELECT IFNULL(SUM(from_amt), 0) fromAmtSum, COUNT(id) cnt
+        FROM exchange
+        WHERE traveler_id = #{travelerId}
+        AND from_cd = #{fromCd}
+        AND ex_status = 'CF'
+        <if test="fromDate != '' and fromDate != null">
+            <![CDATA[
+        		AND ex_status_date >= #{fromDate}
+    		]]>
+        </if>
+        <if test="toDate != '' and toDate != null">
+            <![CDATA[
+        		AND ex_status_date <= #{toDate}
+    		]]>
+        </if>
+    </select>
+
+    <!-- traveler exchange + remittance 기간에 대한 총 환전 금액, 횟수 조회 -->
+    <select id="getFromAmtSumByPeriod" parameterType="hashmap" resultType="hashmap">
+        SELECT IFNULL(SUM(fromAmtSum), 0) fromAmtSum, IFNULL(SUM(cnt), 0) cnt FROM
+        (
+        SELECT IFNULL(SUM(from_amt), 0) fromAmtSum, COUNT(id) cnt
+        FROM exchange
+        WHERE traveler_id = #{travelerId}
+        AND from_cd = #{fromCd}
+        AND ex_status in ('CF', 'OP')
+        <if test="fromDate != '' and fromDate != null">
+            <![CDATA[
+        		AND ex_status_date >= #{fromDate}
+    		]]>
+        </if>
+        <if test="toDate != '' and toDate != null">
+            <![CDATA[
+        		AND ex_status_date <= #{toDate}
+    		]]>
+        </if>
+        UNION ALL
+        SELECT IFNULL(SUM(rm.from_amt), 0) fromAmtSum, COUNT(rm.id) cnt
+        FROM remittance rm
+        WHERE rm.remit_status in ('CF', 'OP', 'DR', 'DP', 'RC')
+        AND rm.traveler_id = #{travelerId}
+        AND rm.from_cd = #{fromCd}
+        <if test="fromDate != '' and fromDate != null">
+            <![CDATA[
+        		AND rm.updated_date >= #{fromDate}
+    		]]>
+        </if>
+        <if test="toDate != '' and toDate != null">
+            <![CDATA[
+        		AND rm.updated_date <= #{toDate}
+    ]]>
+        </if>
+        ) as fromAmtTot
+    </select>
+
+    <select id="getExchangeToAmtSumByPeriod" parameterType="hashmap" resultType="hashmap">
+        SELECT IFNULL(SUM(to_amt), 0) toAmtSum, COUNT(id) cnt
+        FROM exchange
+        WHERE traveler_id = #{travelerId}
+        AND to_cd = #{toCd}
+        AND ex_status = 'CF'
+        <if test="fromDate != '' and fromDate != null">
+            <![CDATA[
+        		AND ex_status_date >= #{fromDate}
+    		]]>
+        </if>
+        <if test="toDate != '' and toDate != null">
+            <![CDATA[
+        		AND ex_status_date <= #{toDate}
+    		]]>
+        </if>
+    </select>
+
+    <select id="getToAmtSumByPeriod" parameterType="hashmap" resultType="hashmap">
+
+        SELECT IFNULL(SUM(toAmtSum), 0) toAmtSum, IFNULL(SUM(cnt), 0) cnt FROM
+        (
+        SELECT IFNULL(SUM(IFNULL(e_money ,0) + IFNULL(r_money ,0) + IFNULL(c_money ,0)), 0) toAmtSum, COUNT(id) cnt
+        FROM traveler_wallet
+        WHERE traveler_id = #{travelerId}
+        AND country = #{toCd}
+        UNION ALL
+        SELECT IFNULL(SUM(traveler_cash_out_amt), 0) toAmtSum, COUNT(id) cnt
+        FROM cash_out
+        WHERE traveler_id = #{travelerId}
+        AND country = #{toCd}
+        AND co_status = 'CF'
+        <if test="fromDate != '' and fromDate != null">
+            <![CDATA[
+					AND co_status_date >= #{fromDate}
+				]]>
+        </if>
+        <if test="toDate != '' and toDate != null">
+            <![CDATA[
+					AND co_status_date <= #{toDate}
+				]]>
+        </if>
+        UNION ALL
+        SELECT IFNULL(SUM(to_amt), 0) toAmtSum, COUNT(id) cnt
+        FROM exchange
+        WHERE traveler_id = #{travelerId}
+        AND to_cd = #{toCd}
+        AND ex_status = 'OP'
+        <if test="fromDate != '' and fromDate != null">
+            <![CDATA[
+        		AND ex_status_date >= #{fromDate}
+    		]]>
+        </if>
+        <if test="toDate != '' and toDate != null">
+            <![CDATA[
+        		AND ex_status_date <= #{toDate}
+    		]]>
+        </if>
+        UNION ALL
+        SELECT IFNULL(SUM(rm.to_amt), 0) toAmtSum, COUNT(rm.id) cnt
+        FROM remittance rm
+        WHERE rm.remit_status in ('CF', 'OP', 'DR', 'DP', 'RC')
+        AND rm.traveler_id = #{travelerId}
+        AND rm.to_cd = #{toCd}
+        <if test="fromDate != '' and fromDate != null">
+            <![CDATA[
+        		AND rm.updated_date >= #{fromDate}
+    		]]>
+        </if>
+        <if test="toDate != '' and toDate != null">
+            <![CDATA[
+        		AND rm.updated_date <= #{toDate}
+    		]]>
+        </if>
+        ) as toCountAmt
+
+    </select>
+
+    <select id="getToAmtRemittanceSumByPeriod" parameterType="hashmap" resultType="hashmap">
+
+        SELECT IFNULL(SUM(toAmtSum), 0) toAmtSum, IFNULL(SUM(cnt), 0) cnt FROM
+        (
+        SELECT IFNULL(SUM(rm.to_amt), 0) toAmtSum, COUNT(rm.id) cnt
+        FROM remittance rm
+        WHERE rm.remit_status in ('CF', 'OP', 'DR', 'DP', 'RC')
+        AND rm.traveler_id = #{travelerId}
+        AND rm.to_cd = #{toCd}
+        <if test="fromDate != '' and fromDate != null">
+            <![CDATA[
+        		AND rm.updated_date >= #{fromDate}
+    		]]>
+        </if>
+        <if test="toDate != '' and toDate != null">
+            <![CDATA[
+        		AND rm.updated_date <= #{toDate}
+    		]]>
+        </if>
+        ) as toCountAmt
+
+    </select>
+
+    <!-- 9.2. traveler ID 환전 정보 읽기 (여행자 환전 히스토리) -->
+    <select id="countExchangeByTravelerId" parameterType="hashmap" resultType="int">
+        SELECT COUNT(1) AS cnt
+        FROM exchange e
+        WHERE e.traveler_id = #{traveler_id}
+    </select>
+
+    <select id="getExchangeByTravelerId" parameterType="hashmap" resultType="hashmap">
+        SELECT e.*,
+               b.country,
+               b.bank_code,
+               b.bank_name,
+               b.bank_account_no,
+               b.account_type,
+               b.first_name,
+               b.last_name,
+               m.ref_value
+        FROM exchange e
+                 INNER JOIN bank_account b
+                            ON e.bank_account_id = b.id
+                 LEFT JOIN mapping m
+                            ON m.exchange_id = e.id
+        WHERE e.traveler_id = #{traveler_id}
+        ORDER BY id DESC
+        LIMIT #{start_row}, #{size}
+    </select>
+
+    <!-- 9.9. 관리자용 환전 정보 조회 -->
+    <sql id="includeAdminExchange">
+        <where>
+            <if test="searchValue != '' and searchValue != null">
+                AND (e.tr_from_amt = #{searchValue}
+                OR e.tr_account_name LIKE CONCAT('%', #{searchValue, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}, '%')
+                OR e.tr_account_no LIKE CONCAT('%', #{searchValue, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}, '%'))
+            </if>
+            <if test="isExistTxn != '' and isExistTxn != null">
+                AND e.id NOT IN (SELECT txn.related_txn_id from transaction_record txn WHERE txn.related_txn_type ='EXCHANGE'
+                AND txn.root_id IS NULL AND txn.created_date >= #{begin_created_date})
+            </if>
+            <if test="country != null and country != ''">
+                AND u.country = #{country}
+            </if>
+            <if test="user_id != null and user_id != ''">
+                AND u.id = #{user_id}
+            </if>
+            <if test="first_name != null and first_name != ''">
+                AND u.first_name LIKE CONCAT('%', #{first_name, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}, '%')
+            </if>
+            <if test="last_name != null and last_name != ''">
+                AND u.last_name LIKE CONCAT('%', #{last_name, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}, '%')
+            </if>
+            <if test="email != null and email != ''">
+                AND u.email LIKE CONCAT('%', #{email, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}, '%')
+            </if>
+            <if test="traveler_id != null and traveler_id != ''">
+                AND t.id = #{traveler_id}
+            </if>
+            <if test="exchange_id != null and exchange_id != ''">
+                AND e.id = #{exchange_id}
+            </if>
+            <if test="bank_account_id != null and bank_account_id != ''">
+                AND e.bank_account_id = #{bank_account_id}
+            </if>
+            <if test="from_cd != null and from_cd != ''">
+                AND e.from_cd = #{from_cd}
+            </if>
+            <if test="begin_from_amt != null and begin_from_amt != '' and end_from_amt != null and end_from_amt != ''">
+                AND e.from_amt BETWEEN #{begin_from_amt} AND #{end_from_amt}
+            </if>
+            <if test="to_cd != null and to_cd != ''">
+                AND e.to_cd = #{to_cd}
+            </if>
+            <if test="begin_to_amt != null and begin_to_amt != '' and end_to_amt != null and end_to_amt != ''">
+                AND e.to_amt BETWEEN #{begin_to_amt} AND #{end_to_amt}
+            </if>
+            <if test="begin_fee != null and begin_fee != '' and end_fee != null and end_fee != ''">
+                AND e.fee BETWEEN #{begin_fee} AND #{end_fee}
+            </if>
+            <if test="ex_status != null and (
+                    ex_status.equalsIgnoreCase('OP')
+                 or ex_status.equalsIgnoreCase('DR')
+                 or ex_status.equalsIgnoreCase('TC')
+                 or ex_status.equalsIgnoreCase('CC')
+                 or ex_status.equalsIgnoreCase('CF')
+                 or ex_status.equalsIgnoreCase('DR')
+                )">
+                AND e.ex_status = #{ex_status}
+            </if>
+            <if test="ex_status != null and ex_status.equalsIgnoreCase('AC')">
+                AND e.ex_status IN ('TC', 'CC')
+            </if>
+            <if test="ex_status != null and ex_status.equalsIgnoreCase('OC')">
+                AND e.ex_status IN ('OP', 'CC')
+            </if>
+            <if test="begin_created_date != null and end_created_date != null">
+                AND (e.created_date BETWEEN #{begin_created_date} AND #{end_created_date}
+                OR e.updated_date BETWEEN #{begin_created_date} AND #{end_created_date})
+            </if>
+            <if test="bank_code != null and bank_code != ''">
+                AND b.bank_code = #{bank_code}
+            </if>
+            <if test="bank_name != null and bank_name != ''">
+                AND b.bank_name LIKE CONCAT('%', #{bank_name}, '%')
+            </if>
+            <if test="bank_account_no != null and bank_account_no != ''">
+                AND b.bank_account_no LIKE CONCAT('%', #{bank_account_no}, '%')
+            </if>
+            <if test="ex_status != null and 'CF'.equals(ex_status)">
+                <if test="paygate_rec_id != null and paygate_rec_id != ''">
+                    AND EXISTS(SELECT 1 FROM transaction_mapping tm INNER JOIN transaction_record tr ON tm.transaction_rec_id = tr.id WHERE tr.related_txn_id = x.exchange_id AND tm.paygate_rec_id = #{paygate_rec_id})
+                </if>
+                <if test="paygate_rec_amount != null and paygate_rec_amount != ''">
+                    AND EXISTS(SELECT 1 FROM transaction_record tr WHERE tr.related_txn_id = x.exchange_id AND tr.amount = #{paygate_rec_amount})
+                </if>
+            </if>
+        </where>
+    </sql>
+    <select id="countAdminExchange" parameterType="com.cashmallow.api.interfaces.admin.dto.AdminExchangeAskVO" resultType="int">
+        SELECT COUNT(1)
+        FROM exchange e
+        INNER JOIN traveler t ON e.traveler_id = t.id
+        INNER JOIN user u ON t.user_id = u.id
+        INNER JOIN bank_account b ON e.bank_account_id = b.id
+        <include refid="includeAdminExchange"/>
+    </select>
+    <select id="findAdminExchangeSubQuery1" parameterType="com.cashmallow.api.interfaces.admin.dto.AdminExchangeAskVO" resultType="hashmap">
+        SELECT
+            tr.related_txn_id                                                                    AS exchange_id,
+            GROUP_CONCAT(DISTINCT CONCAT_WS(';', tm.paygate_rec_id, pr.amount) SEPARATOR '|')    AS dummy_data1,
+            GROUP_CONCAT(DISTINCT CONCAT_WS(';', co.id, co.traveler_cash_out_amt) SEPARATOR '|') AS dummy_data2
+        FROM transaction_record tr
+            INNER JOIN transaction_mapping tm ON tm.transaction_rec_id = tr.id
+            INNER JOIN paygate_record pr ON tm.paygate_rec_id = pr.id
+            LEFT OUTER JOIN cash_out co ON co.exchange_id = tr.related_txn_id AND co.co_status = 'CF'
+        WHERE EXISTS(SELECT 1
+        FROM `exchange` e
+        WHERE tr.related_txn_id = e.id
+            AND e.ex_status = 'CF'
+            <if test="from_cd != null and from_cd != ''">
+                AND e.from_cd = #{from_cd}
+            </if>
+            <if test="begin_created_date != null and end_created_date != null">
+                AND (e.created_date BETWEEN #{begin_created_date} AND #{end_created_date}
+                OR e.updated_date BETWEEN #{begin_created_date} AND #{end_created_date})
+            </if>
+            )
+        GROUP BY tr.related_txn_id
+    </select>
+
+    <select id="findAdminExchange" parameterType="com.cashmallow.api.interfaces.admin.dto.AdminExchangeAskVO" resultType="hashmap">
+        SELECT
+            x.*
+        FROM (
+            SELECT u.country,
+            u.id as user_id,
+            u.lang_key as lang_key,
+            u.first_name,
+            u.last_name,
+            u.email,
+            u.birth_date,
+            u.profile_photo,
+            u.cls,
+            u.activated,
+            t.id as traveler_id,
+            edr.receipt_photo as tr_receipt_photo,
+            e.tr_from_amt,
+            IFNULL(e.tr_account_no, t.account_no) as tr_account_no,
+            e.tr_account_name,
+            e.tr_bank_name,
+            e.id as exchange_id,
+            e.from_cd,
+            e.from_amt,
+            e.to_cd,
+            e.to_amt,
+            ROUND(e.to_amt * e.exchange_rate, 2) AS principal,
+            e.fee - IFNULL(e.coupon_discount_amt, 0) AS fee,
+            e.exchange_rate,
+            e.ex_status,
+            e.created_date,
+            e.updated_date,
+            e.bank_account_id,
+            b.bank_code,
+            b.bank_name,
+            b.bank_account_no,
+            b.first_name AS bank_first_name,
+            b.last_name AS bank_last_name,
+            e.fee_per_amt - IFNULL(e.coupon_discount_amt, 0) AS fee_per_amt,
+            e.from_amt - e.fee AS from_amt_calc,
+            e.fee_rate_amt,
+            e.coupon_user_id,
+            e.coupon_discount_amt,
+            e.exchange_purpose,
+            e.exchange_fund_source
+        FROM `exchange` e
+        INNER JOIN traveler t ON e.traveler_id = t.id
+        INNER JOIN user u ON t.user_id = u.id
+        INNER JOIN bank_account b ON e.bank_account_id = b.id
+        LEFT JOIN (SELECT MAX(id) max_edr_id, exchange_id from exchange_deposit_receipt group by exchange_id) gedr ON e.id = gedr.exchange_id
+        LEFT JOIN exchange_deposit_receipt edr ON gedr.max_edr_id = edr.id
+        <include refid="includeAdminExchange"/>
+        ) x
+        WHERE 1 = 1
+        <if test='sort != null and (
+               sort.equalsIgnoreCase("country DESC")        or sort.equalsIgnoreCase("country ASC")
+            or sort.equalsIgnoreCase("user_id ASC")         or sort.equalsIgnoreCase("user_id DESC")
+            or sort.equalsIgnoreCase("first_name ASC")      or sort.equalsIgnoreCase("first_name DESC")
+            or sort.equalsIgnoreCase("last_name ASC")       or sort.equalsIgnoreCase("last_name DESC")
+            or sort.equalsIgnoreCase("email ASC")           or sort.equalsIgnoreCase("email DESC")
+            or sort.equalsIgnoreCase("traveler_id ASC")     or sort.equalsIgnoreCase("traveler_id DESC")
+            or sort.equalsIgnoreCase("tr_bank_name ASC")    or sort.equalsIgnoreCase("tr_bank_name DESC")
+            or sort.equalsIgnoreCase("tr_account_name ASC") or sort.equalsIgnoreCase("tr_account_name DESC")
+            or sort.equalsIgnoreCase("tr_account_no ASC")   or sort.equalsIgnoreCase("tr_account_no DESC")
+            or sort.equalsIgnoreCase("tr_from_amt ASC")     or sort.equalsIgnoreCase("tr_from_amt DESC")
+            or sort.equalsIgnoreCase("exchange_id ASC")     or sort.equalsIgnoreCase("exchange_id DESC")
+            or sort.equalsIgnoreCase("bank_account_id ASC") or sort.equalsIgnoreCase("bank_account_id DESC")
+            or sort.equalsIgnoreCase("from_cd ASC")         or sort.equalsIgnoreCase("from_cd DESC")
+            or sort.equalsIgnoreCase("from_amt ASC")        or sort.equalsIgnoreCase("from_amt DESC")
+            or sort.equalsIgnoreCase("to_cd ASC")           or sort.equalsIgnoreCase("to_cd DESC")
+            or sort.equalsIgnoreCase("to_amt ASC")          or sort.equalsIgnoreCase("to_amt DESC")
+            or sort.equalsIgnoreCase("exchange_rate ASC")   or sort.equalsIgnoreCase("exchange_rate DESC")
+            or sort.equalsIgnoreCase("fee ASC")             or sort.equalsIgnoreCase("fee DESC")
+            or sort.equalsIgnoreCase("bank_name ASC")       or sort.equalsIgnoreCase("bank_name DESC")
+            or sort.equalsIgnoreCase("ex_status ASC")       or sort.equalsIgnoreCase("ex_status DESC")
+            or sort.equalsIgnoreCase("created_date ASC")    or sort.equalsIgnoreCase("created_date DESC")
+            or sort.equalsIgnoreCase("updated_date ASC")    or sort.equalsIgnoreCase("updated_date DESC")
+        )'>
+            ORDER BY ${sort}
+        </if>
+        LIMIT #{start_row}, #{size}
+    </select>
+
+    <!-- 기능: 71.1.3 환전 조회 -->
+    <select id="getExchangeAmountByCountry" parameterType="hashmap" resultType="hashmap">
+        SELECT *
+        FROM (
+        SELECT COUNT(e.from_cd) totalCnt,
+        COALESCE(SUM(e.from_amt),0) totalAmt, COALESCE(SUM(e.fee),0) totalFee,
+        COALESCE(SUM(e.from_amt + e.fee),0) totalTotal,
+        COALESCE(SUM(hkd.from_amt - hkd.fee),0) hkdAmt,
+        COALESCE(SUM(hkd.fee),0) hkdFee,
+        COALESCE(SUM(hkd.from_amt),0) hkdTotal,
+        COALESCE(SUM(twd.from_amt - twd.fee),0) twdAmt,
+        COALESCE(SUM(twd.fee),0) twdFee,
+        COALESCE(SUM(twd.from_amt),0) twdTotal,
+        COALESCE(SUM(krw.from_amt - krw.fee),0) krwAmt,
+        COALESCE(SUM(krw.fee),0) krwFee,
+        COALESCE(SUM(krw.from_amt),0) krwTotal
+        FROM exchange e
+        LEFT JOIN exchange hkd
+        ON hkd.id = e.id
+        AND hkd.to_cd = '001'
+        LEFT JOIN exchange twd
+        ON hkd.id = e.id
+        AND hkd.to_cd = '002'
+        LEFT JOIN exchange krw
+        ON hkd.id = e.id
+        AND hkd.to_cd = '003'
+        WHERE e.from_cd = #{country}
+        <if test="beginDate != null and beginDate != '' and endDate != null and endDate != ''">
+            <![CDATA[
+            AND    #{beginDate} <= e.ex_status_date  
+            AND    e.ex_status_date <= #{endDate} 
+            ]]>
+        </if>
+        ) AS cntTotal,
+        (SELECT COUNT(e.from_cd) comCnt,
+        COALESCE(SUM(e.from_amt),0) comAmt,
+        COALESCE(SUM(e.fee),0) comFee,
+        COALESCE(SUM(e.from_amt + e.fee),0) comTotal,
+        COALESCE(SUM(hkd.from_amt - hkd.fee),0) comHkdAmt,
+        COALESCE(SUM(hkd.fee),0) comHkdFee,
+        COALESCE(SUM(hkd.from_amt),0) comHkdTotal,
+        COALESCE(SUM(twd.from_amt - twd.fee),0) comTwdAmt,
+        COALESCE(SUM(twd.fee),0) comTwdFee,
+        COALESCE(SUM(twd.from_amt),0) comTwdTotal,
+        COALESCE(SUM(krw.from_amt - krw.fee),0) comKrwAmt,
+        COALESCE(SUM(krw.fee),0) comKrwFee,
+        COALESCE(SUM(krw.from_amt),0) comKrwTotal
+        FROM exchange e
+        LEFT JOIN exchange hkd
+        ON hkd.id = e.id
+        AND hkd.to_cd = '001'
+        LEFT JOIN exchange twd
+        ON hkd.id = e.id
+        AND hkd.to_cd = '002'
+        LEFT JOIN exchange krw
+        ON hkd.id = e.id
+        AND hkd.to_cd = '003'
+        WHERE e.from_cd = #{country}
+        AND e.ex_status = 'CF'
+        <if test="beginDate != null and beginDate != '' and endDate != null and endDate != ''">
+            <![CDATA[
+            AND    #{beginDate} <= e.ex_status_date  
+            AND    e.ex_status_date   <= #{endDate} ]]>
+        </if>
+        ) AS cntComplete,
+        (SELECT COUNT(e.from_cd) reqCnt,
+        COALESCE(SUM(e.from_amt),0) reqAmt,
+        COALESCE(SUM(e.fee),0) reqFee,
+        COALESCE(SUM(e.from_amt + e.fee),0) reqTotal,
+        COALESCE(SUM(hkd.from_amt - hkd.fee),0) reqHkdAmt,
+        COALESCE(SUM(hkd.fee),0) reqHkdFee,
+        COALESCE(SUM(hkd.from_amt),0) reqHkdTotal,
+        COALESCE(SUM(twd.from_amt - twd.fee),0) reqTwdAmt,
+        COALESCE(SUM(twd.fee),0) reqTwdFee,
+        COALESCE(SUM(twd.from_amt),0) reqTwdTotal,
+        COALESCE(SUM(krw.from_amt - krw.fee),0) reqKrwAmt,
+        COALESCE(SUM(krw.fee),0) reqKrwFee,
+        COALESCE(SUM(krw.from_amt),0) reqKrwTotal
+        FROM exchange e
+        LEFT JOIN exchange hkd
+        ON hkd.id = e.id
+        AND hkd.to_cd = '001'
+        LEFT JOIN exchange twd
+        ON hkd.id = e.id
+        AND hkd.to_cd = '002'
+        LEFT JOIN exchange krw
+        ON hkd.id = e.id
+        AND hkd.to_cd = '003'
+        WHERE e.from_cd = #{country}
+        AND e.ex_status = 'OP'
+        <if test="beginDate != null and beginDate != '' and endDate != null and endDate != ''">
+            <![CDATA[
+            AND    #{beginDate} <= e.ex_status_date  
+            AND    e.ex_status_date   <= #{endDate} 
+            ]]>
+        </if>
+        ) AS cntReq,
+        (SELECT COUNT(e.from_cd) canCnt,
+        COALESCE(SUM(e.from_amt),0) canAmt,
+        COALESCE(SUM(e.fee),0) canFee,
+        COALESCE(SUM(e.from_amt + e.fee),0) canTotal,
+        COALESCE(SUM(hkd.from_amt - hkd.fee),0) canHkdAmt,
+        COALESCE(SUM(hkd.fee),0) canHkdFee,
+        COALESCE(SUM(hkd.from_amt),0) canHkdTotal,
+        COALESCE(SUM(twd.from_amt - twd.fee),0) canTwdAmt,
+        COALESCE(SUM(twd.fee),0) canTwdFee,
+        COALESCE(SUM(twd.from_amt),0) canTwdTotal,
+        COALESCE(SUM(krw.from_amt - krw.fee),0) canKrwAmt,
+        COALESCE(SUM(krw.fee),0) canKrwFee,
+        COALESCE(SUM(krw.from_amt),0) canKrwTotal
+        FROM exchange e
+        LEFT JOIN exchange hkd
+        ON hkd.id = e.id
+        AND hkd.to_cd = '001'
+        LEFT JOIN exchange twd
+        ON hkd.id = e.id
+        AND hkd.to_cd = '002'
+        LEFT JOIN exchange krw
+        ON hkd.id = e.id
+        AND hkd.to_cd = '003'
+        WHERE e.from_cd = #{country}
+        AND e.ex_status IN ('TC','CC')
+        <if test="beginDate != null and beginDate != '' and endDate != null and endDate != ''">
+            <![CDATA[
+            AND    #{beginDate} <= e.ex_status_date
+            AND    e.ex_status_date <= #{endDate}]]>
+        </if>
+        ) AS cntCancel
+    </select>
+
+    <!-- 9.3. 여행자 환전 신청 -->
+
+    <!-- 9.3.2. 여행자 환전 신청. to_amt, fee 기준으로 처리한다. -->
+
+    <insert id="insertExchange" parameterType="com.cashmallow.api.domain.model.exchange.Exchange"
+            useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO exchange (bank_account_id,
+                              traveler_id,
+                              identification_number,
+                              tr_account_bankbook_photo,
+                              from_cd,
+                              to_cd,
+                              from_amt,
+                              to_amt,
+                              fee,
+                              exchange_rate,
+                              ex_status,
+                              ex_status_date,
+                              tr_phone_number,
+                              tr_phone_country,
+                              tr_address,
+                              tr_address_country,
+                              tr_address_city,
+                              tr_address_secondary,
+                              tr_address_photo,
+                              creator,
+                              fee_per_amt,
+                              fee_rate_amt,
+                              fee_rate,
+                              coupon_user_id,
+                              coupon_discount_amt,
+                              exchange_purpose,
+                              exchange_fund_source)
+        VALUES (#{bankAccountId},
+                #{travelerId},
+                #{identificationNumber},
+                #{trAccountBankbookPhoto},
+                #{fromCd},
+                #{toCd},
+                #{fromAmt},
+                #{toAmt},
+                #{fee},
+                #{exchangeRate},
+                'OP',
+                NOW(),
+                #{trPhoneNumber, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler},
+                #{trPhoneCountry},
+                #{trAddress, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler},
+                #{trAddressCountry},
+                #{trAddressCity},
+                #{trAddressSecondary, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler},
+                #{trAddressPhoto},
+                #{creator},
+                #{feePerAmt},
+                #{feeRateAmt},
+                #{feeRate},
+                #{couponUserId},
+                #{couponDiscountAmt},
+                #{exchangePurpose},
+                #{exchangeFundSource})
+    </insert>
+
+    <!-- 환전 정보 업데이트 -->
+    <update id="updateExchange" parameterType="com.cashmallow.api.domain.model.exchange.Exchange">
+        UPDATE exchange
+        SET identification_number = #{identificationNumber},
+            tr_bank_name          = #{trBankName},
+            tr_account_name       = #{trAccountName, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler},
+            tr_account_no         = #{trAccountNo, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler},
+            tr_from_amt           = #{trFromAmt},
+            tr_deposit_date       = #{trDepositDate},
+            tr_receipt_photo      = #{trReceiptPhoto},
+            tr_address            = #{trAddress, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler},
+            tr_address_country    = #{trAddressCountry},
+            tr_address_city       = #{trAddressCity},
+            tr_address_secondary  = #{trAddressSecondary, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler},
+            tr_address_photo      = #{trAddressPhoto},
+            tr_phone_number       = #{trPhoneNumber, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler},
+            tr_phone_country      = #{trPhoneCountry},
+            ex_status             = #{exStatus},
+            ex_status_date        = #{exStatusDate},
+            updated_date          = #{updatedDate}
+        WHERE traveler_id = #{travelerId}
+          AND id = #{id}
+    </update>
+
+    <!-- 환전 고객 통장 정보 업데이트 -->
+    <update id="updateExchangeTrAccountInfo" parameterType="com.cashmallow.api.domain.model.exchange.Exchange">
+        UPDATE exchange
+        SET tr_bank_name          = #{trBankName},
+            tr_account_name       = #{trAccountName, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler},
+            tr_account_no         = #{trAccountNo, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler},
+            tr_from_amt           = #{trFromAmt},
+            tr_deposit_date       = #{trDepositDate},
+            tr_receipt_photo      = #{trReceiptPhoto},
+            updated_date          = #{updatedDate}
+        WHERE traveler_id = #{travelerId}
+          AND id = #{id}
+    </update>
+
+    <select id="getExchangeDepositReceiptList" parameterType="long"
+            resultType="com.cashmallow.api.domain.model.exchange.ExchangeDepositReceipt">
+        SELECT *
+        FROM exchange_deposit_receipt
+        WHERE exchange_id = #{exchangeId}
+    </select>
+
+    <insert id="insertExchangeDepositReceipt"
+            parameterType="com.cashmallow.api.domain.model.exchange.ExchangeDepositReceipt">
+        INSERT INTO exchange_deposit_receipt (exchange_id, receipt_photo, created_date)
+        VALUES (#{exchangeId}, #{receiptPhoto}, #{createdDate})
+
+        <selectKey keyProperty="id" resultType="long" order="AFTER">
+            SELECT LAST_INSERT_ID()
+        </selectKey>
+    </insert>
+
+    <update id="updateExchangeBankAccountId" parameterType="com.cashmallow.api.domain.model.exchange.Exchange">
+        UPDATE exchange
+        SET bank_account_id = #{bankAccountId}
+        WHERE id = #{id}
+    </update>
+
+    <select id="getExchangeBeforeMapping" parameterType="long" resultMap="exchangeMap">
+        SELECT e.*, bi.code AS bankCode
+          FROM exchange e
+    INNER JOIN traveler t
+            ON e.traveler_id = t.id
+     LEFT JOIN bank_info bi
+            ON t.bank_info_id = bi.id
+         WHERE e.ex_status = 'OP'
+           AND e.id = #{id}
+    </select>
+
+    <select id="getExchangeBeforeMappingList" resultMap="exchangeMap">
+        SELECT e.*, bi.code AS bankCode
+        FROM exchange e
+  INNER JOIN traveler t
+          ON e.traveler_id = t.id
+   LEFT JOIN bank_info bi
+          ON t.bank_info_id = bi.id
+        WHERE e.ex_status = 'OP'
+          AND e.tr_account_no = #{accountNo, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}
+    </select>
+
+    <select id="getWithdrawalToAmtSumByPeriod" parameterType="hashmap" resultType="hashmap">
+        SELECT IFNULL(SUM(toAmtSum), 0) toAmtSum, IFNULL(SUM(cnt), 0) cnt FROM
+        (
+        SELECT IFNULL(SUM(IFNULL(e_money ,0) + IFNULL(r_money ,0) + IFNULL(c_money ,0)), 0) toAmtSum, COUNT(id) cnt
+        FROM traveler_wallet
+        WHERE traveler_id = #{travelerId}
+        AND country = #{toCd}
+        UNION ALL
+        SELECT IFNULL(SUM(traveler_cash_out_amt), 0) toAmtSum, COUNT(id) cnt
+        FROM cash_out
+        WHERE traveler_id = #{travelerId}
+        AND country = #{toCd}
+        AND co_status = 'CF'
+        <![CDATA[ AND co_status_date >= #{fromDate} ]]>
+        <![CDATA[ AND co_status_date <= #{toDate} ]]>
+        UNION ALL
+        SELECT IFNULL(SUM(to_amt), 0) toAmtSum, COUNT(id) cnt
+        FROM exchange
+        WHERE traveler_id = #{travelerId}
+        AND to_cd = #{toCd}
+        AND ex_status = 'OP'
+        <![CDATA[ AND ex_status_date >= #{fromDate} ]]>
+        <![CDATA[ AND ex_status_date <= #{toDate} ]]>
+        ) as toCountAmt
+
+    </select>
+
+</mapper>

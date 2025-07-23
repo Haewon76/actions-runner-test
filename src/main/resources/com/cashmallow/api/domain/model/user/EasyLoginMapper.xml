@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.cashmallow.api.domain.model.user.EasyLoginMapper">
+
+    <!-- EasyLogin Read -->
+    <select id="getEasyLoginByToken" resultType="com.cashmallow.api.domain.model.user.EasyLogin">
+        SELECT *
+        FROM easy_login
+        WHERE refresh_token = #{refreshToken}
+    </select>
+
+    <select id="getEasyLoginByUserId" resultType="com.cashmallow.api.domain.model.user.EasyLogin">
+        SELECT *
+        FROM easy_login
+        WHERE user_id = #{userId}
+        Order by created_at desc
+        Limit 1
+    </select>
+
+    <!-- AccessToken Write -->
+    <insert id="insertEasyLogin" parameterType="com.cashmallow.api.domain.model.user.EasyLogin">
+        INSERT INTO easy_login(refresh_token, user_id, refresh_time, pin_code_hash, fail_count, created_at, updated_at)
+        VALUES (#{refreshToken},
+                #{userId},
+                #{refreshTime},
+                #{pinCodeHash},
+                #{failCount},
+                #{createdAt},
+                #{updatedAt})
+    </insert>
+
+    <update id="updateEasyLogin" parameterType="com.cashmallow.api.domain.model.user.User">
+        UPDATE easy_login
+        SET refresh_token = #{refreshToken},
+            refresh_time  = #{refreshTime},
+            pin_code_hash = #{pinCodeHash},
+            fail_count    = #{failCount},
+            updated_at    = #{updatedAt}
+        WHERE user_id = #{userId}
+    </update>
+
+    <delete id="deleteEasyLogin">
+        DELETE
+        FROM easy_login
+        WHERE id = #{id}
+    </delete>
+
+    <delete id="deleteEasyLoginByUserId">
+        DELETE
+        FROM easy_login
+        WHERE user_id = #{userId}
+    </delete>
+
+</mapper>

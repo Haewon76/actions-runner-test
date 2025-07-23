@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.cashmallow.api.domain.model.system.SystemMapper">
+
+    <!-- DB health check -->
+    <select id="isDBHealthy" resultType="boolean">
+        SELECT true
+    </select>
+
+    <!-- Application version -->
+    <select id="getAppVersion" parameterType="map" resultType="com.cashmallow.api.domain.model.system.AppVersion">
+        SELECT *
+        FROM app_version
+        WHERE application_id = #{applicationId}
+          AND device_type = #{deviceType}
+    </select>
+
+    <insert id="insertJobPlan" parameterType="com.cashmallow.api.domain.model.system.JobPlan" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO job_plan (from_country_code, to_country_code, job_key, cron_expression, wallet_expired_calendar_day,
+                              job_type, is_active, is_executed)
+        VALUES (#{fromCountryCode}, #{toCountryCode}, #{jobKey}, #{cronExpression}, #{walletExpiredCalendarDay},
+                #{jobType}, #{isActive}, #{isExecuted})
+        ON DUPLICATE KEY UPDATE job_key                     = #{jobKey},
+                                cron_expression             = #{cronExpression},
+                                wallet_expired_calendar_day = #{walletExpiredCalendarDay},
+                                is_active                   = #{isActive},
+                                updated_date                = now()
+    </insert>
+
+    <insert id="insertJobPlanHistory" parameterType="com.cashmallow.api.domain.model.system.JobPlanHistory">
+        INSERT INTO job_plan_history (job_plan_id, from_country_code, to_country_code, job_key, cron_expression, wallet_expired_calendar_day,
+                                      job_type, is_active, is_executed)
+        VALUES (#{jobPlanId}, #{fromCountryCode}, #{toCountryCode}, #{jobKey}, #{cronExpression}, #{walletExpiredCalendarDay},
+                #{jobType}, #{isActive}, #{isExecuted})
+    </insert>
+
+    <select id="getJobPlanListByFromCountryCode" resultType="com.cashmallow.api.domain.model.system.JobPlan">
+        SELECT *
+        FROM job_plan
+        WHERE from_country_code = #{fromCountryCode}
+          AND is_active = true
+    </select>
+
+    <select id="getJobPlanByJobKey" resultType="com.cashmallow.api.domain.model.system.JobPlan">
+        SELECT *
+        FROM job_plan
+        WHERE job_key = #{jobKey}
+    </select>
+
+    <delete id="deleteJobPlan" parameterType="java.lang.String">
+        DELETE FROM job_plan
+         WHERE job_key = #{jobKey}
+    </delete>
+</mapper>

@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>Cashmallow Mail to confirm user's bank account</title>
+</head>
+
+<body>
+
+<div th:replace="mail-templates/en/fragments/header :: header"></div>
+
+<div style="background-color:white; padding:16px; line-height:1.5em;">
+    <div style="font-size:1em;">
+        Please confirm your registered bank account information.<br>
+        &nbsp;<br>
+        - Bank name : <strong th:text="${bankName}"></strong><br>
+        - Account no. : <strong th:text="${accountNo}"></strong><br>
+        - Account name : <strong th:text="${accountName}"></strong><br>
+        &nbsp;<br>
+        Please confirm your bank account information is correct by clicking the below link.<br>
+        &nbsp;<br>
+        <a th:href="@{${confirmURL}(id=${id}, accountToken=${accountToken})}" th:text="@{${confirmURL}(id=${id}, accountToken=${accountToken})}"></a><br>
+        &nbsp;<br>
+        If it is not correct, please proceed with the account verification process again in the app.<br>
+    </div>
+    <div style="padding-top:24px; font-size:0.875em;">
+        <strong style="color:red;">[IMPORTANT]</strong><br>
+        Please confirm that your bank account is correct and that Cashmallow is not responsible for any liability incurred due to incorrect account information. If you would like to modify your bank account information, please contact our customer service center.<br>
+        &nbsp;<br>
+    </div>
+</div>
+
+<div th:replace="mail-templates/en/fragments/footer :: footer"></div>
+
+</body>
+</html>

@@ -1,0 +1,412 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- Mybatis 사용법: http://www.mybatis.org/mybatis-3/ko/index.html -->
+
+<mapper namespace="com.cashmallow.api.domain.model.inactiveuser.InactiveUserMapper">
+
+    <resultMap type="com.cashmallow.api.domain.model.inactiveuser.InactiveUser" id="inactiveUserMap">
+        <result column="first_name" property="firstName" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+        <result column="last_name" property="lastName" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+        <result column="email" property="email" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+        <result column="phone_number" property="phoneNumber" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+    </resultMap>
+
+    <resultMap type="com.cashmallow.api.domain.model.inactiveuser.InactiveExchange" id="inactiveExchangeMap">
+        <result column="tr_account_name" property="trAccountName" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+        <result column="tr_account_no" property="trAccountNo" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+        <result column="tr_address" property="trAddress" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+        <result column="tr_address_secondary" property="trAddressSecondary" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+        <result column="tr_phone_number" property="trPhoneNumber" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+    </resultMap>
+
+    <resultMap type="com.cashmallow.api.domain.model.inactiveuser.InactiveTraveler" id="inactiveTravelerMap">
+        <result column="account_no" property="accountNo" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+        <result column="account_name" property="accountName" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+
+        <result column="local_first_name" property="localFirstName" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+        <result column="local_last_name" property="localLastName" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+        <result column="en_first_name" property="enFirstName" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+        <result column="en_last_name" property="enLastName" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+
+        <result column="address" property="address" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+        <result column="address_secondary" property="addressSecondary" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+    </resultMap>
+
+    <resultMap type="com.cashmallow.api.domain.model.inactiveuser.InactiveRemittance" id="inactiveRemittanceMap">
+        <result column="receiver_bank_account_no" property="receiverBankAccountNo" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+        <result column="receiver_address" property="receiverAddress" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+        <result column="receiver_address_secondary" property="receiverAddressSecondary" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+        <result column="receiver_first_name" property="receiverFirstName" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+        <result column="receiver_last_name" property="receiverLastName" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+        <result column="receiver_phone_no" property="receiverPhoneNo" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+    </resultMap>
+
+    <resultMap type="com.cashmallow.api.domain.model.inactiveuser.InactiveRemittanceTravelerSnapshot" id="inactiveRemittanceTravelerSnapshotMap">
+        <result column="account_no" property="accountNo" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+        <result column="account_name" property="accountName" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+        <result column="address" property="address" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+        <result column="address_secondary" property="addressSecondary" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+        <result column="phone_number" property="phoneNumber" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+    </resultMap>
+
+    <resultMap type="com.cashmallow.api.domain.model.inactiveuser.InactiveRemitReceiverAml" id="inactiveRemitReceiverAmlMap">
+        <result column="receiver_first_name" property="receiverFirstName" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+        <result column="receiver_last_name" property="receiverLastName" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+    </resultMap>
+
+    <resultMap type="com.cashmallow.api.domain.model.inactiveuser.InactiveRefund" id="inactiveRefundMap">
+        <result column="account_no" property="accountNo" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+        <result column="account_name" property="accountName" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+    </resultMap>
+
+
+    <!-- inactive_remittance 입력 -->
+    <insert id="insertInactiveRemittance"
+            parameterType="com.cashmallow.api.domain.model.inactiveuser.InactiveRemittance">
+        INSERT INTO inactive_remittance (id, traveler_id,
+                                         receiver_birth_date, receiver_phone_no, receiver_first_name, receiver_last_name,
+                                         receiver_bank_account_no, receiver_address, receiver_address_secondary, created_date)
+        VALUES ( #{id}
+               , #{travelerId}
+               , #{receiverBirthDate}
+               , #{receiverPhoneNo, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}
+               , #{receiverFirstName, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}
+               , #{receiverLastName, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}
+               , #{receiverBankAccountNo, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}
+               , #{receiverAddress, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}
+               , #{receiverAddressSecondary, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}
+               , #{createdDate})
+    </insert>
+
+    <!-- inactive_remittance 조회 -->
+    <select id="getInactiveRemittanceList" resultMap="inactiveRemittanceMap">
+        SELECT *
+        FROM inactive_remittance
+        WHERE traveler_id = #{travelerId}
+    </select>
+
+    <!-- inactive_remittance 삭제 -->
+    <delete id="deleteInactiveRemittanceList">
+        DELETE
+        FROM inactive_remittance
+        WHERE traveler_id = #{travelerId}
+    </delete>
+
+
+    <!-- inactive_remittance_traveler_snapshot 입력 -->
+    <insert id="insertInactiveRemittanceTravelerSnapshot" parameterType="com.cashmallow.api.domain.model.inactiveuser.InactiveRemittanceTravelerSnapshot">
+        INSERT INTO inactive_remittance_traveler_snapshot (remit_id, traveler_id, identification_number, account_no, account_name,
+                                                           address, address_secondary, phone_number, created_date)
+        VALUES ( #{remitId}
+               , #{travelerId}
+               , #{identificationNumber}
+               , #{accountNo, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}
+               , #{accountName, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}
+               , #{address, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}
+               , #{addressSecondary, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}
+               , #{phoneNumber, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}
+               , #{createdDate})
+    </insert>
+
+    <!-- inactive_remittance 조회 -->
+    <select id="getInactiveRemittanceTravelerSnapshotList"
+            resultMap="inactiveRemittanceTravelerSnapshotMap">
+        SELECT *
+        FROM inactive_remittance_traveler_snapshot
+        WHERE traveler_id = #{travelerId}
+    </select>
+
+    <!-- inactive_remittance_traveler_snapshot 삭제 -->
+    <delete id="deleteInactiveRemittanceTravelerSnapshotList">
+        DELETE
+        FROM inactive_remittance_traveler_snapshot
+        WHERE traveler_id = #{travelerId}
+    </delete>
+
+    <!-- InactiveRemitReceiverAml 입력 -->
+    <insert id="insertInactiveRemitReceiverAml"
+            parameterType="com.cashmallow.api.domain.model.inactiveuser.InactiveRemitReceiverAml">
+        INSERT INTO inactive_remit_receiver_aml (remit_receiver_aml_id, traveler_id, receiver_first_name, receiver_last_name,
+                                                 birth_date, aml_search_id, created_date)
+        VALUES ( #{remitReceiverAmlId}
+               , #{travelerId}
+               , #{receiverFirstName, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}
+               , #{receiverLastName, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}
+               , #{birthDate}
+               , #{amlSearchId}
+               , #{createdDate})
+    </insert>
+
+    <!-- inactive_remittance 조회 -->
+    <select id="getInactiveRemitReceiverAml"
+            resultMap="inactiveRemitReceiverAmlMap">
+        SELECT *
+        FROM inactive_remit_receiver_aml
+        WHERE traveler_id = #{travelerId}
+    </select>
+
+    <!-- inactive_remittance_traveler_snapshot 삭제 -->
+    <delete id="deleteInactiveRemitReceiverAml">
+        DELETE
+        FROM inactive_remit_receiver_aml
+        WHERE traveler_id = #{travelerId}
+    </delete>
+
+
+    <!-- inactive_exchange 입력 -->
+    <insert id="insertInactiveExchange" parameterType="com.cashmallow.api.domain.model.inactiveuser.InactiveExchange">
+        INSERT INTO inactive_exchange (id, traveler_id, identification_number, tr_account_name, tr_account_no, tr_account_bankbook_photo,
+                                       created_date, tr_phone_number, tr_address, tr_address_secondary, tr_address_photo)
+        VALUES ( #{id}
+               , #{travelerId}
+               , #{identificationNumber}
+               , #{trAccountName, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}
+               , #{trAccountNo, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}
+               , #{trAccountBankbookPhoto}
+               , #{createdDate}
+               , #{trPhoneNumber, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}
+               , #{trAddress, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}
+               , #{trAddressSecondary, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}
+               , #{trAddressPhoto})
+    </insert>
+
+    <!-- inactive_exchange 조회 -->
+    <select id="getInactiveExchangeList" resultMap="inactiveExchangeMap">
+        SELECT *
+        FROM inactive_exchange
+        WHERE traveler_id = #{travelerId}
+    </select>
+
+    <!-- inactive_exchange 삭제 -->
+    <delete id="deleteInactiveExchangeList">
+        DELETE
+        FROM inactive_exchange
+        WHERE traveler_id = #{travelerId}
+    </delete>
+
+
+    <!-- inactive_refund 입력 -->
+    <insert id="insertInactiveRefund" parameterType="com.cashmallow.api.domain.model.inactiveuser.InactiveRefund">
+        INSERT INTO inactive_refund (id, traveler_id, account_no, account_name, tr_bankbook_photo, created_date)
+        VALUES ( #{id}
+               , #{travelerId}
+               , #{accountNo, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}
+               , #{accountName, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}
+               , #{trBankbookPhoto}
+               , #{createdDate})
+    </insert>
+
+    <!-- inactive_refund 조회 -->
+    <select id="getInactiveRefundList" resultMap="inactiveRefundMap">
+        SELECT *
+        FROM inactive_refund
+        WHERE traveler_id = #{travelerId}
+    </select>
+
+    <!-- inactive_refund_calc 삭제 -->
+    <delete id="deleteInactiveRefundList">
+        DELETE
+        FROM inactive_refund
+        WHERE traveler_id = #{travelerId}
+    </delete>
+
+
+    <!-- inactive_withdrawal_partner 입력 -->
+    <insert id="insertInactiveWithdrawalPartner" parameterType="com.cashmallow.api.domain.model.inactiveuser.InactiveWithdrawalPartner">
+        INSERT INTO inactive_withdrawal_partner (id, user_id, business_no, account_no, account_name, shop_contact_number, created_date)
+        VALUES (#{id}, #{userId}, #{businessNo}, #{accountNo}, #{accountName}, #{shopContactNumber}, #{createdDate})
+    </insert>
+
+    <!-- inactive_withdrawal_partner 조회 -->
+    <select id="getInactiveWithdrawalPartner" resultType="com.cashmallow.api.domain.model.inactiveuser.InactiveWithdrawalPartner">
+        SELECT id,
+               user_id,
+               business_no,
+               account_no,
+               account_name,
+               shop_contact_number,
+               created_date
+        FROM inactive_withdrawal_partner
+        WHERE user_id = #{userId}
+    </select>
+
+    <!-- inactive_withdrawal_partner 삭제 -->
+    <delete id="deleteInactiveWithdrawalPartner">
+        DELETE
+        FROM inactive_withdrawal_partner
+        WHERE user_id = #{userId}
+    </delete>
+
+
+    <!-- inactive_withdrawal_partner_calc 입력 -->
+    <insert id="insertInactiveWithdrawalPartnerCalc" parameterType="com.cashmallow.api.domain.model.inactiveuser.InactiveWithdrawalPartnerCalc">
+        INSERT INTO inactive_withdrawal_partner_calc (id, withdrawal_partner_id, bank_account_no, bank_account_name, created_date)
+        VALUES (#{id}, #{withdrawalPartnerId}, #{bankAccountNo}, #{bankAccountName}, #{createdDate})
+    </insert>
+
+    <!-- inactive_withdrawal_partner_calc 조회 -->
+    <select id="getInactiveWithdrawalPartnerCalcList" resultType="com.cashmallow.api.domain.model.inactiveuser.InactiveWithdrawalPartnerCalc">
+        SELECT id, withdrawal_partner_id, bank_account_no, bank_account_name, created_date
+        FROM inactive_withdrawal_partner_calc
+        WHERE withdrawal_partner_id = #{withdrawalPartnerId}
+    </select>
+
+    <!-- inactive_withdrawal_partner_calc 삭제 -->
+    <delete id="deleteInactiveWithdrawalPartnerCalcList">
+        DELETE
+        FROM inactive_withdrawal_partner_calc
+        WHERE withdrawal_partner_id = #{withdrawalPartnerId}
+    </delete>
+
+    <!-- inactive_traveler 입력 -->
+    <insert id="insertInactiveTraveler" parameterType="com.cashmallow.api.domain.model.inactiveuser.InactiveTraveler">
+        INSERT INTO inactive_traveler (id, user_id, en_first_name, en_last_name, account_bankbook_photo,
+                                       local_first_name, local_last_name, certification_photo, identification_number,
+                                       account_no, account_name, contact_type, contact_id, created_date, address, address_secondary, address_photo)
+        VALUES ( #{id}
+               , #{userId}
+               , #{enFirstName, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}
+               , #{enLastName, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}
+               , #{accountBankbookPhoto}
+               , #{localFirstName, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}
+               , #{localLastName, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}
+               , #{certificationPhoto}
+               , #{identificationNumber}
+               , #{accountNo, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}
+               , #{accountName, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}
+               , #{contactType}
+               , #{contactId}
+               , #{createdDate}
+               , #{address, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}
+               , #{addressSecondary, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}
+               , #{addressPhoto})
+    </insert>
+
+    <!-- inactive_traveler 조회 -->
+    <select id="getInactiveTraveler" resultMap="inactiveTravelerMap">
+        SELECT *
+        FROM inactive_traveler
+        WHERE user_id = #{userId}
+    </select>
+
+    <!-- inactive_traveler 삭제 -->
+    <delete id="deleteInactiveTraveler">
+        DELETE
+        FROM inactive_traveler
+        WHERE user_id = #{userId}
+    </delete>
+
+
+    <!-- inactive_user 입럭 -->
+    <insert id="insertInactiveUser" parameterType="com.cashmallow.api.domain.model.inactiveuser.InactiveUser">
+        INSERT INTO inactive_user (id, login, first_name, last_name, email, profile_photo, inactive_type, created_date, phone_number)
+        VALUES (#{id},
+                #{login},
+                #{firstName, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler},
+                #{lastName, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler},
+                #{email, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler},
+                #{profilePhoto},
+                #{inactiveType},
+                #{createdDate},
+                #{phoneNumber, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler})
+    </insert>
+
+    <!-- inactive_user 조회 -->
+    <select id="getInactiveUser" resultMap="inactiveUserMap">
+        SELECT *
+        FROM inactive_user
+        WHERE id = #{userId}
+    </select>
+
+    <select id="getInactiveUserByLoginNInactiveType" parameterType="hashmap" resultMap="inactiveUserMap">
+        SELECT *
+        FROM inactive_user
+        WHERE login = #{login}
+          AND inactive_type = #{inactiveType}
+    </select>
+
+    <select id="getInactiveUserListByLogin" parameterType="java.lang.String" resultMap="inactiveUserMap">
+        SELECT *
+        FROM inactive_user
+        WHERE login = #{login}
+        ORDER BY created_date DESC
+    </select>
+
+    <!-- inactive_user 삭제 -->
+    <delete id="deleteInactiveUser">
+        DELETE
+        FROM inactive_user
+        WHERE id = #{userId}
+    </delete>
+
+    <select id="getInactiveTravelerListByIdentificationNumber" parameterType="java.lang.String" resultType="com.cashmallow.api.domain.model.inactiveuser.InactiveTraveler">
+        SELECT id
+             , user_id
+             , account_no
+             , account_name
+             , created_date
+             , contact_type
+             , contact_id
+             , local_first_name
+             , local_last_name
+             , en_first_name
+             , en_last_name
+             , identification_number
+             , certification_photo
+             , account_bankbook_photo
+             , address
+             , address_photo
+             , address_secondary
+          FROM inactive_traveler
+         WHERE identification_number = #{identificationNumber}
+         ORDER BY created_date DESC
+    </select>
+
+    <select id="getInactiveTravelerByUserId" parameterType="java.lang.String" resultType="com.cashmallow.api.domain.model.inactiveuser.InactiveTraveler">
+        SELECT id
+             , user_id
+             , account_no
+             , account_name
+             , created_date
+             , contact_type
+             , contact_id
+             , local_first_name
+             , local_last_name
+             , en_first_name
+             , en_last_name
+             , identification_number
+             , certification_photo
+             , account_bankbook_photo
+             , address
+             , address_photo
+             , address_secondary
+        FROM inactive_traveler
+        WHERE user_id = #{userId}
+    </select>
+
+    <select id="getInactiveTravelerListByUserIds">
+        SELECT id
+             , user_id
+             , account_no
+             , account_name
+             , created_date
+             , contact_type
+             , contact_id
+             , local_first_name
+             , local_last_name
+             , en_first_name
+             , en_last_name
+             , identification_number
+             , certification_photo
+             , account_bankbook_photo
+             , address
+             , address_photo
+             , address_secondary
+          FROM inactive_traveler
+         WHERE user_id IN
+        <foreach collection="inactiveUser" item="userId" open="(" close=")" separator=",">
+            #{userId}
+        </foreach>
+    </select>
+</mapper>

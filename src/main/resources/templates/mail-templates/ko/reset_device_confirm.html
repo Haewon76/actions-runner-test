@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>Confirm user's new device</title>
+</head>
+
+<body>
+
+<div th:replace="mail-templates/ko/fragments/header :: header"></div>
+
+<div id="success" style="background-color:white; padding:16px; line-height:1.5em; font-size:1em;">
+    고객님의 기기 정보가 초기화되었습니다. <br>
+    &nbsp;<br>
+    신규 기기로 로그인 하신 후 여권 정보를 새로 등록하시기 바랍니다.<br>
+    &nbsp;<br>
+    &nbsp;<br>
+</div>
+
+<div id="failure" style="background-color:white; padding:16px; line-height:1.5em; font-size:1em;">
+    신규 기기 사용을 위한 기기 정보 초기화에 실패했습니다. <br>
+    &nbsp;<br>
+    다시 시도해 보시고 계속 실패하면 고객센터로 문의바랍니다. <br>
+    &nbsp;<br>
+    &nbsp;<br>
+</div>
+
+<script>
+    /*<![CDATA[*/
+    var successDIV = document.getElementById("success");
+    var failureDIV = document.getElementById("failure");
+    if ("Y" == "[[${isSuccess}]]") {
+        successDIV.style.display = "block";
+        failureDIV.style.display = "none";
+    } else {
+        successDIV.style.display = "none";
+        failureDIV.style.display = "block";
+    }
+    /*]]>*/
+</script>
+
+<div th:replace="mail-templates/ko/fragments/footer :: footer-confirm"></div>
+
+</body>
+</html>

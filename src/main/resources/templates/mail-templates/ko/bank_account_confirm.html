@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>Confirm user's bank account</title>
+</head>
+
+<body>
+
+<div th:replace="mail-templates/ko/fragments/header :: header"></div>
+
+<div id="success" style="background-color:ffffff; padding:16px; line-height:1.5em; font-size:1em;">
+    계좌 인증이 완료됐습니다. 인증을 위해 보내드린 메일은 보안을 위해 삭제하시기 바랍니다.<br>
+    &nbsp;<br>
+</div>
+
+<div id="failure" style="display:none; background-color:ffffff; padding:16px; line-height:1.5em; font-size:1em;">
+    계좌 인증을 할 수 없습니다. 입력하신 정보가 올바른지 확인 부탁드립니다.<br>
+    &nbsp;<br>
+</div>
+
+<script>
+    /*<![CDATA[*/
+    var successDIV = document.getElementById("success");
+    var failureDIV = document.getElementById("failure");
+    if ("Y" == "[[${isSuccess}]]") {
+        successDIV.style.display = "block";
+        failureDIV.style.display = "none";
+    } else {
+        successDIV.style.display = "none";
+        failureDIV.style.display = "block";
+    }
+    /*]]>*/
+</script>
+
+<div th:replace="mail-templates/ko/fragments/footer :: footer-confirm"></div>
+
+</body>
+</html>

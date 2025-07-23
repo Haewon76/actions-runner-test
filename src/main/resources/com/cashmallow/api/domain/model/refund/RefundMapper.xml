@@ -1,0 +1,365 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- Mybatis 사용법: http://www.mybatis.org/mybatis-3/ko/index.html -->
+
+<mapper namespace="com.cashmallow.api.domain.model.refund.RefundMapper">
+
+    <resultMap type="com.cashmallow.api.domain.model.refund.JpRefundAccountInfo" id="jpRefundAccountMap">
+        <result column="local_last_name" property="localLastName" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+        <result column="local_first_name" property="localFirstName" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+        <result column="account_no" property="accountNo" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+    </resultMap>
+
+    <resultMap type="com.cashmallow.api.domain.model.refund.NewRefund" id="newRefundMap">
+        <result column="tr_account_no" property="trAccountNo" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+        <result column="tr_account_name" property="trAccountName" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+    </resultMap>
+
+    <select id="getNewRefundById" resultMap="newRefundMap">
+        SELECT *
+        FROM new_refund nr
+        WHERE id = #{id}
+    </select>
+
+    <!-- 송금일 경우 remit_id 컬럼에, 화전일 경우 exchange_id/wallet_id 컬럼에서 가져와야하고 필요한 값만 가져오기 위해 추가함 -->
+    <select id="getNewRefundExchangeOrRemitById" parameterType="java.lang.Long" resultType="com.cashmallow.api.domain.model.coupon.vo.CouponNewRefund">
+        SELECT (CASE WHEN related_txn_type = 'EXCHANGE' THEN exchange_id
+                     WHEN related_txn_type = 'REMITTANCE' THEN remit_id
+                     ELSE null END) exchange_or_remit_id
+             , coupon_user_id
+             , coupon_discount_amount
+        FROM new_refund
+        WHERE id = #{refundId}
+    </select>
+
+    <select id="getNewRefundListByTravelerId" resultMap="newRefundMap">
+        SELECT *
+        FROM new_refund nr
+        WHERE traveler_id = #{travelerId}
+    </select>
+
+    <select id="getNewRefundByCountry" parameterType="hashmap" resultMap="newRefundMap">
+        SELECT *
+        FROM new_refund nr
+        WHERE refund_status = #{refundStatus}
+          AND to_cd = #{toCd}
+    </select>
+
+    <select id="getNewRefundListInStandbyByTravelerId" resultMap="newRefundMap">
+        SELECT *
+          FROM new_refund nr
+         WHERE traveler_id = #{travelerId}
+           AND refund_status = 'SB'
+           AND exchange_id IS NOT NULL
+      ORDER BY exchange_id ASC
+    </select>
+
+    <select id="getNewRefundInProgressByTravelerId" resultMap="newRefundMap">
+        SELECT *
+        FROM new_refund nr
+        WHERE traveler_id = #{travelerId}
+          AND refund_status IN ('OP', 'MP', 'AP', 'SB')
+    </select>
+
+    <select id="getNewRefundInProgressByWalletId" parameterType="hashmap" resultMap="newRefundMap">
+        SELECT *
+        FROM new_refund nr
+        WHERE traveler_id = #{travelerId}
+          AND wallet_id = #{walletId}
+          AND refund_status IN ('OP', 'MP', 'AP', 'SB')
+    </select>
+
+    <select id="countSearchNewRefundList" parameterType="hashmap" resultType="int">
+        SELECT COUNT(1)
+        FROM new_refund nr
+        INNER JOIN traveler t ON nr.traveler_id = t.id
+        INNER JOIN user u ON t.user_id = u.id
+        WHERE nr.created_date BETWEEN #{begin_date} AND #{end_date}
+        AND nr.to_cd = #{to_cd}
+        <if test="first_name != null and first_name != ''">
+            AND u.first_name = #{first_name, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}
+        </if>
+        <if test="last_name != null and last_name != ''">
+            AND u.last_name = #{last_name, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}
+        </if>
+        <if test="email != null and email != ''">
+            AND u.email = #{email, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}
+        </if>
+        <if test="user_id != null and user_id != ''">
+            AND t.user_id = #{user_id}
+        </if>
+        <if test="traveler_id != null and traveler_id != ''">
+            AND nr.traveler_id = #{traveler_id}
+        </if>
+        <if test="account_ok != null and (account_ok.equalsIgnoreCase('Y') or account_ok.equalsIgnoreCase('N'))">
+            AND t.account_ok = #{account_ok}
+        </if>
+        <if test="begin_account_ok_date != null and begin_account_ok_date != '' and end_account_ok_date != null and end_account_ok_date != ''">
+            AND t.account_ok_date BETWEEN #{begin_account_ok_date} AND #{end_account_ok_date}
+        </if>
+        <if test="bank_name != null and bank_name != ''">
+            AND nr.bank_name LIKE CONCAT('%', #{bank_name}, '%')
+        </if>
+        <if test="account_no != null and account_no != ''">
+            AND nr.tr_account_no = #{account_no, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}
+        </if>
+        <if test="account_name != null and account_name != ''">
+            AND nr.tr_account_name = #{account_name, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}
+        </if>
+        <if test="refund_status != null and refund_status != ''">
+            AND nr.refund_status = #{refund_status}
+        </if>
+        <if test="begin_created_date != null and begin_created_date != '' and end_created_date != null and end_created_date != ''">
+            AND nr.created_date BETWEEN #{begin_created_date} AND #{end_created_date}
+        </if>
+        <if test="begin_updated_date != null and begin_updated_date != '' and end_updated_date != null and end_updated_date != ''">
+            AND nr.updated_date BETWEEN #{begin_updated_date} AND #{end_updated_date}
+        </if>
+    </select>
+
+    <select id="searchNewRefundList" parameterType="hashmap" resultType="hashmap">
+        SELECT u.first_name,
+        u.last_name,
+        t.user_id,
+        u.email,
+        nr.id AS refund_id,
+        nr.to_cd,
+        nr.to_amt,
+        nr.created_date,
+        nr.updated_date,
+        nr.tr_bank_name as bank_name,
+        nr.tr_account_no as account_no,
+        nr.tr_account_name as account_name,
+        nr.from_cd,
+        <if test="refund_status != null and refund_status == 'CF'">
+            nr.exchange_rate,
+            nr.fee_per_amt,
+            nr.fee_rate_amt,
+            nr.from_amt,
+            truncate(nr.from_amt / nr.exchange_rate, -1 * floor(log10(c.mapping_inc))) AS refund_ex_amt,   -- 거래액
+            nr.fee                                         AS refund_fee_amt,  -- 수수료 합계
+            nr.related_txn_type                            AS refund_txn_type, -- 유형
+            CASE nr.related_txn_type
+            WHEN 'EXCHANGE' THEN nr.exchange_id
+            WHEN 'REMITTANCE' THEN nr.remit_id
+            END                                        AS txn_id,          -- 거래번호
+            GROUP_CONCAT(tm.paygate_rec_id SEPARATOR ', ') AS tid,  -- TID
+            nr.coupon_discount_amount,
+            nr.paygate_rec_out_id,
+        </if>
+        nr.refund_status
+        FROM new_refund nr
+        <if test="refund_status != null and refund_status == 'CF'">
+            LEFT OUTER JOIN transaction_record tr ON tr.related_txn_id = nr.remit_id OR tr.related_txn_id = nr.exchange_id
+            LEFT OUTER JOIN transaction_mapping tm ON tm.transaction_rec_id = tr.id
+            INNER JOIN country c ON c.code = nr.to_cd
+        </if>
+        INNER JOIN traveler t ON nr.traveler_id = t.id
+        INNER JOIN user u ON t.user_id = u.id
+        WHERE nr.created_date BETWEEN #{begin_date} AND #{end_date}
+        AND nr.to_cd = #{to_cd}
+        <if test="first_name != null and first_name != ''">
+            AND u.first_name = #{first_name, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}
+        </if>
+        <if test="last_name != null and last_name != ''">
+            AND u.last_name = #{last_name, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}
+        </if>
+        <if test="email != null and email != ''">
+            AND u.email = #{email, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}
+        </if>
+        <if test="user_id != null and user_id != ''">
+            AND t.user_id = #{user_id}
+        </if>
+        <if test="account_ok != null and (account_ok.equalsIgnoreCase('Y') or account_ok.equalsIgnoreCase('N'))">
+            AND t.account_ok = #{account_ok}
+        </if>
+        <if test="begin_account_ok_date != null and begin_account_ok_date != '' and end_account_ok_date != null and end_account_ok_date != ''">
+            AND t.account_ok_date BETWEEN #{begin_account_ok_date} AND #{end_account_ok_date}
+        </if>
+        <if test="bank_name != null and bank_name != ''">
+            AND nr.tr_bank_name LIKE CONCAT('%', #{bank_name}, '%')
+        </if>
+        <if test="account_no != null and account_no != ''">
+            AND nr.tr_account_no = #{account_no, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}
+        </if>
+        <if test="account_name != null and account_name != ''">
+            AND nr.tr_account_name = #{account_name, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}
+        </if>
+        <if test="refund_status != null and refund_status != ''">
+            AND nr.refund_status = #{refund_status}
+        </if>
+        <if test="begin_created_date != null and begin_created_date != '' and end_created_date != null and end_created_date != ''">
+            AND nr.created_date BETWEEN #{begin_created_date} AND #{end_created_date}
+        </if>
+        <if test="begin_updated_date != null and begin_updated_date != '' and end_updated_date != null and end_updated_date != ''">
+            AND nr.updated_date BETWEEN #{begin_updated_date} AND #{end_updated_date}
+        </if>
+            GROUP BY nr.id
+        <if test="sort != null and sort != ''">
+            ORDER BY ${sort}
+        </if>
+        LIMIT ${start_row}, ${size}
+    </select>
+
+    <select id="getNewRefundNotCancelByExchangeId" parameterType="hashmap" resultMap="newRefundMap">
+        SELECT nr.*
+         FROM new_refund nr
+        WHERE nr.exchange_id = #{exchangeId}
+          AND nr.traveler_id = #{travelerId}
+          AND nr.refund_status NOT IN ('CC', 'TC')
+    </select>
+
+    <select id="getNewRefundNotCancelByRemitId" parameterType="hashmap" resultMap="newRefundMap">
+        SELECT nr.*
+         FROM new_refund nr
+        WHERE nr.remit_id = #{remitId}
+          AND nr.traveler_id = #{travelerId}
+          AND nr.refund_status NOT IN ('CC', 'TC')
+    </select>
+
+    <update id="updateNewRefund" parameterType="com.cashmallow.api.domain.model.refund.NewRefund">
+        UPDATE new_refund
+        SET refund_status = #{refundStatus},
+            tr_account_no = #{trAccountNo, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler},
+            tr_account_name = #{trAccountName, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler},
+            tr_bank_name = #{trBankName},
+            jp_account_type = #{jpAccountType},
+            jp_bank_branch_name = #{jpBankBranchName},
+            updated_date  = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateNewRefundList" parameterType="com.cashmallow.api.domain.model.refund.NewRefund">
+        <foreach collection="list" item="item" separator=";">
+            UPDATE new_refund
+               SET refund_status = #{item.refundStatus},
+                   updated_date = NOW()
+             WHERE id = #{item.id}
+        </foreach>
+    </update>
+
+    <insert id="insertRefundStatus" parameterType="com.cashmallow.api.domain.model.refund.RefundStatus">
+        INSERT INTO refund_status (refund_id, refund_status, user_id, message)
+        values (#{refundId}, #{refundStatus}, #{userId}, #{message})
+    </insert>
+
+    <insert id="insertRefundStatusList" parameterType="com.cashmallow.api.domain.model.refund.RefundStatus">
+        INSERT INTO refund_status (refund_id, refund_status, user_id, message)
+        values
+            <foreach collection="list" item="item" separator=",">
+                (#{item.refundId}, #{item.refundStatus}, #{item.userId}, #{item.message})
+            </foreach>
+    </insert>
+
+    <insert id="insertNewRefund" parameterType="com.cashmallow.api.domain.model.refund.NewRefund" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO new_refund (to_cd, traveler_id, to_amt, exchange_rate, base_exchange_rate, from_cd, from_amt, fee,
+                            fee_per_amt, fee_rate_amt, fee_rate, tr_bank_info_id, tr_bank_name, tr_account_no, tr_account_name, jp_account_type,
+                            refund_status, related_txn_type, wallet_id, exchange_id, remit_id, coupon_user_id, coupon_discount_amount, jp_bank_branch_name)
+        SELECT #{toCd},
+               #{travelerId},
+               #{toAmt},
+               #{exchangeRate},
+               #{baseExchangeRate},
+               #{fromCd},
+               #{fromAmt},
+               #{fee},
+               #{feePerAmt},
+               #{feeRateAmt},
+               #{feeRate},
+               #{trBankInfoId},
+               #{trBankName},
+               #{trAccountNo, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler},
+               #{trAccountName, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler},
+               #{jpAccountType},
+               #{refundStatus},
+               #{relatedTxnType},
+               #{walletId},
+               #{exchangeId},
+               #{remitId},
+               #{couponUserId},
+               #{couponDiscountAmount},
+               #{jpBankBranchName}
+    </insert>
+
+    <select id="getRefundAmountByCountry" parameterType="HashMap" resultType="HashMap">
+        SELECT *
+        FROM (SELECT COUNT(to_cd) totalCnt, COALESCE(SUM(to_amt), 0) totalTotal
+              FROM new_refund
+              WHERE to_cd = #{country}) AS cntTotal,
+             (SELECT COUNT(to_cd) totalCnt, COALESCE(SUM(to_amt), 0) comTotal
+              FROM new_refund
+              WHERE to_cd = #{country}
+                AND refund_status = 'CF') AS cntComplete,
+             (SELECT COUNT(to_cd) totalCnt, COALESCE(SUM(to_amt), 0) reqTotal
+              FROM new_refund
+              WHERE to_cd = #{country}
+                AND refund_status IN ('OP', 'AP', 'MP')) AS cntReq
+    </select>
+
+    <!-- 23.7.21 환불건에 대해서 페이게이트 TID 수기 저장 / 24.03.19 되살림 -->
+    <update id="setRefundTidOutId" parameterType="com.cashmallow.api.domain.model.refund.NewRefund">
+        UPDATE new_refund
+        SET paygate_rec_out_id = #{paygateRecOutId}
+        WHERE id = #{id}
+    </update>
+
+    <insert id="insertJpRefundAccountInfo" parameterType="com.cashmallow.api.domain.model.refund.JpRefundAccountInfo" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO jp_refund_account_info (traveler_id, local_last_name, local_first_name, ml_bank_id, bank_code, bank_name,
+                                            branch_code, branch_name, account_type, account_no)
+        SELECT #{travelerId},
+               #{localLastName, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler},
+               #{localFirstName, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler},
+               #{mlBankId},
+               #{bankCode},
+               #{bankName},
+               #{branchCode},
+               #{branchName},
+               #{accountType},
+               #{accountNo, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}
+    </insert>
+
+    <update id="updateJpRefundAccountInfo" parameterType="com.cashmallow.api.domain.model.refund.JpRefundAccountInfo">
+        UPDATE jp_refund_account_info
+           SET local_last_name = #{localLastName, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler},
+               local_first_name = #{localFirstName, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler},
+               ml_bank_id = #{mlBankId},
+               bank_code = #{bankCode},
+               bank_name = #{bankName},
+               branch_code = #{branchCode},
+               branch_name = #{branchName},
+               account_type = #{accountType},
+               account_no = #{accountNo, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler},
+               need_re_register = #{needReRegister}
+        WHERE id = #{id}
+    </update>
+
+    <select id="getJpRefundAccountInfoById" parameterType="long" resultMap="jpRefundAccountMap">
+        SELECT *
+          FROM jp_refund_account_info
+         WHERE id = #{id}
+    </select>
+
+    <select id="getJpRefundAccountInfoByTravelerId" parameterType="long" resultMap="jpRefundAccountMap">
+        SELECT *
+        FROM jp_refund_account_info
+        WHERE traveler_id = #{travelerId}
+    </select>
+
+    <insert id="insertJpRefundAccountInfoHistory" parameterType="com.cashmallow.api.domain.model.refund.JpRefundAccountInfo">
+        INSERT INTO jp_refund_account_info_history (jp_refund_account_info_id, traveler_id, local_last_name, local_first_name,
+                                                    ml_bank_id, bank_code, bank_name, branch_code, branch_name, account_type, account_no)
+        SELECT #{id},
+               #{travelerId},
+               #{localLastName, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler},
+               #{localFirstName, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler},
+               #{mlBankId},
+               #{bankCode},
+               #{bankName},
+               #{branchCode},
+               #{branchName},
+               #{accountType},
+               #{accountNo, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}
+    </insert>
+
+</mapper>

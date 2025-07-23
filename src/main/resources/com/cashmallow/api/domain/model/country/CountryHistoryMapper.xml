@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.cashmallow.api.domain.model.country.CountryHistoryMapper">
+
+    <insert id="registerCountryHistory" parameterType="com.cashmallow.api.domain.model.country.CountryHistory">
+        INSERT INTO country_history (code, iso_3166, iso_4217, eng_name, kor_name, calling_code, service, can_signup, timezone_interval,
+                                     last_ref_value, is_family_name_after_first_name, type_of_ref_value, mapping_upper_range, mapping_lower_range,
+                                     mapping_inc, unit_scale, default_lat, default_lng, ttrate_tt_rate, ttrate_notes_rate, cash_out_type, date_calculation_standard,
+                                     created_at, user_id, ip)
+        VALUES (#{code}, #{iso3166}, #{iso4217}, #{engName}, #{korName}, #{callingCode}, #{service}, #{canSignup}, #{timezoneInterval},
+                #{lastRefValue}, #{isFamilyNameAfterFirstName}, #{typeOfRefValue}, #{mappingUpperRange}, #{mappingLowerRange},
+                #{mappingInc}, #{unitScale}, #{defaultLat}, #{defaultLng}, #{ttrateTtRate}, #{ttrateNotesRate}, #{cashOutType}, #{dateCalculationStandard},
+                #{createdAt}, #{userId}, #{ip})
+    </insert>
+
+    <select id="getCountryHistory" parameterType="string" resultType="com.cashmallow.api.domain.model.country.CountryHistory">
+        SELECT code,
+               iso_3166,
+               iso_4217,
+               eng_name,
+               kor_name,
+               calling_code,
+               service,
+               can_signup,
+               timezone_interval,
+               last_ref_value,
+               is_family_name_after_first_name,
+               type_of_ref_value,
+               mapping_upper_range,
+               mapping_lower_range,
+               mapping_inc,
+               unit_scale,
+               default_lat,
+               default_lng,
+               ttrate_tt_rate,
+               ttrate_notes_rate,
+               cash_out_type,
+               date_calculation_standard,
+               created_at,
+               user_id,
+               ip
+        FROM country_history
+        WHERE code = #{countryCode}
+    </select>
+
+    <insert id="registerCountryFeeHistory" parameterType="com.cashmallow.api.domain.model.country.CountryFeeHistory">
+        INSERT INTO country_fee_history(country_fee_id, from_cd, to_cd, fee, min, max,
+                                        sort, use_yn, user_id, ip)
+        VALUES (#{countryFeeId}, #{fromCd}, #{toCd}, #{fee}, #{min}, #{max},
+                #{sort}, #{useYn}, #{userId}, #{ip})
+    </insert>
+
+    <select id="getCountryFeeHistory" parameterType="long" resultType="com.cashmallow.api.domain.model.country.CountryFeeHistory">
+        SELECT id,
+               country_fee_id,
+               from_cd,
+               to_cd,
+               fee,
+               min,
+               max,
+               sort,
+               use_yn,
+               created_at,
+               user_id,
+               ip
+        FROM country_fee_history
+        WHERE country_fee_id = #{countryFeeId}
+    </select>
+
+    <insert id="insertExchangeConfigHistory">
+        INSERT INTO exchange_config_history(exchange_config_id, from_cd, to_cd, fee_rate_exchange, min_fee,
+                                            can_exchange,
+                                            enabled_exchange, creator, exchange_notice, refund_fee_per,
+                                            fee_per_exchange,
+                                            can_remittance, enabled_remittance, fee_per_remittance, fee_rate_remittance,
+                                            remittance_notice, user_id, ip)
+        VALUES (#{exchangeConfigId}, #{fromCd}, #{toCd}, #{feeRateExchange}, #{minFee},
+                #{canExchange},
+                #{enabledExchange}, #{creator}, #{exchangeNotice}, #{refundFeePer},
+                #{feePerExchange},
+                #{canRemittance}, #{enabledRemittance}, #{feePerRemittance}, #{feeRateRemittance},
+                #{remittanceNotice}, #{userId}, #{ip})
+    </insert>
+
+    <select id="getExchangeConfigHistory" parameterType="long"
+            resultType="com.cashmallow.api.domain.model.country.ExchangeConfigHistory">
+        SELECT id,
+               exchange_config_id,
+               from_cd,
+               to_cd,
+               fee_rate_exchange,
+               min_fee,
+               can_exchange,
+               enabled_exchange,
+               creator,
+               exchange_notice,
+               refund_fee_per,
+               fee_per_exchange,
+               can_remittance,
+               enabled_remittance,
+               fee_per_remittance,
+               fee_rate_remittance,
+               remittance_notice,
+               created_at,
+               user_id,
+               ip
+        FROM exchange_config_history
+        WHERE exchange_config_id = #{exchangeConfigId}
+    </select>
+</mapper>

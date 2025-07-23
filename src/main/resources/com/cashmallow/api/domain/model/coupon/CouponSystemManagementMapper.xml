@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.cashmallow.api.domain.model.coupon.CouponSystemManagementMapper">
+
+    <!-- 아래는 admin 시스템 쿠폰 메뉴 및 시스템 쿠폰 적용을 위한 쿼리들 -->
+
+    <select id="getNewSystemCouponList" parameterType="com.cashmallow.api.interfaces.coupon.dto.req.CouponSystemManagementRequest" resultType="com.cashmallow.api.domain.model.coupon.entity.Coupon">
+        SELECT id
+             , coupon_code
+             , coupon_name
+             , coupon_discount_value
+             , min_required_amount
+        FROM coupon_v2
+        WHERE from_country_code = #{fromCountryCode}
+          AND coupon_code LIKE CONCAT(#{couponType}, '%')
+          AND is_active = 'Y' AND is_system = 'Y'
+          AND id NOT IN (SELECT coupon_id
+                         FROM coupon_system_management
+                         WHERE from_country_code = #{fromCountryCode} AND coupon_type = #{couponType}
+                           AND is_applied = 'Y')
+    </select>
+
+    <insert id="createManageSystemCoupon" parameterType="com.cashmallow.api.domain.model.coupon.entity.CouponSystemManagement">
+        INSERT INTO coupon_system_management (
+                                               id, coupon_id, from_country_code, is_applied, coupon_type, coupon_code_body, description
+                                             , start_date_local, end_date_local, start_date, end_date
+                                             , created_id, updated_id, created_date, updated_date
+        ) VALUES (
+                   #{id}, #{couponId}, #{fromCountryCode}, 'Y', #{couponType}, #{couponCodeBody}, #{description}
+                 , #{startDateLocal}, #{endDateLocal}, #{startDate}, #{endDate}
+                 , #{createdId}, #{updatedId}, CURRENT_TIMESTAMP(), CURRENT_TIMESTAMP()
+                 )
+    </insert>
+
+    <update id="updateManageSystemCoupon" parameterType="map">
+        UPDATE coupon_system_management
+        SET is_applied = #{isApplied}
+          , updated_id = #{updatedId}
+          , updated_date = CURRENT_TIMESTAMP()
+        WHERE coupon_id = #{couponId}
+    </update>
+
+    <!-- 날짜 범위 내에 있을 때 시스템 쿠폰 내역 조회 -->
+    <select id="getUsingCouponDateRange" parameterType="com.cashmallow.api.interfaces.coupon.dto.req.CouponSystemManagementRequest" resultType="com.cashmallow.api.domain.model.coupon.entity.CouponSystemManagement">
+        SELECT id
+             , coupon_id
+             , from_country_code
+             , coupon_type
+             , coupon_code_body
+             , description
+             , start_date_local
+             , end_date_local
+             , start_date
+             , end_date
+             , created_id
+             , created_date
+        FROM coupon_system_management
+        WHERE from_country_code = #{fromCountryCode}
+          AND coupon_type = #{couponType}
+          AND start_date_local IS NOT NULL AND end_date_local IS NOT NULL
+          AND #{currentDate} BETWEEN start_date_local AND end_date_local
+          AND is_applied = 'Y'
+    </select>
+
+    <!-- 날짜 기한 없는 적용중인 시스템 쿠폰 내역 조회 -->
+    <select id="getUsingCoupon" parameterType="com.cashmallow.api.interfaces.coupon.dto.req.CouponSystemManagementRequest" resultType="com.cashmallow.api.domain.model.coupon.entity.CouponSystemManagement">
+        SELECT id
+             , coupon_id
+             , from_country_code
+             , coupon_type
+             , coupon_code_body
+             , description
+             , start_date_local
+             , end_date_local
+             , start_date
+             , end_date
+             , created_id
+             , created_date
+        FROM coupon_system_management
+        WHERE from_country_code = #{fromCountryCode}
+          AND coupon_type = #{couponType}
+          AND start_date_local IS NULL AND end_date_local IS NULL
+          AND is_applied = 'Y'
+        ORDER
+            BY created_date DESC
+    </select>
+
+    <!-- 날짜 기한 없는 적용중인 시스템 쿠폰 내역 조회 (모든 타입 조회용) -->
+    <select id="getUsingCouponAllCouponType" parameterType="map" resultType="com.cashmallow.api.domain.model.coupon.entity.CouponSystemManagement">
+        SELECT id
+        , coupon_id
+        , from_country_code
+        , coupon_type
+        , coupon_code_body
+        , description
+        , start_date_local
+        , end_date_local
+        , start_date
+        , end_date
+        , created_id
+        , created_date
+        FROM coupon_system_management
+        WHERE from_country_code = #{fromCountryCode}
+        AND coupon_type IN
+        <foreach collection="couponTypes" item="type" separator="," open="(" close=")">
+            #{type}
+        </foreach>
+        AND start_date_local IS NULL AND end_date_local IS NULL
+        AND is_applied = 'Y'
+        ORDER
+        BY created_date DESC
+    </select>
+
+    <select id="getManageCouponByCouponId" parameterType="java.lang.Long" resultType="com.cashmallow.api.domain.model.coupon.entity.CouponSystemManagement">
+        SELECT id
+             , coupon_id
+             , from_country_code
+             , coupon_type
+             , coupon_code_body
+             , description
+             , start_date_local
+             , end_date_local
+             , start_date
+             , end_date
+             , created_id
+             , created_date
+        FROM coupon_system_management
+        WHERE coupon_id = #{couponId}
+    </select>
+
+    <!-- 적용 중이거나 적용 예정인 쿠폰 -->
+    <select id="getUsingOrLaterCouponList" parameterType="com.cashmallow.api.interfaces.coupon.dto.req.CouponSystemManagementRequest" resultType="com.cashmallow.api.domain.model.coupon.entity.CouponSystemManagement">
+        SELECT id
+             , coupon_id
+             , from_country_code
+             , coupon_type
+             , coupon_code_body
+             , description
+             , start_date_local
+             , end_date_local
+             , start_date
+             , end_date
+             , created_id
+             , created_date
+        FROM coupon_system_management
+        WHERE from_country_code = #{fromCountryCode}
+          AND coupon_type = #{couponType}
+          AND is_applied = 'Y'
+    </select>
+
+</mapper>

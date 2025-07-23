@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Cashmallow Exchange Receipt</title>
+    <style>
+        body {
+            font-family: 'Droid Sans Fallback', sans-serif;
+        }
+
+        table {
+            border-collapse: collapse;
+        }
+
+        td {
+            
+            vertical-align: bottom;
+            white-space: nowrap;
+            
+            color: #000000;
+            font-size: 11pt;
+            font-weight: 400;
+            font-style: normal;
+            font-family: 'Droid Sans Fallback', sans-serif;
+        }
+
+        .x67 {
+
+            
+            vertical-align: bottom;
+            white-space: nowrap;
+            
+
+            color: #000000;
+            font-size: 12pt;
+            font-weight: 400;
+            font-style: normal;
+            font-family: Arial, sans-serif;
+
+        }
+
+        .x68 {
+
+            
+            vertical-align: top;
+            white-space: nowrap;
+            
+
+            color: #000000;
+            font-size: 11pt;
+            font-weight: 400;
+            font-style: normal;
+            font-family: 'Droid Sans Fallback', sans-serif;
+
+        }
+
+        .x69 {
+            vertical-align: middle;
+            white-space: nowrap;
+            color: #000000;
+            font-size: 11pt;
+            font-weight: 400;
+            font-style: normal;
+            font-family: 'Droid Sans Fallback', sans-serif;
+        }
+
+        .x70 {
+
+            text-align: left;
+            vertical-align: middle;
+            white-space: nowrap;
+
+            padding-left: 32px;
+
+            font-size: 11pt;
+            font-weight: 400;
+            font-style: normal;
+            font-family: 'Droid Sans Fallback', sans-serif;
+
+        }
+
+        .x71 {
+
+            
+            vertical-align: bottom;
+            white-space: nowrap;
+
+            font-size: 28pt;
+            font-weight: 700;
+            font-style: normal;
+            font-family: 'Droid Sans Fallback', sans-serif;
+            border-top: none;
+            border-right: none;
+            border-bottom: none;
+            border-left: none;
+        }
+
+        .x72 {
+
+            text-align: center;
+            vertical-align: bottom;
+            white-space: nowrap;
+
+            color: #404040;
+            font-size: 28pt;
+            font-weight: 700;
+            font-style: normal;
+            font-family: 'Droid Sans Fallback',sans-serif;
+            border-top: none;
+            border-right: none;
+            border-bottom: none;
+            border-left: none;
+
+
+        }
+
+        .x73 {
+
+            
+            vertical-align: middle;
+            white-space: nowrap;
+
+            color: #595959;
+            font-size: 10pt;
+            font-weight: 400;
+            font-style: normal;
+            font-family: 'Droid Sans Fallback',sans-serif;
+
+        }
+
+        .x74 {
+            text-align:left;
+            vertical-align:middle;
+            white-space:nowrap;
+            padding-left:32px;
+            background:#FFFFFF;
+            color:#595959;
+            font-size:10pt;
+            font-weight:400;
+            font-style:normal;
+            font-family:'Droid Sans Fallback',sans-serif;
+            border-top:none;
+            border-right:none;
+            border-bottom:none;
+            border-left:none;
+        }
+        .x75 {
+
+            text-align: right;
+            vertical-align: middle;
+            white-space: nowrap;
+
+            color: #595959;
+            font-size: 10pt;
+            font-weight: 400;
+            font-style: normal;
+            font-family: 'Droid Sans Fallback',sans-serif;
+
+        }
+
+        .x76 {
+
+            text-align: center;
+            vertical-align: middle;
+            white-space: nowrap;
+
+            color: #595959;
+            font-size: 10pt;
+            font-weight: 400;
+            font-style: normal;
+            font-family: 'Droid Sans Fallback',sans-serif;
+
+        }
+        .x77 {
+            vertical-align: bottom;
+            white-space: nowrap;
+            color: #595959;
+            font-size: 10pt;
+            font-weight: 400;
+            font-style: normal;
+            font-family: 'Droid Sans Fallback',sans-serif;
+            border-top: none;
+            border-right: none;
+            border-bottom: 3px solid #000000;
+            border-left: none;
+        }
+        .x78 {
+            text-align: left;
+            vertical-align: middle;
+            white-space: nowrap;
+            color: #595959;
+            font-size: 10pt;
+            font-weight: 400;
+            font-style: normal;
+            font-family: 'Droid Sans Fallback',sans-serif;
+        }
+        .x79 {
+            text-align: left;
+            vertical-align: middle;
+            white-space: nowrap;
+            color: #000000;
+            font-size: 11pt;
+            font-weight: 400;
+            font-style: normal;
+            font-family: 'Droid Sans Fallback', sans-serif;
+        }
+        .x80 {
+            text-align: left;
+            vertical-align: middle;
+            white-space: nowrap;
+            color: #595959;
+            font-size: 10pt;
+            font-weight: 400;
+            font-style: normal;
+            font-family: 'Droid Sans Fallback',sans-serif;
+        }
+        .x81 {
+            text-align: left;
+            vertical-align: middle;
+            white-space: nowrap;
+            padding-left: 32px;
+            color: #595959;
+            font-size: 10pt;
+            font-weight: 400;
+            font-style: normal;
+            font-family: 'Droid Sans Fallback',sans-serif;
+        }
+        .x84 {
+            text-align: center;
+            vertical-align: middle;
+            white-space: nowrap;
+            color: #595959;
+            font-size: 10pt;
+            font-weight: 400;
+            font-style: normal;
+            font-family: 'Droid Sans Fallback',sans-serif;
+            border-top: none ;
+            border-right: none;
+            border-bottom: 1px solid #FFFFFF;
+            border-left: none;
+        }
+        .x85 {
+            text-align: left;
+            vertical-align: middle;
+            white-space: nowrap;
+
+            padding-left: 32px;
+
+            color: #595959;
+            font-size: 10pt;
+            font-weight: 400;
+            font-style: normal;
+            font-family: 'Droid Sans Fallback',sans-serif;
+            border-top: 1px solid #F2F2F2;
+            border-right: none;
+            border-bottom: 1px solid #FFFFFF;
+            border-left: none;
+        }
+
+        .x86 {
+
+            text-align: left;
+            vertical-align: middle;
+            white-space: nowrap;
+
+            color: #595959;
+            font-size: 10pt;
+            font-weight: 700;
+            font-style: normal;
+            font-family: 'Droid Sans Fallback', sans-serif;
+
+        }
+
+        .x87 {
+
+
+            vertical-align: middle;
+            white-space: nowrap;
+
+            color: #595959;
+            font-size: 9pt;
+            font-weight: 400;
+            font-style: normal;
+            font-family: 'Droid Sans Fallback', sans-serif;
+            border-top: 1px solid #F2F2F2;
+            border-right: none;
+            border-bottom: 1px solid #F2F2F2;
+            border-left: none ;
+
+
+        }
+
+        .x88 {
+
+            text-align: right;
+            vertical-align: middle;
+            white-space: nowrap;
+
+            color: #595959;
+            font-size: 9pt;
+            font-weight: 400;
+            font-style: normal;
+            font-family: 'Droid Sans Fallback', sans-serif;
+            border-top: 1px solid #F2F2F2;
+            border-right: none;
+            border-bottom: 1px solid #F2F2F2;
+            border-left: none;
+
+
+        }
+
+        .x89 {
+
+
+            vertical-align: middle;
+            white-space: nowrap;
+
+            color: #595959;
+            font-size: 9pt;
+            font-weight: 400;
+            font-style: normal;
+            font-family: 'Droid Sans Fallback', sans-serif;
+            border-top: none;
+            border-right: none;
+            border-bottom: none;
+            border-left: 1px solid #F2F2F2;
+
+
+        }
+
+        .x90 {
+
+            text-align: right;
+            vertical-align: middle;
+            white-space: nowrap;
+
+            color: #595959;
+            font-size: 9pt;
+            font-weight: 400;
+            font-style: normal;
+            font-family: 'Droid Sans Fallback', sans-serif;
+            border-top: 1px solid ;
+            border-right: none;
+            border-bottom: none;
+            border-left: none;
+
+
+        }
+
+        .x91 {
+
+            text-align: right;
+            vertical-align: middle;
+            white-space: nowrap;
+
+            color: #595959;
+            font-size: 9pt;
+            font-weight: 400;
+            font-style: normal;
+            font-family: 'Droid Sans Fallback', sans-serif;
+            border-top: 1px solid #F2F2F2;
+            border-right: none;
+            border-bottom: 1px solid #F2F2F2;
+            border-left: none;
+
+
+        }
+
+        .x92 {
+
+
+            vertical-align: middle;
+            white-space: nowrap;
+
+            color: #595959;
+            font-size: 9pt;
+            font-weight: 400;
+            font-style: normal;
+            font-family: 'Droid Sans Fallback', sans-serif;
+            border-top: none;
+            border-right: none;
+            border-bottom: 1px solid #F2F2F2;
+            border-left: none;
+
+
+        }
+
+        .x93 {
+
+
+            vertical-align: middle;
+            white-space: nowrap;
+
+            color: #595959;
+            font-size: 9pt;
+            font-weight: 400;
+            font-style: normal;
+            font-family: 'Droid Sans Fallback', sans-serif;
+            border-top: none;
+            border-right: none;
+            border-bottom: 1px solid #F2F2F2;
+            border-left: none;
+
+
+        }
+        .x96 {
+            text-align:right;
+            vertical-align:middle;
+            white-space:nowrap;
+            background:#FFFFFF;
+            color:#404040;
+            font-size:9pt;
+            font-weight:400;
+            font-style:normal;
+            font-family:'Droid Sans Fallback',sans-serif;
+            border-top:none;
+            border-right:1px solid ;
+            border-bottom:1px solid #F2F2F2;
+            border-left:none;
+        }
+        .x99 {
+            text-align: left;
+            vertical-align: bottom;
+            white-space: nowrap;
+            padding-left: 240px;
+            color: #000000;
+            font-size: 28pt;
+            font-weight: 700;
+            font-style: normal;
+            font-family: 'Droid Sans Fallback',sans-serif;
+            border-top: none;
+            border-right: none;
+            border-bottom: none;
+            border-left: none;
+        }
+
+        .x101 {
+            text-align: center;
+            vertical-align: middle;
+            white-space: nowrap;
+            color: #595959;
+            font-size: 10pt;
+            font-weight: 400;
+            font-style: normal;
+            font-family: 'Droid Sans Fallback',sans-serif;
+        }
+
+        .x102 {
+            text-align: left;
+            vertical-align: middle;
+            white-space: nowrap;
+            color: #595959;
+            font-size: 10pt;
+            font-weight: 400;
+            font-style: normal;
+            font-family: 'Droid Sans Fallback',sans-serif;
+        }
+
+        .x103 {
+            text-align:left;
+            vertical-align:middle;
+            white-space:nowrap;
+
+            padding-left:32px;
+            background:#FFFFFF;
+
+            color:#595959;
+            font-size:10pt;
+            font-weight:400;
+            font-style:normal;
+            font-family:'Droid Sans Fallback',sans-serif;
+            border-top:none;
+            border-right:none;
+            border-bottom:1px solid #FFFFFF;
+            border-left:none;
+        }
+
+        .x104 {
+
+            text-align: center;
+            vertical-align: bottom;
+            white-space: nowrap;
+
+            color: #404040;
+            font-size: 28pt;
+            font-weight: 700;
+            font-style: normal;
+            font-family: 'Droid Sans Fallback',sans-serif;
+            border-top: none;
+            border-right: none;
+            border-bottom: none;
+            border-left: none;
+
+
+        }
+
+        .x105 {
+
+            text-align: right;
+            vertical-align: middle;
+            white-space: nowrap;
+
+            color: #595959;
+            font-size: 10pt;
+            font-weight: 400;
+            font-style: normal;
+            font-family: 'Droid Sans Fallback',sans-serif;
+
+        }
+
+        .x106 {
+
+            text-align: right;
+            vertical-align: middle;
+            white-space: nowrap;
+
+            color: #595959;
+            font-size: 10pt;
+            font-weight: 400;
+            font-style: normal;
+            font-family: 'Droid Sans Fallback',sans-serif;
+
+        }
+
+        .x107 {
+            text-align:center;
+            vertical-align:middle;
+            white-space:nowrap;
+            background:#F2F2F2;
+            color:#595959;
+            font-size:9pt;
+            font-weight:400;
+            font-style:normal;
+            font-family:'Droid Sans Fallback',sans-serif;
+            border-top:none;
+            border-right:none;
+            border-bottom:1px solid #FFFFFF;
+            border-left:none;
+        }
+
+        .x109 {
+
+            text-align: right;
+            vertical-align: middle;
+            white-space: nowrap;
+
+            color: #595959;
+            font-size: 9pt;
+            font-weight: 400;
+            font-style: normal;
+            font-family: 'Droid Sans Fallback', sans-serif;
+            border-top: none ;
+            border-right: none;
+            border-bottom: 1px solid ;
+            border-left: none;
+
+
+        }
+
+        .x110 {
+
+            text-align: right;
+            vertical-align: middle;
+            white-space: nowrap;
+
+            color: #595959;
+            font-size: 9pt;
+            font-weight: 400;
+            font-style: normal;
+            font-family: 'Droid Sans Fallback', sans-serif;
+            border-top: none ;
+            border-right: 1px solid ;
+            border-bottom: 1px solid ;
+            border-left: none;
+
+
+        }
+
+        .x113 {
+            text-align: right;
+            vertical-align: middle;
+            white-space: nowrap;
+
+            color: #595959;
+            font-size: 9pt;
+            font-weight: 400;
+            font-style: normal;
+            font-family: 'Droid Sans Fallback', sans-serif;
+            border-top: none ;
+            border-right: 1px solid ;
+            border-bottom: 1px solid ;
+            border-left: none;
+
+
+        }
+
+        .x115 {
+
+            text-align: center;
+            vertical-align: middle;
+            white-space: nowrap;
+            color: #595959;
+            font-size: 9pt;
+            font-weight: 400;
+            font-style: normal;
+            font-family: 'Droid Sans Fallback', sans-serif;
+            border-top: 1px solid #F2F2F2;
+            border-right: 1px solid #F2F2F2;
+            border-bottom: 1px solid #F2F2F2;
+            border-left: none;
+        }
+
+        .x118 {
+            text-align: right;
+            vertical-align: middle;
+            white-space: nowrap;
+            color: #595959;
+            font-size: 9pt;
+            font-weight: 400;
+            font-style: normal;
+            font-family: 'Droid Sans Fallback', sans-serif;
+            border-top: 1px solid ;
+            border-right: 1px solid ;
+            border-bottom: none;
+            border-left: none;
+        }
+
+        .x120 {
+
+            text-align: center;
+            vertical-align: middle;
+            white-space: nowrap;
+            color: #595959;
+            font-size: 9pt;
+            font-weight: 400;
+            font-style: normal;
+            font-family: 'Droid Sans Fallback', sans-serif;
+            border-top: 1px solid ;
+            border-right: 1px solid ;
+            border-bottom: none;
+            border-left: none;
+        }
+
+        .x123 {
+
+            text-align: center;
+            vertical-align: middle;
+            white-space: nowrap;
+            color: #2f2e2e;
+            font-size: 9pt;
+            font-weight: 400;
+            font-style: normal;
+            font-family: 'Droid Sans Fallback', sans-serif;
+            border-top: 1px solid #F2F2F2;
+            border-right: none;
+            border-bottom: 1px solid #F2F2F2;
+            border-left: none;
+        }
+        .x126 {
+            text-align: center;
+            vertical-align: middle;
+            white-space: normal;
+            background: #F2F2F2;
+            color: #595959;
+            font-size: 9pt;
+            font-weight: 400;
+            font-style: normal;
+            font-family: 'Droid Sans Fallback', sans-serif;
+        }
+    </style>
+</head>
+<body link='blue' vlink='purple'>
+
+<table border='0' cellpadding='0' cellspacing='0' width='734' style='border-collapse:collapse;
+table-layout:fixed;width:550pt'>
+    <col width='47'/>
+    <col width='100'/>
+    <col width='71' style='width:53.25pt'/>
+    <col width='49'/>
+    <col width='51'/>
+    <col width='52'/>
+    <col width='31'/>
+    <col width='71' span='4' style='width:53.25pt'/>
+    <col width='49'/>
+    <tr height=65>
+        <td colspan='2' height='87' width='147' style='text-align:left; border-top: 3px solid #000000;height:65.25pt;overflow:hidden;line-height:0;vertical-align:top;' align='left'><span style='position:absolute;z-index:1;margin-left:36px;margin-top:35px;width:91px;height:88px'><img th:src="${cashmallowCiImage}" alt="Cashmallow CI" width="80"/></span><span><table cellpadding='0' cellspacing='0'>
+            <tr>
+                <td colspan='2' height='87' class='x99' width='147' style='height:65.25pt;overflow:hidden;line-height:0;'><a name="Print_Area"><span style='font-size:28pt;color:#000000;font-weight:700;text-decoration:none;font-family:"Droid Sans Fallback",sans-serif;'></span></a></td></tr></table></span></td>
+        <td style='border-top: 3px solid #000000;' colspan='8' class='x104' width='467'>Receipt</td>
+        <td class='x72' width='71' style='width:53.25pt; border-top: 3px solid #000000;'></td>
+        <td class='x71' width='49' style='width:36.75pt; border-top: 3px solid #000000;'></td>
+    </tr>
+    <tr height='22'>
+        <td colspan='12' height='22' class='x70'></td>
+    </tr>
+    <tr height='22'>
+        <td colspan='3' height='22' class='x74'></td>
+        <td colspan='3' class='x103h'></td>
+        <td colspan='2' class='x74'></td>
+        <td class='x75'>Receipt No.</td>
+        <td colspan='2' class='x105' th:text="${receiptNo}"></td>
+        <td class='x73'></td>
+    </tr>
+    <tr height='21' class='x67'>
+        <td colspan='4' height='21' class='x74'></td>
+        <td colspan='2' class='x101'></td>
+        <td class='x76'></td>
+        <td class='x75'></td>
+        <td class='x75'>Issued Date</td>
+        <td colspan='2' class='x106' th:text="${date}"></td>
+        <td class='x74'></td>
+    </tr>
+    <tr height='22'>
+        <td colspan='12' height='22' class='x74'></td>
+    </tr>
+    <tr height='22'>
+        <td height='22' class='x74' style='height:16.5pt;'></td>
+        <td colspan='2' class='x73'>Sender Information</td>
+        <td colspan='9' class='x73'></td>
+    </tr>
+    <tr height='22'>
+        <td height='22' class='x74' style='height:16.5pt;'></td>
+        <td colspan='2' class='x101'>Sender</td>
+        <td colspan='5' class='x102' th:text="${travelerName}"></td>
+        <td colspan='4' class='x74'></td>
+    </tr>
+    <tr height='22' class='x68'>
+        <td height='22' class='x74' style='height:16.5pt;'></td>
+        <td colspan='2' class='x101'>Email</td>
+        <td colspan='4' class='x80' th:text="${email}"></td>
+        <td colspan='5' class='x81'></td>
+    </tr>
+    <tr height='22' class='x68'>
+        <td colspan='12' height='22' class='x74'></td>
+    </tr>
+    <tr height='22'>
+        <td height='22' class='x74' style='height:16.5pt;'></td>
+        <td colspan='7' class='x73'>Please find your currency exchange transaction details below.</td>
+        <td colspan='4' class='x74'></td>
+    </tr>
+    <tr height='22' class='x69'>
+        <td height='22' class='x74' style='height:16.5pt;'></td>
+        <td colspan='4' class='x73'>Thank you for using Cashmallow service.</td>
+        <td colspan='7' class='x74'></td>
+    </tr>
+    <tr height='15' class='x69'>
+        <td colspan='12' height='15' class='x74' style="border-bottom: none;"></td>
+    </tr>
+    <tr height='22' class='x69'>
+        <td height='22' class='x74' style='height:16.5pt;'></td>
+        <td colspan='2' class='x107' style='border-right:none; border-top: 1px solid #000000'>Deposit Date</td>
+        <td class='x87' style="border-top: 1px solid #000000"></td>
+        <td colspan='6' class='x96' style='border-right:none; border-top: 1px solid #000000' th:text="${date}"></td>
+        <td class='x84' style="border-top: 1px solid #000000; border-bottom: 1px solid #F2F2F2"></td>
+        <td class='x74' ></td>
+    </tr>
+    <tr height='22' class='x69'>
+        <td height='22' class='x74' style='height:16.5pt;'></td>
+        <td colspan='2' class='x107' style='border-right:1px solid #F2F2F2; border-bottom:1px solid #FFFFFF;'>Deposit Amount</td>
+        <td class='x87'></td>
+        <td colspan='3' class='x115' style='border-right:none;'></td>
+        <td class='x88' style='border-bottom: 1px #F2F2F2'>HKD</td>
+        <td colspan='2' class='x113' style='border-right:none; border-bottom: 1px solid #F2F2F2' th:text="${fromAmt}"></td>
+        <td class='x85' style='border-bottom: 1px #F2F2F2'></td>
+        <td class='x74'></td>
+    </tr>
+    <tr height='22' class='x69'>
+        <td height='22' class='x74' style='height:16.5pt;'></td>
+        <td colspan='2' rowspan='2' height='44' class='x107' style='border-right:1px solid #F2F2F2;height:33pt; border-top: 1px solid #FFFFFF'>Exchange Amount</td>
+        <td class='x89' style='border-top: 1px solid #F2F2F2; border-bottom: 1px solid #F2F2F2'></td>
+        <td colspan='3' class='x120' style='border-right:none; border-top: 1px solid #F2F2F2'></td>
+        <td class='x90' style='border-top: 1px solid #F2F2F2'>HKD</td>
+        <td colspan='2' class='x118' style='border-right:none; border-bottom: 1px solid #F2F2F2; border-top: 1px solid #F2F2F2' th:text="${fromPrincipal}"></td>
+        <td class='x85' style='border-bottom: 1px #F2F2F2'></td>
+    </tr>
+    <tr height='22' class='x69'>
+        <td height='22' class='x74' style='height:16.5pt;'></td>
+        <td class='x89'></td>
+        <td colspan='3' class='x123' style='border-right:none;'></td>
+        <td class='x91' th:text="${toIso4217}"></td>
+        <td class='x92'></td>
+        <td class='x93' align='right' th:text="${toAmt}"></td>
+        <td class='x85' style='border-bottom: 1px #F2F2F2'></td>
+    </tr>
+    <tr height='22' class='x69'>
+        <td height='22' class='x74' style='height:16.5pt;'></td>
+        <td colspan='2' class='x107' style='border-right:1px solid #F2F2F2;border-bottom:1px solid #FFFFFF; border-top: 1px solid #FFFFFF'>Coupon</td>
+        <td class='x87'></td>
+        <td colspan='3' class='x115' style='border-right:none;border-bottom:1px solid #F2F2F2;'></td>
+        <td class='x88'>HKD</td>
+        <td colspan='2' class='x113' style='border-right:none;border-bottom:1px solid #F2F2F2;' th:text="${discountAmt}"></td>
+        <td class='x85' style='border-bottom: 1px #F2F2F2'></td>
+        <td class='x74'></td>
+    </tr>
+    <tr height='22'>
+        <td height='22' class='x74' style='height:16.5pt;'></td>
+        <td colspan='2' class='x107' style='border-right:1px solid #F2F2F2;border-bottom:1px solid #FFFFFF;'>Transfer Fee</td>
+        <td class='x87'></td>
+        <td colspan='3' class='x115' style='border-right:none;border-bottom:1px solid #F2F2F2;'></td>
+        <td class='x88'>HKD</td>
+        <td colspan='2' class='x113' style='border-right:none;border-bottom:1px solid #F2F2F2 ;' th:text="${fee}"></td>
+        <td class='x85' style='border-bottom: 1px #F2F2F2'></td>
+        <td class='x74'></td>
+    </tr>
+    <tr height='22'>
+        <td height='22' class='x74' style='height:16.5pt;'></td>
+        <td colspan='2' class='x107' style='border-right:none;border-bottom:1px solid ;'>Exchange Rates</td>
+        <td class='x87' style="border-bottom: 1px solid"></td>
+        <td colspan='4' class='x110' style='border-right:none;border-bottom:1px solid ;' th:text="${toIso4217}"></td>
+        <td colspan='2' class='x109' style='border-bottom:1px solid ;' th:text="${exchange_rate}"></td>
+        <td class='x85' style='border-bottom: 1px solid '></td>
+        <td class='x74'></td>
+    </tr>
+    <tr height='22'>
+        <td colspan='12' height='22' class='x74'></td>
+    </tr>
+    <tr height='22'>
+        <td colspan='12' height='22' class='x74'></td>
+    </tr>
+    <tr height='22'>
+        <td colspan='12' height='22' class='x74'></td>
+    </tr>
+    <tr height='22'>
+        <td colspan='12' height='22' class='x74'></td>
+    </tr>
+    <tr height='22' class='x79'>
+        <td colspan='12' height='22' class='x78'></td>
+    </tr>
+    <tr height='22' class='x79'>
+        <td colspan='12' height='22' class='x78'></td>
+    </tr>
+    <tr height='22' class='x79'>
+        <td colspan='4' height='22' class='x78'></td>
+        <td colspan='7' class='x78'></td>
+    </tr>
+    <tr height='22' class='x79'>
+        <td colspan='12' height='22' class='x78'></td>
+    </tr>
+    <tr height='22' class='x79'>
+        <td colspan='12' height='22' class='x78'></td>
+    </tr>
+    <tr height='22' class='x79'>
+        <td height='22' class='x78' style='height:16.5pt;'></td>
+        <td colspan='3' class='x86'>Cashmallow Hong Kong Limited</td>
+        <td height='22' width='51' style='text-align: left;height:16.5pt;width:38.25pt;vertical-align:top;' align='left'><span style='z-index:2;margin-left:19px;margin-top:21px;width:87px;height:87px'><img th:src="${stampImage}" alt="Cashmallow stamp"/></span><span><table cellpadding='0' cellspacing='0'><tr><td height='22' class='x78' width='51' style='height:16.5pt;width:38.25pt;'></td></tr></table></span></td>
+        <td colspan='8' class='x78'></td>
+    </tr>
+    <tr height='22' class='x79'>
+        <td colspan='12' height='22' class='x78'></td>
+    </tr>
+    <tr height='22' class='x79'>
+        <td height='22' class='x78' style='height:16.5pt;'></td>
+        <td colspan='8' class='x78'>Room1423, 14/F, Radio City 505-511 Hennessy Road, Causeway Bay, Hong Kong</td>
+        <td colspan='3' class='x78'></td>
+    </tr>
+    <tr height='22' class='x79'>
+        <td colspan='12' height='22' class='x78'></td>
+    </tr>
+    <tr height='22' class='x79'>
+        <td height='22' class='x78' style='height:16.5pt;'></td>
+        <td colspan='2' class='x78'>Tel : +852-4614-9439</td>
+        <td colspan='9' class='x78'></td>
+    </tr>
+    <tr height='22' class='x79'>
+        <td height='22' class='x78' style='height:16.5pt;'></td>
+        <td colspan='3' class='x78'>E-mail : contact@cashmallow.com</td>
+        <td colspan='8' class='x78'></td>
+    </tr>
+    <tr height='22' class='x79'>
+        <td colspan='12' height='22' class='x78'></td>
+    </tr>
+    <tr height='22' class='x79'>
+        <td colspan='12' height='22' class='x78'></td>
+    </tr>
+    <tr height='19'>
+        <td colspan='12' height='16' class='x77'></td>
+    </tr>
+    <tr height='0' style='display:none'>
+        <td width='47' style='width:35.25pt;'></td>
+        <td width='100' style='width:75pt;'></td>
+        <td width='71' style='width:53.25pt;'></td>
+        <td width='49' style='width:36.75pt;'></td>
+        <td width='51' style='width:38.25pt;'></td>
+        <td width='52' style='width:39pt;'></td>
+        <td width='31' style='width:23.25pt;'></td>
+        <td width='284' colspan='4'></td>
+        <td width='49' style='width:36.75pt;'></td>
+    </tr>
+</table>
+</body>
+</html>

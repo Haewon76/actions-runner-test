@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.cashmallow.api.domain.model.user.DeeplinkMapper">
+
+    <select id="getDeeplinkStat" parameterType="com.cashmallow.api.domain.model.deeplink.DeeplinkStat" resultType="com.cashmallow.api.domain.model.deeplink.DeeplinkStat">
+        <![CDATA[
+        SELECT COUNT(1)                                       AS clickedCount,
+               COUNT(IF(A.installedAt IS NOT NULL, 1, NULL))  AS installedCount,
+               COUNT(IF(A.loginedAt IS NOT NULL, 1, NULL))    AS loginedCount,
+               COUNT(IF(A.registeredAt IS NOT NULL, 1, NULL)) AS registeredCount,
+               A.utm_medium                                   AS utmMedium
+        FROM (
+                 SELECT DC.uuid,
+                        DC.utm_medium,
+                        DC.utm_source,
+                        DC.created_at     AS clickedAt,
+                        DI.created_at     AS installedAt,
+                        DLR.logined_at    AS loginedAt,
+                        DLR.registered_at AS registeredAt
+                 FROM deeplink_click DC
+                          LEFT JOIN deeplink_install DI
+                                    ON DC.uuid = DI.uuid
+                          LEFT JOIN deeplink_login_register DLR
+                                    ON DC.uuid = DLR.uuid
+                 WHERE DC.unix_time >= UNIX_TIMESTAMP(#{startDate})
+                   AND DC.unix_time <= UNIX_TIMESTAMP(#{endDate})
+             ) A
+        GROUP BY A.utm_medium
+        ]]>
+    </select>
+
+    <insert id="addClickEvent" parameterType="com.cashmallow.api.domain.model.deeplink.DeeplinkDto">
+        INSERT INTO deeplink_click (uuid, ip, utm_medium, utm_source, user_agent, os_type, unix_time)
+        VALUES (#{uuid}, #{ip}, #{utmMedium}, #{utmSource}, #{userAgent}, #{osType}, UNIX_TIMESTAMP());
+    </insert>
+
+    <insert id="addInstallEvent" parameterType="com.cashmallow.api.domain.model.deeplink.DeeplinkDto">
+        INSERT INTO deeplink_install (uuid, ip, user_agent, os_type, unix_time)
+        VALUES (#{uuid}, #{ip}, #{userAgent}, #{osType}, UNIX_TIMESTAMP())
+        ON DUPLICATE KEY UPDATE uuid = #{uuid}
+    </insert>
+
+    <insert id="addLogin" parameterType="com.cashmallow.api.domain.model.deeplink.DeeplinkDto">
+        INSERT INTO deeplink_login_register (uuid, ip, user_id, user_agent, os_type, logined_at, logined_unix_time)
+        VALUES (#{uuid}, #{ip}, #{userId}, #{userAgent}, #{osType}, NOW(), UNIX_TIMESTAMP())
+        ON DUPLICATE KEY UPDATE logined_at        = NOW(),
+                                logined_unix_time = UNIX_TIMESTAMP()
+    </insert>
+
+    <insert id="addRegister" parameterType="com.cashmallow.api.domain.model.deeplink.DeeplinkDto">
+        INSERT INTO deeplink_login_register (uuid, ip, user_id, user_agent, os_type, registered_at, registered_unix_time)
+        VALUES (#{uuid}, #{ip}, #{userId}, #{userAgent}, #{osType}, NOW(), UNIX_TIMESTAMP())
+        ON DUPLICATE KEY UPDATE registered_at        = NOW(),
+                                registered_unix_time = UNIX_TIMESTAMP()
+    </insert>
+
+</mapper>

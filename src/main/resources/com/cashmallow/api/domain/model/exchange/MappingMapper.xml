@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- Mybatis 사용법: http://www.mybatis.org/mybatis-3/ko/index.html -->
+
+<mapper namespace="com.cashmallow.api.domain.model.exchange.MappingMapper">
+
+    <!-- Read -->
+
+    <!-- mapping table -->
+    <!-- 60.2. 이미 사용된 PIN 값을 구한다. 2017.01.13: status의 상태는 OP, CC, CF만 존재함. -->
+    <select id="getMappedPinValues" parameterType="hashmap" resultType="bigdecimal">
+        SELECT pin_value
+        FROM mapping m
+        WHERE m.country = #{country}
+          AND m.bank_account_id = #{bank_account_id}
+          AND STR_TO_DATE(#{valid_date}, '%Y-%m-%d %H:%i:%s') BETWEEN m.begin_valid_date AND m.end_valid_date
+          AND m.pin_value BETWEEN #{min_pin_value} AND #{max_pin_value}
+          AND m.status IN ('OP', 'CC', 'CF')
+        ORDER BY pin_value DESC
+    </select>
+
+    <!-- 60.2.2. putPinValue후 pin_value와 일치하는 자료를 찾는다. -->
+    <select id="findPinInfoByPinValue" parameterType="hashmap" resultType="com.cashmallow.api.domain.model.exchange.Mapping">
+        SELECT *
+        FROM mapping m
+        WHERE m.country = #{country}
+          AND m.bank_account_id = #{bank_account_id}
+          AND #{valid_date} BETWEEN m.begin_valid_date AND m.end_valid_date
+          AND m.pin_value = #{min_pin_value}
+          AND m.status = 'OP'
+        ORDER BY pin_value DESC
+    </select>
+
+    <!-- 60.2.2. putPinValue후 pin_value와 일치하는 자료를 찾는다. -->
+    <select id="getMappingForMapping" parameterType="hashmap" resultType="com.cashmallow.api.domain.model.exchange.Mapping">
+        SELECT *
+        FROM mapping
+        WHERE country = #{country}
+          AND bank_account_id = #{bankAccountId}
+          AND pin_value = #{pinValue}
+          AND ref_value = #{refValue}
+          AND status = 'OP'
+          AND traveler_id = #{travelerId}
+          AND exchange_id IS NULL
+    </select>
+
+    <!-- 99.2. 현재 날짜를 응답한다. -->
+    <select id="getCurDate" resultType="java.sql.Timestamp">
+        SELECT CURDATE()
+    </select>
+
+    <select id="getMappingByRemitId" parameterType="hashmap" resultType="com.cashmallow.api.domain.model.exchange.Mapping">
+        SELECT *
+        FROM mapping
+        WHERE traveler_id = #{travelerId}
+          AND remit_id = #{remitId}
+    </select>
+
+    <!-- Write -->
+
+    <!-- 60.1. mapping 테이블에 pin_value를 저장한다. -->
+    <insert id="putPinValue" parameterType="com.cashmallow.api.interfaces.admin.dto.MappingRegVO">
+        INSERT INTO mapping (country,
+                             bank_account_id,
+                             pin_value,
+                             ref_value,
+                             pin_seq_no,
+                             begin_valid_date,
+                             end_valid_date,
+                             status,
+                             traveler_id)
+        VALUES (#{country},
+                #{bank_account_id},
+                #{pin_value},
+                #{ref_value},
+                (
+                    SELECT *
+                    FROM (
+                             SELECT IFNULL(MAX(pin_seq_no), 0) + 1 AS pin_seq_no
+                             FROM mapping
+                             WHERE bank_account_id = #{bank_account_id}
+                               AND pin_value = #{pin_value}
+                               AND begin_valid_date = #{begin_valid_date}
+                         ) t1
+                ),
+                #{begin_valid_date},
+                #{end_valid_date},
+                'OP',
+                #{traveler_id});
+    </insert>
+
+    <update id="updateMapping" parameterType="com.cashmallow.api.domain.model.exchange.Mapping">
+        UPDATE mapping
+        SET status      = #{status},
+            exchange_id = #{exchangeId},
+            remit_id    = #{remitId}
+        WHERE id = #{id}
+          AND traveler_id = #{travelerId}
+    </update>
+
+    <!-- 60.3. 환전 신청 정보와 exchange_id를 연결한다. -->
+    <update id="updateExchangeIdAfterReqExchange" parameterType="hashmap">
+        UPDATE mapping
+        SET exchange_id = #{exchangeId},
+            status      = 'CF'
+        WHERE id = #{mappingId}
+          AND traveler_id = #{travelerId}
+          AND pin_value = (SELECT from_amt FROM exchange e WHERE e.id = #{exchangeId})
+          AND status = 'OP'
+    </update>
+
+    <!-- 60.4.3 환전 신청 후 여행자 환전 취소 시 할당 받은 PIN 값의 상태를 TC로 변경한다. -->
+    <update id="cancelExchangePinValueByTravelerId" parameterType="long">
+        UPDATE mapping m
+            INNER JOIN (
+                SELECT id
+                FROM exchange
+                WHERE traveler_id = #{travelerId}
+                  AND ex_status = 'OP'
+                ORDER BY created_date DESC
+                LIMIT 0, 1
+            ) e
+            ON m.exchange_id = e.id
+        SET status = 'TC'
+        WHERE m.exchange_id = e.id
+          AND m.status = 'CF'
+    </update>
+
+    <update id="updateRemitIdAfterReqRemittance" parameterType="hashmap">
+        UPDATE mapping
+        SET remit_id = #{remitId},
+            status   = 'CF'
+        WHERE id = #{mappingId}
+          AND traveler_id = #{travelerId}
+          AND pin_value = (SELECT from_amt FROM remittance rm WHERE rm.id = #{remitId})
+          AND status = 'OP'
+    </update>
+
+    <update id="cancelRemittancePinValueByTravelerId" parameterType="long">
+        UPDATE mapping m
+            INNER JOIN (
+                SELECT id
+                FROM remittance
+                WHERE traveler_id = #{travelerId}
+                  AND remit_status = 'OP'
+                ORDER BY created_date DESC
+                LIMIT 0, 1
+            ) rm
+            ON m.remit_id = rm.id
+        SET status = 'TC'
+        WHERE m.remit_id = rm.id
+          AND m.status = 'CF'
+    </update>
+
+</mapper>

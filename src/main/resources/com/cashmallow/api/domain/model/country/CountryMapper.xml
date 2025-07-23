@@ -1,0 +1,411 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.cashmallow.api.domain.model.country.CountryMapper">
+
+    <!-- 국가별 관리 정보 -->
+    <select id="getCountryList" parameterType="HashMap" resultType="com.cashmallow.api.domain.model.country.Country">
+        SELECT *
+        FROM country
+        <where>
+            <if test="service != null and service != ''">
+                AND service = #{service}
+            </if>
+            <if test="code != null and code != ''">
+                AND code = #{code}
+            </if>
+            <if test="canSignup != null and canSignup != ''">
+                AND can_signup = #{canSignup}
+            </if>
+        </where>
+    </select>
+
+    <!-- 국가별 관리 정보 -->
+    <select id="getCountry" resultType="com.cashmallow.api.domain.model.country.Country">
+        SELECT *
+        FROM country
+        WHERE code = #{code}
+    </select>
+
+    <!-- rate table -->
+    <!-- 기능: from_cd 에서 to_cd 화폐로의 환전 가능 여부 출력은 enabled 로 출력 (Y/N) -->
+    <select id="getExchangeConfigByFromCdToCd" parameterType="hashmap" resultType="com.cashmallow.api.domain.model.country.ExchangeConfig">
+        SELECT *
+        FROM exchange_config
+        WHERE from_cd = #{fromCd}
+          AND to_cd = #{toCd}
+    </select>
+
+    <!-- 기능: 환전 서비스 'Y' 인 데이터 가져오기 -->
+    <select id="getCanExchanageFeeRateList" resultType="com.cashmallow.api.domain.model.country.ExchangeConfig">
+        SELECT *
+        FROM exchange_config
+        WHERE can_exchange = 'Y'
+        ORDER BY from_cd, to_cd
+    </select>
+
+    <select id="getCanRemittanceFeeRateList" resultType="com.cashmallow.api.domain.model.country.ExchangeConfig">
+        SELECT *
+        FROM exchange_config
+        WHERE can_remittance = 'Y'
+        ORDER BY from_cd, to_cd
+    </select>
+
+    <update id="updateFeeRate" parameterType="com.cashmallow.api.domain.model.country.ExchangeConfig">
+        UPDATE exchange_config
+        SET can_exchange       = #{canExchange},
+            enabled_exchange   = #{enabledExchange},
+            can_remittance     = #{canRemittance},
+            enabled_remittance = #{enabledRemittance},
+            exchange_notice    = #{exchangeNotice},
+            updated_date       = NOW()
+        WHERE id = #{id}
+          AND from_cd = #{fromCd}
+          AND to_cd = #{toCd}
+    </update>
+
+    <!-- Notify dormant users -->
+    <select id="getServiceCountriesIso4217" parameterType="hashmap" resultType="String">
+    <![CDATA[
+        SELECT iso_4217
+        FROM country
+        WHERE service = 'Y'
+        ]]>
+    </select>
+
+    <select id="getServiceCountryList" resultType="com.cashmallow.api.domain.model.country.Country">
+        SELECT *
+        FROM country
+        WHERE service = 'Y'
+    </select>
+
+    <insert id="registerCountry" parameterType="com.cashmallow.api.domain.model.country.Country">
+        INSERT INTO country (code, eng_name, kor_name, iso_4217, calling_code,
+                            service, timezone_interval, last_ref_value, is_family_name_after_first_name, type_of_ref_value,
+                            mapping_upper_range, mapping_lower_range, mapping_inc,
+                            unit_scale, iso_3166, date_calculation_standard, cash_out_type, can_signup,
+                            default_lat, default_lng, ttrate_tt_rate, ttrate_notes_rate)
+        VALUES (#{code}, #{engName}, #{korName}, #{iso4217}, #{callingCode},
+                #{service}, #{timezoneInterval}, #{lastRefValue}, #{isFamilyNameAfterFirstName}, #{typeOfRefValue},
+                #{mappingUpperRange}, #{mappingLowerRange}, #{mappingInc},
+                #{unitScale}, #{iso3166}, #{dateCalculationStandard}, #{cashOutType}, #{canSignup},
+                #{defaultLat}, #{defaultLng}, #{ttrateTtRate}, #{ttrateNotesRate})
+    </insert>
+
+    <update id="updateCountry">
+        UPDATE country
+        SET eng_name                        = #{engName},
+            kor_name                        = #{korName},
+            iso_4217                        = #{iso4217},
+            calling_code                    = #{callingCode},
+            service                         = #{service},
+            timezone_interval               = #{timezoneInterval},
+            last_ref_value                  = #{lastRefValue},
+            is_family_name_after_first_name = #{isFamilyNameAfterFirstName},
+            type_of_ref_value               = #{typeOfRefValue},
+            mapping_upper_range             = #{mappingUpperRange},
+            mapping_lower_range             = #{mappingLowerRange},
+            mapping_inc                     = #{mappingInc},
+            unit_scale                      = #{unitScale},
+            iso_3166                        = #{iso3166},
+            date_calculation_standard       = #{dateCalculationStandard},
+            cash_out_type                   = #{cashOutType},
+            can_signup                      = #{canSignup},
+            default_lat                     = #{defaultLat},
+            default_lng                     = #{defaultLng},
+            ttrate_tt_rate                  = #{ttrateTtRate},
+            ttrate_notes_rate               = #{ttrateNotesRate}
+        where code = #{code}
+    </update>
+
+    <select id="getCountryFees" resultType="com.cashmallow.api.domain.model.country.CountryFee">
+        SELECT id,
+               from_cd,
+               to_cd,
+               fee,
+               min,
+               max,
+               sort,
+               created_at,
+               updated_at,
+               use_yn
+        FROM country_fee
+    </select>
+    <select id="getCountryFeesByCd" resultType="com.cashmallow.api.domain.model.country.CountryFee">
+        SELECT id,
+        from_cd,
+        to_cd,
+        fee,
+        min,
+        max,
+        sort,
+        created_at,
+        updated_at,
+        use_yn
+        FROM country_fee
+        <where>
+            <if test="useYn != null and useYn != ''">
+                AND use_yn = #{useYn}
+            </if>
+            <if test="fromCd != null and fromCd != ''">
+                AND from_cd = #{fromCd}
+            </if>
+            <if test="toCd != null and toCd != ''">
+                AND to_cd = #{toCd}
+            </if>
+        </where>
+        ORDER BY sort;
+    </select>
+
+    <insert id="registerCountryFee" parameterType="com.cashmallow.api.domain.model.country.CountryFee">
+        INSERT INTO country_fee(from_cd, to_cd, fee, min, max,
+        sort, use_yn)
+        VALUES (#{fromCd}, #{toCd}, #{fee}, #{min}, #{max},
+        #{sort}, #{useYn}
+        <selectKey keyProperty="id" resultType="Long" order="AFTER">
+            SELECT LAST_INSERT_ID()
+        </selectKey>
+        )
+    </insert>
+
+    <select id="getCountryMaxCode" resultType="java.lang.String">
+        SELECT max(code)
+        FROM country
+    </select>
+
+    <update id="updateCountryFee" parameterType="com.cashmallow.api.domain.model.country.CountryFee">
+        UPDATE country_fee
+        SET from_cd    = #{fromCd},
+            to_cd      = #{toCd},
+            fee        = #{fee},
+            min        = #{min},
+            max        = #{max},
+            sort       = #{sort},
+            updated_at = NOW(),
+            use_yn     = #{useYn}
+        WHERE id = #{id}
+    </update>
+
+    <select id="getCountryFeeById" parameterType="long" resultType="com.cashmallow.api.domain.model.country.CountryFee">
+        SELECT id,
+               from_cd,
+               to_cd,
+               fee,
+               min,
+               max,
+               sort,
+               created_at,
+               updated_at,
+               use_yn
+        FROM country_fee
+        WHERE id = #{id}
+    </select>
+
+    <select id="calculateFee" resultType="java.math.BigDecimal">
+        SELECT fee
+        FROM country_fee
+        WHERE from_cd = #{fromCd}
+          AND to_cd = #{toCd}
+          AND #{toMoney} BETWEEN min AND max
+          AND use_yn = 'Y'
+        ORDER BY fee DESC
+        LIMIT 1
+    </select>
+
+    <select id="getExchangeConfigByCode" resultType="com.cashmallow.api.domain.model.country.ExchangeConfig">
+        SELECT id,
+        from_cd,
+        to_cd,
+        fee_rate_exchange,
+        min_fee,
+        can_exchange,
+        enabled_exchange,
+        created_date,
+        updated_date,
+        creator,
+        exchange_notice,
+        refund_fee_per,
+        fee_per_exchange,
+        can_remittance,
+        enabled_remittance,
+        fee_per_remittance,
+        fee_rate_remittance,
+        remittance_notice
+        FROM exchange_config
+        <where>
+            <if test="fromCd != null and fromCd != ''">
+                AND from_cd = #{fromCd}
+            </if>
+            <if test="toCd != null and toCd != ''">
+                AND to_cd = #{toCd}
+            </if>
+        </where>
+    </select>
+
+    <select id="getExchangeConfigById" parameterType="long" resultType="com.cashmallow.api.domain.model.country.ExchangeConfig">
+        SELECT id,
+               from_cd,
+               to_cd,
+               fee_rate_exchange,
+               min_fee,
+               can_exchange,
+               enabled_exchange,
+               created_date,
+               updated_date,
+               creator,
+               exchange_notice,
+               refund_fee_per,
+               fee_per_exchange,
+               can_remittance,
+               enabled_remittance,
+               fee_per_remittance,
+               fee_rate_remittance,
+               remittance_notice
+        FROM exchange_config
+        WHERE id = #{id}
+    </select>
+
+    <insert id="insertExchangeConfig">
+        INSERT INTO exchange_config(from_cd, to_cd, fee_rate_exchange, min_fee, can_exchange, enabled_exchange,
+        creator, exchange_notice, refund_fee_per, fee_per_exchange, can_remittance,
+        enabled_remittance, fee_per_remittance, fee_rate_remittance, remittance_notice)
+        VALUES (#{fromCd}, #{toCd}, #{feeRateExchange}, #{minFee}, #{canExchange}, #{enabledExchange},
+        #{creator}, #{exchangeNotice}, #{refundFeePer}, #{feePerExchange}, #{canRemittance},
+        #{enabledRemittance}, #{feePerRemittance}, #{feeRateRemittance}, #{remittanceNotice}
+        <selectKey keyProperty="id" resultType="Long" order="AFTER">
+            SELECT LAST_INSERT_ID()
+        </selectKey>
+        )
+    </insert>
+
+    <update id="updateExchangeConfig">
+        UPDATE exchange_config
+        SET from_cd             = #{fromCd},
+            to_cd               = #{toCd},
+            fee_rate_exchange   = #{feeRateExchange},
+            min_fee             = #{minFee},
+            can_exchange        = #{canExchange},
+            enabled_exchange    = #{enabledExchange},
+            updated_date        = NOW(),
+            creator             = #{creator},
+            exchange_notice     = #{exchangeNotice},
+            refund_fee_per      = #{refundFeePer},
+            fee_per_exchange    = #{feePerExchange},
+            can_remittance      = #{canRemittance},
+            enabled_remittance  = #{enabledRemittance},
+            fee_per_remittance  = #{feePerRemittance},
+            fee_rate_remittance = #{feeRateRemittance},
+            remittance_notice   = #{remittanceNotice}
+        WHERE id = #{id}
+    </update>
+
+    <insert id="saveCurrencyLimit">
+        INSERT INTO exchange_config(
+            id, from_cd, to_cd, from_edd_amount_limit, from_edd_count_limit, from_min_remittance,
+            from_max_remittance, from_min_exchange, from_max_exchange, from_min_withdrawal, from_max_withdrawal,
+            from_max_refund, from_day_max_exchange, from_month_max_exchange, from_annual_max_exchange, to_min_remittance,
+            to_max_remittance, to_min_exchange, to_max_exchange, to_min_withdrawal, to_max_withdrawal,
+            to_day_max_exchange, to_month_max_exchange, to_annual_max_exchange, creator, from_total_max_exchange,
+            to_day_max_withdrawal, to_month_max_withdrawal, wallet_expired_day, wallet_expired_minute
+        )
+        VALUES (
+            #{id}, #{fromCd}, #{toCd}, #{fromEddAmountLimit}, #{fromEddCountLimit}, #{fromMinRemittance},
+            #{fromMaxRemittance}, #{fromMinExchange}, #{fromMaxExchange}, #{fromMinWithdrawal}, #{fromMaxWithdrawal},
+            #{fromMaxRefund}, #{fromDayMaxExchange}, #{fromMonthMaxExchange}, #{fromAnnualMaxExchange}, #{toMinRemittance},
+            #{toMaxRemittance}, #{toMinExchange}, #{toMaxExchange}, #{toMinWithdrawal}, #{toMaxWithdrawal},
+            #{toDayMaxExchange}, #{toMonthMaxExchange}, #{toAnnualMaxExchange}, #{creator}, #{fromTotalMaxExchange},
+            #{toDayMaxWithdrawal}, #{toMonthMaxWithdrawal}, #{walletExpiredDay}, #{walletExpiredMinute}
+        )
+        ON DUPLICATE KEY UPDATE
+            from_edd_amount_limit    = #{fromEddAmountLimit},
+            from_edd_count_limit     = #{fromEddCountLimit},
+            from_min_remittance      = #{fromMinRemittance},
+            from_max_remittance      = #{fromMaxRemittance},
+            from_min_exchange        = #{fromMinExchange},
+            from_max_exchange        = #{fromMaxExchange},
+            from_min_withdrawal      = #{fromMinWithdrawal},
+            from_max_withdrawal      = #{fromMaxWithdrawal},
+            from_max_refund          = #{fromMaxRefund},
+            from_day_max_exchange    = #{fromDayMaxExchange},
+            from_month_max_exchange  = #{fromMonthMaxExchange},
+            from_annual_max_exchange = #{fromAnnualMaxExchange},
+            from_total_max_exchange  = #{fromTotalMaxExchange},
+            to_min_remittance        = #{toMinRemittance},
+            to_max_remittance        = #{toMaxRemittance},
+            to_min_exchange          = #{toMinExchange},
+            to_max_exchange          = #{toMaxExchange},
+            to_min_withdrawal        = #{toMinWithdrawal},
+            to_max_withdrawal        = #{toMaxWithdrawal},
+            to_day_max_exchange      = #{toDayMaxExchange},
+            to_month_max_exchange    = #{toMonthMaxExchange},
+            to_annual_max_exchange   = #{toAnnualMaxExchange},
+            to_day_max_withdrawal    = #{toDayMaxWithdrawal},
+            to_month_max_withdrawal  = #{toMonthMaxWithdrawal},
+            wallet_expired_day       = #{walletExpiredDay},
+            wallet_expired_minute    = #{walletExpiredMinute},
+            updated_date             = now(),
+            id = LAST_INSERT_ID(id)
+        <selectKey keyProperty="id" resultType="Long" order="AFTER">
+            SELECT LAST_INSERT_ID()
+        </selectKey>
+    </insert>
+
+    <sql id="getCurrencyLimitInclude">
+        <where>
+            <!-- foreach 사용하려 하였으나 명시적으로 선언 -->
+            <if test="columns[2].searchable and columns[2].search.value != null and columns[2].search.value != ''">
+                AND from_cd = #{columns[2].search.value}/* fromCd */
+            </if>
+            <if test="columns[3].searchable and columns[3].search.value != null and columns[3].search.value != ''">
+                AND to_cd = #{columns[3].search.value}/* toCd */
+            </if>
+        </where>
+    </sql>
+
+    <select id="getCurrencyLimitCount" resultType="map">
+        SELECT
+            (SELECT COUNT(*) FROM exchange_config) AS totalRecords,
+            COUNT(*) AS filteredRecords
+        FROM exchange_config
+        <include refid="getCurrencyLimitInclude"/>
+    </select>
+
+    <select id="getCurrencyLimits" resultType="com.cashmallow.api.domain.model.country.CurrencyLimit">
+        SELECT
+            id,
+            from_cd,
+            to_cd,
+            from_edd_amount_limit,
+            from_edd_count_limit,
+            from_min_remittance,
+            from_max_remittance,
+            from_min_exchange,
+            from_max_exchange,
+            from_min_withdrawal,
+            from_max_withdrawal,
+            from_max_refund,
+            from_day_max_exchange,
+            from_month_max_exchange,
+            from_annual_max_exchange,
+            from_total_max_exchange,
+            to_min_remittance,
+            to_max_remittance,
+            to_min_exchange,
+            to_max_exchange,
+            to_min_withdrawal,
+            to_max_withdrawal,
+            to_day_max_exchange,
+            to_month_max_exchange,
+            to_annual_max_exchange,
+            to_day_max_withdrawal,
+            to_month_max_withdrawal,
+            wallet_expired_day,
+            wallet_expired_minute
+        FROM exchange_config
+        <include refid="getCurrencyLimitInclude"/>
+        <if test="order != null and order.size() > 0">
+            ORDER BY ${columns[order[0].column].data} ${order[0].dir}
+        </if>
+        LIMIT #{start}, #{length}
+    </select>
+</mapper>

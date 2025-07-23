@@ -1,0 +1,292 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- Mybatis 사용법: http://www.mybatis.org/mybatis-3/ko/index.html -->
+
+<mapper namespace="com.cashmallow.api.domain.model.customercenter.NoticeMapper">
+
+    <!-- Notice 목록 조회 -->
+    <select id="countNoticeContents" parameterType="hashmap" resultType="int">
+        SELECT COUNT(1) AS cnt
+        FROM notice_content c,
+             notice n
+        WHERE n.id = c.id
+          AND n.begin_date &lt;= CURDATE()
+          AND n.end_date >= CURDATE()
+          <include refid="includeNoticeContentUserLanguageType"/>
+    </select>
+
+    <select id="getNoticeContents" parameterType="hashmap" resultType="com.cashmallow.api.domain.model.customercenter.NoticeContent">
+        SELECT n.id,
+               c.language_type,
+               c.title,
+               c.content,
+               n.modifier,
+               n.modified_date,
+               n.begin_date,
+               n.end_date,
+               n.is_popup
+        FROM notice_content c,
+             notice n
+        WHERE n.id = c.id
+          AND n.begin_date &lt;= CURDATE()
+          AND n.end_date >= CURDATE()
+          <include refid="includeNoticeContentUserLanguageType"/>
+        ORDER BY ${sort}
+        LIMIT #{startRow}, #{size}
+    </select>
+
+    <sql id="includeNoticeContentUserLanguageType">
+        AND EXISTS (SELECT 1
+                    FROM notice_content c2
+                            JOIN (SELECT CASE
+                                            WHEN country = '001' AND #{deviceLangKey} NOT IN ('en', 'zh', 'ko') THEN 'en'
+                                            WHEN country = '003' AND #{deviceLangKey} NOT IN ('en', 'ko') THEN 'en'
+                                            WHEN country = '004' AND #{deviceLangKey} NOT IN ('en', 'ja') THEN 'en'
+                                            ELSE #{deviceLangKey}
+                                            END AS device_lang_key,
+                                        CASE
+                                            WHEN country = '001' THEN 'zh'
+                                            WHEN country = '003' THEN 'ko'
+                                            WHEN country = '004' THEN 'ja'
+                                            END AS country_lang_key
+                                FROM `user`
+                                WHERE id = #{userId}) u
+                    WHERE n.id = c2.id
+                        AND c2.language_type = u.country_lang_key
+                        AND c.language_type = u.device_lang_key)
+    </sql>
+    <select id="getPopupNotice" resultType="com.cashmallow.api.domain.model.customercenter.NoticeContent">
+        SELECT c.id,
+               c.language_type,
+               c.title,
+               c.content,
+               n.modifier,
+               n.modified_date,
+               n.begin_date,
+               n.end_date,
+               n.is_popup
+        FROM notice_content c,
+             notice n
+        WHERE c.id = n.id
+          AND n.is_popup = TRUE
+          AND n.begin_date &lt;= CURDATE()
+          AND n.end_date >= CURDATE()
+          <include refid="includeNoticeContentUserLanguageType"/>
+        ORDER BY modified_date DESC
+        LIMIT 1
+    </select>
+
+    <!-- 마지막 insert 동작의 자동 증가 column의 값 구하기 -->
+    <select id="getLastInsertId" resultType="Long">
+        SELECT LAST_INSERT_ID()
+    </select>
+
+    <!-- Notice 목록 조회 -->
+    <select id="countNoticeContentsForAdmin" parameterType="hashmap" resultType="int">
+        SELECT COUNT(1) AS cnt
+        FROM notice_content c
+        RIGHT JOIN notice n
+        ON n.id = c.id
+        AND c.language_type = IFNULL((
+        SELECT a.language_type
+        FROM notice_content a
+        WHERE a.id = c.id
+        AND a.language_type = #{languageType}
+        ),
+        LEFT(#{languageType}, 2))
+        <where>
+            <if test="searchValue != '' and searchValue != null">
+                AND ( c.id = #{searchValue}
+                OR c.title LIKE CONCAT('%', #{searchValue}, '%')
+                OR n.begin_date LIKE CONCAT(CONVERT(#{searchValue} USING latin1), '%')
+                OR n.end_date LIKE CONCAT(CONVERT(#{searchValue} USING latin1), '%')
+                OR n.is_popup = (CASE WHEN UPPER(#{searchValue}) = 'TRUE' THEN TRUE
+                WHEN UPPER(#{searchValue}) = 'FALSE' THEN FALSE
+                ELSE NULL
+                END)
+                OR n.modified_date LIKE CONCAT(CONVERT(#{searchValue} USING latin1), '%') )
+            </if>
+            <if test="postingStatus == 'GOING'">
+                <![CDATA[
+            AND n.begin_date <= CURDATE() AND n.end_date >= CURDATE()
+        ]]>
+            </if>
+            <if test="postingStatus == 'DONE'">
+                <![CDATA[
+            AND n.end_date < CURDATE()
+        ]]>
+            </if>
+            <if test="postingStatus == 'TOBE'">
+                AND n.begin_date > CURDATE()
+            </if>
+            <if test="isPopup != null and isPopup != ''">
+                AND n.is_popup = #{isPopup}
+            </if>
+            <if test="checkDate != null and checkDate != ''">
+                <![CDATA[
+            AND n.begin_date <= #{checkDate} AND n.end_date >= #{checkDate}
+        ]]>
+            </if>
+            <if test="fromDate != null and fromDate != ''">
+                AND n.modified_date >= CONCAT(#{fromDate}, ' 00:00:00')
+            </if>
+            <if test="toDate != null and toDate != ''">
+                <![CDATA[
+            AND n.modified_date <= CONCAT(#{toDate}, ' 23:59:59')
+        ]]>
+            </if>
+        </where>
+    </select>
+
+    <select id="getNoticeContentsForAdmin" parameterType="hashmap"
+            resultType="com.cashmallow.api.domain.model.customercenter.NoticeContent">
+        SELECT n.id, c.language_type,
+        c.title, c.content, n.modifier, n.modified_date,
+        n.begin_date, n.end_date, n.is_popup
+        FROM notice_content c
+        RIGHT JOIN notice n
+        ON n.id = c.id
+        AND c.language_type = IFNULL((
+        SELECT a.language_type
+        FROM notice_content a
+        WHERE a.id = c.id
+        AND a.language_type = #{languageType}
+        ),
+        LEFT(#{languageType}, 2))
+        <where>
+            <if test="searchValue != '' and searchValue != null">
+                AND ( c.id = #{searchValue}
+                OR c.title LIKE CONCAT('%', #{searchValue}, '%')
+                OR n.begin_date LIKE CONCAT(CONVERT(#{searchValue} USING latin1), '%')
+                OR n.end_date LIKE CONCAT(CONVERT(#{searchValue} USING latin1), '%')
+                OR n.is_popup = (CASE WHEN UPPER(#{searchValue}) = 'TRUE' THEN TRUE
+                WHEN UPPER(#{searchValue}) = 'FALSE' THEN FALSE
+                ELSE NULL
+                END)
+                OR n.modified_date LIKE CONCAT(CONVERT(#{searchValue} USING latin1), '%') )
+            </if>
+            <if test="postingStatus == 'GOING'">
+                <![CDATA[
+            AND n.begin_date <= CURDATE() AND n.end_date >= CURDATE()
+        ]]>
+            </if>
+            <if test="postingStatus == 'DONE'">
+                <![CDATA[
+            AND n.end_date < CURDATE()
+        ]]>
+            </if>
+            <if test="postingStatus == 'TOBE'">
+                AND n.begin_date > CURDATE()
+            </if>
+            <if test="isPopup != null and isPopup != ''">
+                AND n.is_popup = #{isPopup}
+            </if>
+            <if test="checkDate != null and checkDate != ''">
+                <![CDATA[
+            AND n.begin_date <= #{checkDate} AND n.end_date >= #{checkDate}
+        ]]>
+            </if>
+            <if test="fromDate != null and fromDate != ''">
+                AND n.modified_date >= CONCAT(#{fromDate}, ' 00:00:00')
+            </if>
+            <if test="toDate != null and toDate != ''">
+                <![CDATA[
+            AND n.modified_date <= CONCAT(#{toDate}, ' 23:59:59')
+        ]]>
+            </if>
+        </where>
+        ORDER BY ${sort}
+        LIMIT #{startRow}, #{size}
+    </select>
+
+    <select id="getNotice" resultType="com.cashmallow.api.domain.model.customercenter.Notice">
+        SELECT id, begin_date, end_date, is_popup, modifier, modified_date
+        FROM notice
+        WHERE id = #{id}
+    </select>
+
+    <insert id="insertNotice" parameterType="com.cashmallow.api.domain.model.customercenter.Notice">
+        INSERT INTO notice (id, begin_date, end_date, is_popup, modifier, modified_date)
+        VALUES (#{id}, #{beginDate}, #{endDate}, ${isPopup}, ${modifier}, NOW())
+        ON DUPLICATE KEY
+            UPDATE begin_date    = #{beginDate},
+                   end_date      = #{endDate},
+                   is_popup      = #{isPopup},
+                   modifier      = #{modifier},
+                   modified_date = NOW()
+    </insert>
+
+    <!--     <update id="updateNotice" parameterType="com.cashmallow.api.domain.Notice">
+            UPDATE notice
+            SET    begin_date = #{beginDate}, end_date = #{endDate}, is_popup = ${isPopup}, modifier = ${modifier}, modified_date = NOW())
+        </update> -->
+
+    <delete id="deleteNotice">
+        DELETE
+        FROM notice
+        WHERE id = #{id}
+    </delete>
+
+    <select id="getNoticeContentAdmin" resultType="com.cashmallow.api.domain.model.customercenter.NoticeContent">
+        SELECT c.id,
+               c.language_type,
+               c.title,
+               c.content,
+               n.modifier,
+               n.modified_date,
+               n.begin_date,
+               n.end_date,
+               n.is_popup
+        FROM notice_content c,
+             notice n
+        WHERE c.id = n.id
+          AND c.id = #{param1}
+          AND c.language_type = #{param2}
+        LIMIT 1
+    </select>
+
+    <select id="getNoticeContentTraveler" resultType="com.cashmallow.api.domain.model.customercenter.NoticeContent">
+        SELECT c.id,
+               c.language_type,
+               c.title,
+               c.content,
+               n.modifier,
+               n.modified_date,
+               n.begin_date,
+               n.end_date,
+               n.is_popup
+        FROM notice_content c,
+             notice n
+        WHERE c.id = n.id
+          AND c.id = #{noticeId}
+        <include refid="includeNoticeContentUserLanguageType"/>
+        LIMIT 1
+    </select>
+
+    <insert id="insertNoticeContent" parameterType="com.cashmallow.api.domain.model.customercenter.NoticeContent">
+        INSERT INTO notice_content (id, language_type, title, content, modifier, modified_date)
+        VALUES (${id}, #{languageType}, #{title}, #{content}, ${modifier}, NOW())
+        ON DUPLICATE KEY
+            UPDATE title         = #{title},
+                   content       = #{content},
+                   modifier      = #{modifier},
+                   modified_date = NOW()
+    </insert>
+
+    <!--     <update id="updateNoticeContent" parameterType="com.cashmallow.api.domain.NoticeContent">
+            UPDATE notice_content
+            SET    title = #{title}, content = #{content}, modifier = ${modifier}, modified_date = NOW())
+            WHERE  id = ${id}
+            AND    language_type = #{languageType}
+        </update> -->
+
+    <delete id="deleteNoticeContents">
+        DELETE FROM notice_content
+        WHERE id = #{id}
+        <if test="languageType != null and languageType != ''">
+            AND language_type = #{languageType}
+        </if>
+    </delete>
+
+</mapper>

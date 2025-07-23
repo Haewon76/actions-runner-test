@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>Cashmallow Mail to confirm a mail address</title>
+</head>
+
+<body>
+
+<div th:replace="mail-templates/en/fragments/header :: header"></div>
+
+<div style="background-color:white; padding:16px; line-height:1.5em;">
+    <div style="font-size:1em;">
+        Thank you for using Cashmallow's service. <br>
+        We have sent you a receipt for your service request. <br>
+        Start your wonderful journey with Cashmallow.<br>
+        &nbsp;<br>
+        <strong>&lt;IMPORTANT&gt;</strong> <br>
+        We will send all notification to this e-mail address. <br>
+        Please register with your often used e-mail to make sure you would not miss out any important message from us.<br>
+        &nbsp;<br>
+        &nbsp;<br>
+    </div>
+</div>
+
+<div th:replace="mail-templates/en/fragments/footer :: footer"></div>
+
+</body>
+</html>

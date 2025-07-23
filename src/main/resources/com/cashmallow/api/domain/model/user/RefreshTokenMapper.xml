@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.cashmallow.api.domain.model.user.RefreshTokenMapper">
+
+    <!-- RefreshToken Read -->
+    <select id="getRefreshTokenByToken" resultType="com.cashmallow.api.domain.model.user.RefreshToken">
+        SELECT *
+        FROM refresh_token
+        WHERE token = #{token}
+    </select>
+
+    <select id="getRefreshTokenByUserId" resultType="com.cashmallow.api.domain.model.user.RefreshToken">
+        SELECT *
+        FROM refresh_token
+        WHERE user_id = #{userId}
+    </select>
+
+    <!-- AccessToken Write -->
+    <insert id="insertRefreshToken" parameterType="com.cashmallow.api.domain.model.user.RefreshToken">
+        INSERT INTO refresh_token (login, token, refresh_time, user_id, auths, instance_id, service_country)
+        VALUES (#{login}, #{token}, #{refreshTime}, #{userId}, #{auths}, #{instanceId}, #{serviceCountry})
+        ON DUPLICATE KEY
+            UPDATE login        = #{login},
+                   token        = #{token},
+                   refresh_time = #{refreshTime},
+                   user_id      = #{userId},
+                   auths        = #{auths},
+                   instance_id     = #{instanceId},
+                   service_country = #{serviceCountry}
+    </insert>
+
+    <delete id="deleteRefreshTokenByUserId">
+        DELETE
+        FROM refresh_token
+        WHERE user_id = #{userId}
+    </delete>
+
+</mapper>

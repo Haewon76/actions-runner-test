@@ -1,0 +1,165 @@
+// hotfix/error-aml-list - Tue May 16 05:19:52 UTC 2023
+plugins {
+    id 'org.springframework.boot' version '2.6.1'
+    id 'io.spring.dependency-management' version '1.0.8.RELEASE'
+    id 'java'
+}
+
+group = 'com.cashmallow.api'
+version = '5.5.25'
+sourceCompatibility = JavaVersion.VERSION_17
+ext['log4j2.version'] = '2.15.0'
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-webflux'
+    implementation 'org.springframework.boot:spring-boot-starter-jdbc'
+    implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
+    implementation 'org.springframework.boot:spring-boot-starter-mail'
+    implementation 'org.springframework.boot:spring-boot-starter-amqp'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'org.springframework.boot:spring-boot-starter-hateoas'
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'org.springframework.boot:spring-boot-starter-cache'
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+    implementation 'org.springframework.session:spring-session-data-redis'
+    implementation 'org.springframework.boot:spring-boot-starter-aop'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+
+    // add config library
+    implementation 'org.springframework.cloud:spring-cloud-starter-config'
+    implementation 'org.springframework.security:spring-security-rsa'
+    // implementation 'org.springframework.cloud:spring-cloud-starter-bootstrap'
+    annotationProcessor "org.springframework.boot:spring-boot-configuration-processor" // Use ConfigurationProperties
+
+    implementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter:2.3.2'
+
+    implementation 'org.mybatis:mybatis-typehandlers-jsr310:1.0.2'
+    implementation 'org.json:json:20180813'
+    implementation 'org.jsoup:jsoup:1.14.1'
+    implementation 'commons-codec:commons-codec'
+    implementation 'commons-fileupload:commons-fileupload:1.2.2'
+    implementation 'commons-io:commons-io:2.4'
+    implementation 'javax.mail:mail:1.4.5'
+    implementation 'org.apache.httpcomponents:httpclient'
+    implementation 'com.openhtmltopdf:openhtmltopdf-core:1.0.10'
+    implementation 'com.openhtmltopdf:openhtmltopdf-pdfbox:1.0.10'
+    implementation 'commons-net:commons-net:3.6'
+    implementation 'com.jcraft:jsch:0.1.55'
+    implementation 'io.lettuce:lettuce-core:6.0.2.RELEASE'
+    implementation 'com.google.firebase:firebase-admin:9.2.0'
+    implementation 'com.google.auth:google-auth-library-oauth2-http:0.24.1'
+    implementation 'org.apache.commons:commons-lang3:3.12.0'
+
+    implementation 'com.google.http-client:google-http-client-jackson2:1.40.1'
+
+    implementation 'io.jsonwebtoken:jjwt-api:0.10.7'
+    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.10.7'
+    runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.10.7'
+
+    // add jwt for SCB
+    implementation 'com.nimbusds:nimbus-jose-jwt:9.2'
+    implementation 'com.auth0:java-jwt:3.19.1'
+    implementation 'org.bouncycastle:bcprov-jdk15on:1.64'
+
+    implementation 'com.google.maps:google-maps-services:2.2.0'
+
+    // add lombok
+    compileOnly 'org.projectlombok:lombok:1.18.24'
+    annotationProcessor 'org.projectlombok:lombok:1.18.24'
+    testCompileOnly 'org.projectlombok:lombok:1.18.24'
+    testAnnotationProcessor 'org.projectlombok:lombok:1.18.24'
+
+    // Use restTemplate for PATCH, PUT method
+    implementation 'org.apache.httpcomponents:httpclient:4.5.13'
+
+    implementation files('src/main/lib/javacryption-1.0.jar')
+
+    // for geo-location
+    // implementation group: 'com.maxmind.geoip2', name: 'geoip2', version: '4.0.1'
+    implementation group: 'net.renfei', name: 'ip2location', version: '1.2.0'
+//    implementation 'com.ip2location:ip2location-java:8.11.2'
+
+    // for user-agent parser
+    implementation 'io.github.mngsk:device-detector:1.0.10'
+
+    implementation 'net.logstash.logback:logstash-logback-encoder:5.0'
+
+    implementation 'io.lettuce:lettuce-core:6.1.5.RELEASE'
+
+    runtimeOnly 'mysql:mysql-connector-java'
+
+    testImplementation('org.springframework.boot:spring-boot-starter-test') {
+        exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
+    }
+    testImplementation 'org.springframework.amqp:spring-rabbit-test'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+    // add spring-boot-devtools for realtime debugging
+    // 개발시 필요할 때만 활성화 할 것
+//    implementation 'org.springframework.boot:spring-boot-devtools'
+
+    annotationProcessor "org.springframework.boot:spring-boot-configuration-processor"
+
+    implementation 'org.bgee.log4jdbc-log4j2:log4jdbc-log4j2-jdbc4.1:1.16'
+
+    // Swagger
+    implementation 'org.springdoc:springdoc-openapi-ui:1.7.0'
+
+    // nas storage library
+    implementation("io.minio:minio:8.5.4")
+    implementation("com.squareup.okhttp3:okhttp:4.9.3")
+
+    // prometheus
+    implementation 'io.micrometer:micrometer-registry-prometheus'
+
+    implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
+    implementation 'io.github.openfeign:feign-okhttp'
+
+    implementation 'org.springframework.boot:spring-boot-autoconfigure'
+
+    // M1 error
+    implementation 'io.netty:netty-resolver-dns-native-macos:4.1.68.Final:osx-aarch_64'
+
+    implementation 'org.apache.tika:tika-core:2.9.2'
+    implementation 'commons-io:commons-io:2.13.0'
+
+}
+
+test {
+    useJUnitPlatform()
+    systemProperty "spring.profiles.active", System.getenv("SPRING_PROFILES_ACTIVE") ?: "dev-local"
+    systemProperty "encrypt_key", System.getenv("encrypt_key")
+    systemProperty "RUNNER_NAME", "test"
+}
+
+dependencyManagement {
+    imports {
+        mavenBom "org.springframework.cloud:spring-cloud-dependencies:2021.0.8"
+        mavenBom("io.opentelemetry:opentelemetry-bom:1.32.0")
+        mavenBom("io.opentelemetry.instrumentation:opentelemetry-instrumentation-bom-alpha:1.32.0-alpha")
+    }
+}
+
+//   print version
+tasks.register('printAppVersion') {
+    println version
+}
+
+bootJar {
+//    layered()
+}
+
+tasks.jar {
+    enabled = false
+    preserveFileTimestamps = false
+    reproducibleFileOrder = true
+}
+
+
+tasks.withType(JavaCompile).configureEach {
+    options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
+}

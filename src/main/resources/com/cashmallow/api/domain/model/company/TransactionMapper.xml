@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.cashmallow.api.domain.model.company.TransactionMapper">
+
+    <select id="getTransactionRecordByTransactionRecordId" parameterType="long" resultType="com.cashmallow.api.domain.model.company.TransactionRecord">
+        SELECT *
+        FROM transaction_record
+        WHERE id = #{transactionRecordId}
+    </select>
+
+    <select id="getTransactionRecordsList" parameterType="hashmap" resultType="com.cashmallow.api.domain.model.company.TransactionRecord">
+        SELECT *
+        FROM transaction_record
+        <where>
+            <if test="id != null and id != ''">
+                AND id = #{id}
+            </if>
+            <if test="relatedTxnType != null and relatedTxnType != ''">
+                AND related_txn_type = #{relatedTxnType}
+            </if>
+            <if test="relatedTxnId != null and relatedTxnId != ''">
+                AND related_txn_id = #{relatedTxnId}
+            </if>
+            <if test="rootId != null and rootId != ''">
+                AND root_id = #{rootId}
+            </if>
+            <if test="upperId != null and upperId != ''">
+                AND upper_id = #{upperId}
+            </if>
+            <if test="toIso4217 != null and toIso4217 != ''">
+                AND iso4217 = #{toIso4217}
+            </if>
+            <if test="startDate != null and startDate != ''">
+                AND created_date BETWEEN #{startDate} AND #{endDate}
+            </if>
+            <if test="fundingStatus != null and fundingStatus != ''">
+                AND funding_status = #{fundingStatus}
+            </if>
+            <if test="description != null and description != ''">
+                AND description = #{description}
+            </if>
+            <if test="targetCreatedDate != null and targetCreatedDate != ''">
+                AND #{targetCreatedDate} >= created_date
+            </if>
+            <if test="targetUpdatedDate != null and targetUpdatedDate != ''">
+                AND #{targetUpdatedDate} >= updated_date
+            </if>
+        </where>
+    </select>
+
+    <select id="getTransactionRecord" parameterType="hashmap" resultType="com.cashmallow.api.domain.model.company.TransactionRecord">
+        SELECT *
+        FROM transaction_record
+        <where>
+            AND root_id is null
+            <if test="id != null and id != ''">
+                AND id = #{id}
+            </if>
+            <if test="relatedTxnType != null and relatedTxnType != ''">
+                AND related_txn_type = #{relatedTxnType}
+            </if>
+            <if test="relatedTxnId != null and relatedTxnId != ''">
+                AND related_txn_id = #{relatedTxnId}
+            </if>
+            <if test="fundingStatus != null and fundingStatus != ''">
+                AND funding_status = #{fundingStatus}
+            </if>
+        </where>
+    </select>
+
+    <select id="countDuplicateTransactionRecord" parameterType="com.cashmallow.api.domain.model.company.TransactionRecord" resultType="int">
+        SELECT count(*)
+        FROM transaction_record
+        WHERE root_id is null
+          AND related_txn_type = #{relatedTxnType}
+          AND related_txn_id = #{relatedTxnId}
+    </select>
+
+    <select id="getTransactionRecordListByIdList" parameterType="hashmap" resultType="com.cashmallow.api.domain.model.company.TransactionRecord">
+        SELECT *
+        FROM transaction_record
+        WHERE id IN
+        <foreach collection="list" item="item" open="(" close=")" separator=",">
+            #{item.transactionRecId}
+        </foreach>
+        OR root_id IN
+        <foreach collection="list" item="item" open="(" close=")" separator=",">
+            #{item.transactionRecId}
+        </foreach>
+    </select>
+
+    <select id="getTransactionMappingListByTransactionRecordId" parameterType="long" resultType="com.cashmallow.api.domain.model.company.TransactionMapping">
+        SELECT *
+        FROM transaction_mapping
+        WHERE transaction_rec_id = #{transactionRecordId}
+    </select>
+
+    <select id="countTransactionMappingByPaygateRecordId" parameterType="string" resultType="int">
+        SELECT count(*)
+        FROM transaction_mapping
+        WHERE paygate_rec_id = #{paygateRecordId}
+    </select>
+
+    <select id="getTransactionMappingListByPaygateRecordId" parameterType="string" resultType="com.cashmallow.api.domain.model.company.TransactionMapping">
+        SELECT *
+        FROM transaction_mapping
+        WHERE paygate_rec_id = #{paygateRecordId}
+    </select>
+
+    <select id="getTransactionRecordForPaygateRecord" parameterType="hashmap" resultType="com.cashmallow.api.domain.model.company.TransactionRecord">
+        SELECT tr.*
+        FROM transaction_record tr
+                 inner join (SELECT * FROM transaction_mapping WHERE paygate_rec_id = #{paygateRecId}) tm
+                            ON (tr.id = tm.transaction_rec_id or tr.root_id = transaction_rec_id)
+    </select>
+
+    <insert id="insertTransactionRecord" parameterType="com.cashmallow.api.domain.model.company.TransactionRecord" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO transaction_record
+            (related_txn_type, related_txn_id, iso4217, amount, upper_id, root_id, description, creator, funding_status)
+        VALUES (#{relatedTxnType}, #{relatedTxnId}, #{iso4217}, #{amount}, #{upperId}, #{rootId}, #{description}, #{creator}, #{fundingStatus})
+    </insert>
+
+    <update id="updateTransactionRecord" parameterType="com.cashmallow.api.domain.model.company.TransactionRecord">
+        UPDATE transaction_record
+        SET related_txn_type  = #{relatedTxnType},
+            related_txn_id    = #{relatedTxnId},
+            iso4217           = #{iso4217},
+            amount            = #{amount},
+            upper_id          = #{upperId},
+            root_id           = #{rootId},
+            description       = #{description},
+            creator           = #{creator},
+            funding_status    = #{fundingStatus},
+            updated_date      = NOW(),
+            exchange_txn_id   = #{exchangeTxnId},
+            send_money_txn_id = #{sendMoneyTxnId},
+            send_money_status = #{sendMoneyStatus}
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteTransactionRecord" parameterType="com.cashmallow.api.domain.model.company.TransactionRecord">
+        DELETE
+        FROM transaction_record
+        WHERE id = #{id}
+    </delete>
+
+    <insert id="insertTransactionMapping" parameterType="com.cashmallow.api.domain.model.company.TransactionMapping" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO transaction_mapping
+            (transaction_rec_id, paygate_rec_id, creator, traveler_id)
+        VALUES (#{transactionRecId}, #{paygateRecId}, #{creator}, #{travelerId})
+    </insert>
+
+    <update id="updateTransactionMapping" parameterType="com.cashmallow.api.domain.model.company.TransactionMapping" useGeneratedKeys="true" keyProperty="id">
+        UPDATE transaction_mapping
+        SET paygate_rec_id =#{newPaygateRecId},
+            creator        = #{creator}
+        WHERE transaction_rec_id = #{transactionRecId}
+          AND paygate_rec_id = #{paygateRecId};
+    </update>
+
+    <delete id="deleteTransactionMapping" parameterType="long">
+        DELETE
+        FROM transaction_mapping
+        WHERE transaction_rec_id = #{transactionRecId}
+    </delete>
+
+    <insert id="insertRollbackMappingHistory" parameterType="com.cashmallow.api.domain.model.company.RollbackMappingHistory" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO rollback_mapping_history
+            (related_txn_type, related_txn_id, iso4217, amount, description, created_date, updated_date, creator, funding_status, paygate_record_id_list)
+        VALUES (#{relatedTxnType}, #{relatedTxnId}, #{iso4217}, #{amount}, #{description}, #{createdDate}, #{updatedDate}, #{creator}, #{fundingStatus}, #{paygateRecordIdList})
+    </insert>
+</mapper>

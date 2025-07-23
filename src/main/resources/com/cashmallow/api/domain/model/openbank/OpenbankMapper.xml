@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- Mybatis 사용법: http://www.mybatis.org/mybatis-3/ko/index.html -->
+
+<mapper namespace="com.cashmallow.api.domain.model.openbank.OpenbankMapper">
+
+    <select id="getOpenbankByTravelerId" resultType="com.cashmallow.api.domain.model.openbank.Openbank">
+        SELECT traveler_id,
+               access_token,
+               refresh_token,
+               token_issue_date,
+               sign_yn,
+               sign_date,
+               user_seq_no,
+               user_ci,
+               fintech_use_num,
+               bank_code_std,
+               bank_name,
+               account_num_masked,
+               account_holder_name,
+               account_sign_yn,
+               account_sign_date,
+               created_date,
+               updated_date
+        FROM traveler_openbank
+        WHERE traveler_id = #{travelerId}
+    </select>
+
+    <select id="getOpenbankByTokenIssueDate" resultType="com.cashmallow.api.domain.model.openbank.Openbank">
+        SELECT traveler_id,
+               access_token,
+               refresh_token,
+               token_issue_date,
+               sign_yn,
+               sign_date,
+               user_seq_no,
+               user_ci,
+               fintech_use_num,
+               bank_code_std,
+               bank_name,
+               account_num_masked,
+               account_holder_name,
+               account_sign_yn,
+               account_sign_date,
+               created_date,
+               updated_date
+        FROM traveler_openbank
+        WHERE token_issue_date BETWEEN #{startDate} AND #{endDate}
+        AND sign_yn = 'Y'
+        AND account_sign_yn = 'Y'
+    </select>
+
+    <insert id="insertOpenbankUserToken" parameterType="com.cashmallow.api.domain.model.openbank.Openbank">
+        INSERT into traveler_openbank (traveler_id,
+                                       access_token,
+                                       refresh_token,
+                                       token_issue_date,
+                                       sign_yn,
+                                       sign_date,
+                                       user_seq_no)
+        VALUES (#{travelerId},
+                #{accessToken},
+                #{refreshToken},
+                #{tokenIssueDate},
+                'Y',
+                #{signDate},
+                #{userSeqNo})
+    </insert>
+
+    <update id="updateOpenbankToken" parameterType="com.cashmallow.api.domain.model.openbank.Openbank">
+        UPDATE
+            traveler_openbank
+        SET access_token     = #{accessToken},
+            refresh_token    = #{refreshToken},
+            token_issue_date = #{tokenIssueDate},
+            sign_yn          = 'Y',
+            sign_date        = #{signDate},
+            user_seq_no      = #{userSeqNo}
+        WHERE traveler_id = #{travelerId}
+    </update>
+
+    <update id="deleteOpenbankUserToken" parameterType="long">
+        UPDATE
+            traveler_openbank
+        SET user_seq_no         = '',
+            user_ci             = '',
+            sign_yn             = 'N',
+            sign_date           = NOW(),
+            access_token        = '',
+            refresh_token       = '',
+            fintech_use_num     = '',
+            bank_code_std       = '',
+            bank_name           = '',
+            account_num_masked  = '',
+            account_holder_name = '',
+            account_sign_yn     = 'N'
+        WHERE traveler_id = #{travelerId}
+    </update>
+
+    <update id="updateOpenbankAccount" parameterType="com.cashmallow.api.interfaces.openbank.dto.client.UserMeDetail">
+        UPDATE
+            traveler_openbank
+        SET user_ci             = #{user_ci},
+            fintech_use_num     = #{fintech_use_num},
+            bank_code_std       = #{bank_code_std},
+            bank_name           = #{bank_name},
+            account_num_masked  = #{account_num_masked},
+            account_holder_name = #{account_holder_name},
+            account_sign_yn     = 'Y',
+            account_sign_date   = NOW()
+        WHERE traveler_id = #{traveler_id}
+    </update>
+
+    <update id="deleteOpenbankAccount" parameterType="long">
+        UPDATE
+            traveler_openbank
+        SET fintech_use_num='',
+            bank_code_std='',
+            bank_name='',
+            account_num_masked='',
+            account_holder_name='',
+            account_sign_yn='N',
+            account_sign_date = NOW()
+        WHERE traveler_id = #{travelerId};
+    </update>
+
+</mapper>

@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- Mybatis 사용법: http://www.mybatis.org/mybatis-3/ko/index.html -->
+
+<mapper namespace="com.cashmallow.api.domain.model.partner.PartnerMapper">
+
+    <!-- Read -->
+
+    <select id="getWithdrawalPartnerByUserId" resultType="com.cashmallow.api.domain.model.partner.WithdrawalPartner">
+        SELECT *
+        FROM withdrawal_partner
+        WHERE user_id = #{userId}
+    </select>
+
+    <select id="getWithdrawalPartnerByWithdrawalPartnerId" resultType="com.cashmallow.api.domain.model.partner.WithdrawalPartner">
+        SELECT *
+        FROM withdrawal_partner
+        WHERE id = #{withdrawalPartnerId}
+    </select>
+
+    <select id="getWithdrawalPartnerListByCountry" parameterType="hashmap" resultType="com.cashmallow.api.domain.model.partner.WithdrawalPartner">
+        SELECT s.*, u.country
+        FROM withdrawal_partner s, user u
+        WHERE s.user_id = u.id
+            AND s.fx_possible_amt > 0
+        <if test="country != '' and country != null">
+            AND u.country = #{country}
+        </if>
+        <if test="cashOutService != '' and cashOutService != null">
+            AND s.cash_out_service = #{cashOutService}
+        </if>
+    </select>
+
+    <select id="getWithdrawalPartnerListByKindOfStorekeeper" resultType="com.cashmallow.api.domain.model.partner.WithdrawalPartner">
+        SELECT *
+        FROM withdrawal_partner
+        WHERE kind_of_storekeeper = #{kindOfStorekeeper}
+    </select>
+
+    <select id="getWithdrawalPartnerCashpointListNearby" parameterType="hashmap" resultType="com.cashmallow.api.domain.model.partner.WithdrawalPartnerCashpoint">
+        SELECT sa.*,
+               s.kind_of_storekeeper,
+               RADIANS(ACOS(SIN(RADIANS(partner_cashpoint_lat)) * SIN(RADIANS(${lat})) + COS(RADIANS(partner_cashpoint_lat)) * COS(RADIANS(${lat})) * COS(RADIANS(partner_cashpoint_lng - ${lng})))) AS distance
+        FROM withdrawal_partner_cashpoint sa,
+             withdrawal_partner s
+        WHERE sa.withdrawal_partner_id = s.id
+          AND withdrawal_partner_id = #{withdrawalPartnerId}
+          AND sa.partner_cashpoint_lat IS NOT NULL
+          AND sa.partner_cashpoint_lng IS NOT NULL
+        ORDER BY distance ASC
+        LIMIT 30
+    </select>
+
+    <!-- 기능: 71.1.2 사업자등록증 현황 조회 -->
+    <select id="getConfirmCntByCountry" parameterType="string" resultType="hashmap">
+        SELECT COUNT(*)                                                             total,
+               IFNULL(SUM(IF(biz_no_ok = 'Y', 1, 0)), 0)                         AS Y,
+               IFNULL(SUM(IF(biz_no_ok = 'N', 1, 0)), 0)                         AS N,
+               IFNULL(SUM(IF(biz_no_ok = 'R', 1, 0)), 0)                         AS R,
+               IFNULL(SUM(IF(biz_no_ok = 'Y' AND u.activated = FALSE, 1, 0)), 0) AS ina_Y,
+               IFNULL(SUM(IF(biz_no_ok = 'N' AND u.activated = FALSE, 1, 0)), 0) AS ina_N,
+               IFNULL(SUM(IF(biz_no_ok = 'R' AND u.activated = FALSE, 1, 0)), 0) AS ina_R
+        FROM withdrawal_partner s,
+             user u
+        WHERE s.user_id = u.id
+          AND s.biz_no_ok IN ('Y', 'N', 'R')
+          AND u.country = #{country}
+    </select>
+
+    <update id="updateWithdrawalPartner" parameterType="com.cashmallow.api.domain.model.partner.WithdrawalPartner">
+        UPDATE withdrawal_partner
+        SET shop_name           = #{shopName},
+            business_no         = #{businessNo},
+            biz_exp_date        = #{bizExpDate},
+            shop_addr           = #{shopAddr},
+            shop_photo          = #{shopPhoto},
+            business_photo      = #{businessPhoto},
+            shop_lat            = #{shopLat},
+            shop_lng            = #{shopLng},
+            cash_out_service    = #{cashOutService},
+            biz_no_ok           = #{bizNoOk},
+            biz_no_ok_date      = #{bizNoOkDate},
+            account_no          = #{accountNo},
+            account_name        = #{accountName},
+            bank_name           = #{bankName},
+            account_ok          = #{accountOk},
+            account_ok_date     = #{accountOkDate},
+            fx_possible_amt     = #{fxPossibleAmt},
+            about               = #{about},
+            cash_out_start_at   = #{cashOutStartAt},
+            cash_out_end_at     = #{cashOutEndAt},
+            shop_contact_number = #{shopContactNumber},
+            creator             = #{creator},
+            holiday_date        = #{holidayDate},
+            holiday_day         = #{holidayDay},
+            cash_out_hours      = #{cashOutHours},
+            fee_rate            = #{feeRate},
+            fee_per             = #{feePer}
+        WHERE id = #{id}
+    </update>
+
+    <insert id="insertWithdrawalPartner" parameterType="com.cashmallow.api.domain.model.partner.WithdrawalPartner" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO withdrawal_partner(user_id, partner_id, shop_name, business_no,
+                                       biz_exp_date, shop_addr, shop_photo, business_photo,
+                                       shop_lat, shop_lng, biz_no_ok, biz_no_ok_date,
+                                       account_no, account_name, bank_name,
+                                       account_ok, account_ok_date, fx_possible_amt, about,
+                                       cash_out_start_at, cash_out_end_at, shop_contact_number, creator,
+                                       holiday_date, holiday_day, cash_out_hours, fee_rate, fee_per)
+        VALUES (#{userId}, #{partnerId}, #{shopName}, #{businessNo},
+                #{bizExpDate}, #{shopAddr}, #{shopPhoto}, #{businessPhoto},
+                #{shopLat}, #{shopLng}, #{bizNoOk}, #{bizNoOkDate},
+                #{accountNo}, #{accountName}, #{bankName},
+                #{accountOk}, #{accountOkDate}, #{fxPossibleAmt}, #{about},
+                #{cashOutStartAt}, #{cashOutEndAt}, #{shopContactNumber}, #{creator},
+                #{holidayDate}, #{holidayDay}, #{cashOutHours}, #{feeRate}, #{feePer})
+    </insert>
+
+    <insert id="insertWithdrawalPartnerMaintenance">
+        INSERT INTO withdrawal_partner_maintenance (withdrawal_partner_id, start_at, end_at)
+        VALUES (#{withdrawalPartnerId}, #{startAt}, #{endAt})
+    </insert>
+
+    <select id="selectWithdrawalPartnerMaintenances" resultType="com.cashmallow.api.domain.model.partner.WithdrawalPartnerMaintenance">
+        SELECT *
+        FROM withdrawal_partner_maintenance wpm
+        WHERE withdrawal_partner_id = #{withdrawalPartnerId}
+          AND end_at > now()
+        ORDER BY start_at ASC;
+    </select>
+</mapper>

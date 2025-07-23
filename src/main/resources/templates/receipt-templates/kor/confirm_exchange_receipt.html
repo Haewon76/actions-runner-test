@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Cashmallow Exchange Receipt</title>
+    <style type="text/css">
+        body {
+            font-family: Droid Sans Fallback
+        }
+
+        table {
+            width: 100%;
+            border-spacing: 0pt;
+            border-left: none;
+            border-top: none;
+        }
+
+        th {
+            padding: 8px;
+            border-right: none;
+            border-bottom: none;
+        }
+
+        td {
+            padding: 8px;
+            border-right: none;
+            border-bottom: none;
+        }
+
+        .center {
+            text-align: center;
+        }
+
+        .right {
+            text-align: right;
+        }
+    </style>
+</head>
+<body>
+<table>
+    <tr>
+        <th colspan="2" class="center" scope="col"><h1>영수증</h1></th>
+    </tr>
+    <tr>
+        <td><span th:text="${name}"></span> 귀하</td>
+        <td class="right">No.: <span th:text="${receiptNo}"></span></td>
+    </tr>
+    <tr>
+        <td>ID: <span th:text="${emailId}"></span></td>
+        <td class="right">발급일: <span th:text="${date}"></span></td>
+    </tr>
+</table>
+<table border="1">
+    <tr>
+        <th rowspan='4' scope="row">공급자</th>
+        <th scope="row">사업자등록번호</th>
+        <td colspan="2">304-88-00249</td>
+        <td rowspan="3" class="center"><img th:src="${stampImage}" alt="Cashmallow stamp"></img></td>
+    </tr>
+    <tr>
+        <th scope="row">상호</th>
+        <td colspan="2">(주)캐시멜로</td>
+    </tr>
+    <tr>
+        <th scope="row">대표자 성명</th>
+        <td colspan="2">안소연</td>
+    </tr>
+    <tr>
+        <th scope="row">주소</th>
+        <td colspan="3">서울시 강남구 선릉로94길 14 4층</td>
+    </tr>
+    <tr>
+        <th scope="row">날짜</th>
+        <th scope="row">매수금액(<span th:text="${toIso4217}"></span>)</th>
+        <th scope="row">환율</th>
+        <th scope="row">매도금액(KRW)</th>
+        <th scope="row">수수료(KRW)</th>
+    </tr>
+    <tr class="center">
+        <td><span th:text="${date}"></span></td>
+        <td><span th:text="${toAmt}"></span></td>
+        <td><span th:text="${exchangeRate}"></span></td>
+        <td><span th:text="${fromMoney}"></span></td>
+        <td><span th:text="${fee}"></span></td>
+    </tr>
+    <tr>
+        <th scope="row" colspan="3">총액(KRW)</th>
+        <td colspan="2" class="center"><span th:text="${fromAmt}"></span></td>
+    </tr>
+</table>
+<table>
+    <tr>
+        <th scope="row" class="right"><img th:src="${cashmallowCiImage}" alt="Cashmallow CI"></th>
+    </tr>
+</table>
+</body>
+</html>

@@ -1,0 +1,40 @@
+<html>
+<head>
+    <style>
+        td {
+            padding: 4px;
+        }
+
+        p {
+            font-size: 12px
+        }
+    </style>
+</head>
+<body>
+<p>1. 於ATM主畫面的左上角確認ATM系統
+<table>
+    <tr>
+        <td width="50%">
+            <a href="https://www.cashmallow.com/zh-hant/atm-withdrawal-way/nicepark/"><img th:src="${@environment.getProperty('host.cdn.url')} + '/static/images/nice_logo.png'" style="max-width:80%; height:auto;"/></a><br>
+        </td>
+        <td width="50%">
+            <a href="https://www.cashmallow.com/zh-hant/atm-withdrawal-way/hannet/"><img th:src="${@environment.getProperty('host.cdn.url')} + '/static/images/hannet.png'" style="max-width:80%; height:auto;"/></a><br>
+        </td>
+    </tr>
+    <tr>
+        <td width="50%">
+            <a href="https://www.cashmallow.com/zh-hant/atm-withdrawal-way/hs/"><img th:src="${@environment.getProperty('host.cdn.url')} + '/static/images/hyosung.png'" style="max-width:80%; height:auto;"/></a><br>
+        </td>
+        <td width="50%">
+            <a href="https://www.cashmallow.com/zh-hant/atm-withdrawal-way/lotte/"><img th:src="${@environment.getProperty('host.cdn.url')} + '/static/images/lotte_atm.png'" style="max-width:80%; height:auto;"/></a><br>
+        </td>
+    </tr>
+</table>
+<br>
+2. 點選 "COATM"<br>
+3. 輸入您的生日(YYYYMMDD)後按"확인"<br>
+4. 輸入一次性密碼(OTP)後按"확인"<br>
+5. 領取現金<br>
+</p>
+</body>
+</html>

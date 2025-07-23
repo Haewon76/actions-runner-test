@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- Mybatis 사용법: http://www.mybatis.org/mybatis-3/ko/index.html -->
+
+<mapper namespace="com.cashmallow.api.domain.model.mallowlink.MallowlinkMapper">
+
+    <insert id="insertMallowlinkLog">
+        INSERT INTO mallowlink_log (method, request, status, response, elapsed_time)
+        VALUES (#{method}, #{request}, #{status}, #{response}, #{elapsedTime});
+    </insert>
+
+</mapper>

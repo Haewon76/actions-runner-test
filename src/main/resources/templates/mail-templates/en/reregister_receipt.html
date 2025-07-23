@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>[Cashmallow] Account reconciliation failed, please contact customer service center.</title>
+</head>
+
+<body>
+
+<div th:replace="mail-templates/en/fragments/header :: header"></div>
+
+<div style="background-color:white; padding:16px; line-height:1.5em;">
+    <div style="font-size:1em;">
+        The receipt you uploaded cannot be reconciled. Please verify the following:<br>
+        1. Check if the receipt displays the transfer amount, date, and the account number from which the funds were debited.<br>
+        2. Ensure that you did not use an unregistered account for the transfer.<br>
+        3. Confirm if the transfer amount is correct.<br>
+        Alternatively, please contact the customer service center through the app for further assistance with CS-related inquiries.<br>
+        <br>
+        <br>
+        你上傳的收據無法對帳，請先確認<br>
+        1. 收據是否顯示轉帳金額、日期、出帳戶口帳號。<br>
+        2. 是否使用非登記的帳戶轉帳。<br>
+        3. 轉帳金額是否正確。<br>
+        或請於APP客服中心洽詢CS。<br>
+    </div>
+</div>
+
+<div th:replace="mail-templates/en/fragments/footer :: footer"></div>
+
+</body>
+</html>

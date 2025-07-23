@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.cashmallow.api.domain.model.bankinfo.BankInfoMapper">
+
+    <select id="getBankInfoByIso3166" resultType="com.cashmallow.api.domain.model.bankinfo.BankInfo">
+        SELECT *
+        FROM bank_info
+        WHERE iso3166 = #{iso3166}
+    </select>
+
+    <select id="getBankInfoKrByCode" resultType="com.cashmallow.api.domain.model.bankinfo.BankInfo">
+        SELECT *
+        FROM bank_info
+        WHERE iso3166 = 'KR'
+          AND code = #{bankCode}
+    </select>
+
+    <select id="getBankInfoHkByName" resultType="com.cashmallow.api.domain.model.bankinfo.BankInfo">
+        SELECT *
+        FROM bank_info
+        WHERE iso3166 = 'HK'
+          AND name like CONCAT('%', #{bankName}, '%')
+    </select>
+
+    <select id="getBankInfoById" resultType="com.cashmallow.api.domain.model.bankinfo.BankInfo">
+        SELECT *
+          FROM bank_info
+         WHERE id = #{id}
+    </select>
+
+</mapper>

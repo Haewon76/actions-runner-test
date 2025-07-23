@@ -1,0 +1,9 @@
+diff a/src/main/java/com/cashmallow/api/interfaces/traveler/web/TravelerController.java b/src/main/java/com/cashmallow/api/interfaces/traveler/web/TravelerController.java	(rejected hunks)
+@@ -3,6 +3,7 @@ package com.cashmallow.api.interfaces.traveler.web;
+ import com.cashmallow.api.application.*;
+ import com.cashmallow.api.application.impl.*;
+ import com.cashmallow.api.auth.AuthService;
++import com.cashmallow.api.domain.model.bundle.Bundle;
+ import com.cashmallow.api.domain.model.company.TransactionRecord.RelatedTxnType;
+ import com.cashmallow.api.domain.model.country.enums.CountryCode;
+ import com.cashmallow.api.domain.model.partner.WithdrawalPartner;

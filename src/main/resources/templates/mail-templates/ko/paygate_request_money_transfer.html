@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>[Cashmallow] 송금 요청</title>
+</head>
+
+<body>
+
+<div th:replace="mail-templates/ko/fragments/header :: header"></div>
+
+<div style="background-color:white; padding:16px; line-height:1.5em;">
+    <div style="font-size:1em;">
+        Cashmallow에서는 다음과 같이 이체를 요청합니다.<br>
+        &nbsp;<br>
+        - 은행 명 : <strong th:text="${bankName}"></strong><br>
+        - 계좌번호 : <strong th:text="${accountNo}"></strong><br>
+        - 예금주명 : <strong th:text="${accountName}"></strong><br>
+        - 이체금액 : <strong th:text="${amount}"></strong><br>
+        - 화폐 : USD<br>
+        &nbsp;<br>
+    </div>
+
+</div>
+
+<div th:replace="mail-templates/ko/fragments/footer :: footer"></div>
+
+</body>
+</html>

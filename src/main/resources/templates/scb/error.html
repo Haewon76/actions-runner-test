@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+    <title>SCB withdraw</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script type="text/javascript" src="https://code.jquery.com/jquery-latest.min.js"></script>
+    <link th:href="${@environment.getProperty('host.cdn.url')} + '/static/css/scb/view.css'" rel="stylesheet"/>
+
+    <script>
+        let isAndroid = [[${isAndroid}]];
+        let message = '[[${message}]]';
+        let code = '[[${code}]]';
+
+        function closeView() {
+            const json = JSON.stringify({message, code});
+            if (isAndroid) {
+                Cashmallow.closeView(json);
+            } else {
+                webkit.messageHandlers.closeView.postMessage(json);
+            }
+        }
+
+        function appMessage() {
+            // const message = 'test message';
+            // const code = '200';
+            const json = JSON.stringify({code, message});
+            if (isAndroid) {
+                Cashmallow.appMessage(json);
+            } else {
+                webkit.messageHandlers.appMessage.postMessage(json);
+            }
+        }
+
+        window.onload = function () {
+            // closeView();
+            appMessage();
+        }
+    </script>
+
+</head>
+<body>
+<div class="flex items-center justify-center h-screen">
+    <div class="p-4 max-w-lg m-5 text-center">
+        <p class="text-gray-700" th:utext="${message}">This is a notice box with rounded corners and a shadow.</p>
+    </div>
+</div>
+<header class="fixed top-0 left-0 w-full h-16 flex items-center justify-between px-4 bg-white z-10">
+    <!--상단 왼쪽 뒤로가기 버튼-->
+    <div onclick="closeView()">
+        <div class="fixed top-[20px] left-[20px]">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M9.52502 4.5L2.02502 12L9.52502 19.5" stroke="#212529" stroke-width="2" stroke-linecap="round"/>
+                <path d="M21 12H3" stroke="#212529" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+        </div>
+    </div>
+</header>
+</body>
+</html>

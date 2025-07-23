@@ -1,0 +1,350 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.cashmallow.api.domain.model.coupon.CouponV2Mapper">
+
+    <select id="getCouponList"
+         parameterType="com.cashmallow.api.interfaces.coupon.dto.req.CouponSearchRequest"
+         resultType="com.cashmallow.api.domain.model.coupon.entity.Coupon">
+
+        SELECT id
+             , is_active
+             , created_date
+             , from_country_code
+             , coupon_name
+             , coupon_code
+             , coupon_description
+             , coupon_discount_type
+             , coupon_discount_value
+             , max_discount_amount
+             , min_required_amount
+             , expire_type
+             , service_type
+             , coupon_start_date
+             , coupon_end_date
+             , expire_period_days
+             , created_id
+             , is_system
+          FROM coupon_v2
+         WHERE from_country_code = #{fromCountryCode}
+        <if test="searchStartDate != null and !''.equals(searchStartDate) and searchEndDate != null and !''.equals(searchEndDate)">
+            AND created_date BETWEEN #{searchStartDate} AND #{searchEndDate}
+        </if>
+        <if test="couponCodeName != null and !''.equals(couponCodeName)">
+           AND (
+             coupon_code LIKE CONCAT(#{couponCodeName}, '%') OR coupon_name LIKE CONCAT(#{couponCodeName}, '%')
+            )
+        </if>
+
+        <if test="isSystem != null and !''.equals(isSystem)">
+            AND is_system = #{isSystem}
+        </if>
+        <if test="isActive != null and !''.equals(isActive)">
+            AND is_active = #{isActive}
+        </if>
+
+        <if test="sortColumnCode != null and !''.equals(sortColumnCode)">
+        <choose>
+            <when test="sortColumnCode == 'coupon_id' and sortColumnOrder == 'ASC'">
+                ORDER BY id ASC
+            </when>
+            <when test="sortColumnCode == 'coupon_id' and sortColumnOrder == 'DESC'">
+                ORDER BY id DESC
+            </when>
+            <when test="sortColumnCode == 'is_system' and sortColumnOrder == 'ASC'">
+                ORDER BY is_system ASC
+            </when>
+            <when test="sortColumnCode == 'is_system' and sortColumnOrder == 'DESC'">
+                ORDER BY is_system DESC
+            </when>
+
+            <when test="sortColumnCode == 'created_date' and sortColumnOrder == 'ASC'">
+                ORDER BY created_date ASC
+            </when>
+            <when test="sortColumnCode == 'created_date' and sortColumnOrder == 'DESC'">
+                ORDER BY created_date DESC
+            </when>
+
+            <when test="sortColumnCode == 'coupon_name' and sortColumnOrder == 'ASC'">
+                ORDER BY coupon_name ASC
+            </when>
+            <when test="sortColumnCode == 'coupon_name' and sortColumnOrder == 'DESC'">
+                ORDER BY coupon_name DESC
+            </when>
+
+            <when test="sortColumnCode == 'coupon_code' and sortColumnOrder == 'ASC'">
+                ORDER BY coupon_code ASC
+            </when>
+            <when test="sortColumnCode == 'coupon_code' and sortColumnOrder == 'DESC'">
+                ORDER BY coupon_code DESC
+            </when>
+
+            <when test="sortColumnCode == 'coupon_discount_type' and sortColumnOrder == 'ASC'">
+                ORDER BY coupon_discount_type ASC
+            </when>
+            <when test="sortColumnCode == 'coupon_discount_type' and sortColumnOrder == 'DESC'">
+                ORDER BY coupon_discount_type DESC
+            </when>
+
+            <when test="sortColumnCode == 'coupon_discount_type' and sortColumnOrder == 'ASC'">
+                ORDER BY coupon_discount_type ASC
+            </when>
+            <when test="sortColumnCode == 'coupon_discount_type' and sortColumnOrder == 'DESC'">
+                ORDER BY coupon_discount_type DESC
+            </when>
+
+            <when test="sortColumnCode == 'coupon_discount_value' and sortColumnOrder == 'ASC'">
+                ORDER BY coupon_discount_value ASC
+            </when>
+            <when test="sortColumnCode == 'coupon_discount_value' and sortColumnOrder == 'DESC'">
+                ORDER BY coupon_discount_value DESC
+            </when>
+
+            <when test="sortColumnCode == 'max_discount_amount' and sortColumnOrder == 'ASC'">
+                ORDER BY max_discount_amount ASC
+            </when>
+            <when test="sortColumnCode == 'max_discount_amount' and sortColumnOrder == 'DESC'">
+                ORDER BY max_discount_amount DESC
+            </when>
+
+            <when test="sortColumnCode == 'service_type' and sortColumnOrder == 'ASC'">
+                ORDER BY service_type ASC
+            </when>
+            <when test="sortColumnCode == 'service_type' and sortColumnOrder == 'DESC'">
+                ORDER BY service_type DESC
+            </when>
+
+            <when test="sortColumnCode == 'coupon_start_date' and sortColumnOrder == 'ASC'">
+                ORDER BY coupon_start_date ASC
+            </when>
+            <when test="sortColumnCode == 'coupon_start_date' and sortColumnOrder == 'DESC'">
+                ORDER BY coupon_start_date DESC
+            </when>
+
+            <when test="sortColumnCode == 'coupon_end_date' and sortColumnOrder == 'ASC'">
+                ORDER BY coupon_end_date ASC
+            </when>
+            <when test="sortColumnCode == 'coupon_end_date' and sortColumnOrder == 'DESC'">
+                ORDER BY coupon_end_date DESC
+            </when>
+
+            <when test="sortColumnCode == 'expire_period_days' and sortColumnOrder == 'ASC'">
+                ORDER BY expire_period_days ASC
+            </when>
+            <when test="sortColumnCode == 'expire_period_days' and sortColumnOrder == 'DESC'">
+                ORDER BY expire_period_days DESC
+            </when>
+
+            <when test="sortColumnCode == 'min_required_amount' and sortColumnOrder == 'ASC'">
+                ORDER BY min_required_amount ASC
+            </when>
+            <when test="sortColumnCode == 'min_required_amount' and sortColumnOrder == 'DESC'">
+                ORDER BY min_required_amount DESC
+            </when>
+
+            <otherwise>
+                ORDER BY id ASC
+            </otherwise>
+        </choose>
+        </if>
+         LIMIT #{size} OFFSET #{offset}
+
+    </select>
+
+
+    <select id="getCouponTotalCount"
+            parameterType="com.cashmallow.api.interfaces.coupon.dto.req.CouponSearchRequest"
+            resultType="java.lang.Long">
+        SELECT count(id)
+        FROM coupon_v2
+        WHERE from_country_code = #{fromCountryCode}
+        <if test="searchStartDate != null and !''.equals(searchStartDate) and searchEndDate != null and !''.equals(searchEndDate)">
+            AND created_date BETWEEN #{searchStartDate} AND #{searchEndDate}
+        </if>
+        <if test="couponCodeName != null and !''.equals(couponCodeName)">
+            AND (
+                coupon_code LIKE CONCAT(#{couponCodeName}, '%') OR coupon_name LIKE CONCAT(#{couponCodeName}, '%')
+            )
+        </if>
+
+        <if test="isSystem != null and !''.equals(isSystem)">
+            AND is_system = #{isSystem}
+        </if>
+        <if test="isActive != null and !''.equals(isActive)">
+            AND is_active = #{isActive}
+        </if>
+    </select>
+
+    <insert id="createCoupon" parameterType="com.cashmallow.api.domain.model.coupon.entity.Coupon">
+
+        <selectKey keyProperty="id" resultType="Long" order="AFTER">
+            SELECT LAST_INSERT_ID()
+        </selectKey>
+
+        INSERT INTO coupon_v2(id, is_system, from_country_code, coupon_name, coupon_code, coupon_description
+                            , coupon_discount_type, coupon_discount_value, max_discount_amount, min_required_amount, expire_type
+                            , coupon_start_date, coupon_end_date, coupon_start_date_utc, coupon_end_date_utc, expire_period_days
+                            , service_type, is_active
+                            , created_id, updated_id)
+        VALUES (#{id}, #{isSystem}, #{fromCountryCode}, #{couponName}, #{couponCode}, #{couponDescription}
+                , #{couponDiscountType}, #{couponDiscountValue}, #{maxDiscountAmount}, #{minRequiredAmount}, #{expireType}
+                , #{couponStartDate}, #{couponEndDate}, #{couponStartDateUtc}, #{couponEndDateUtc}, #{expirePeriodDays}
+                , #{serviceType}, #{isActive}
+                , #{createdId}, #{updatedId})
+
+    </insert>
+
+    <insert id="insertCouponApplyCurrency" parameterType="map">
+        INSERT INTO coupon_apply_currency_v2(coupon_id, target_iso_3166)
+        VALUES
+        <if test="applyCurrencyList != null and applyCurrencyList.size > 0">
+            <foreach collection="applyCurrencyList" item="targetCurrency" separator=",">
+                (#{couponId}, #{targetCurrency})
+            </foreach>
+        </if>
+    </insert>
+
+    <select id="getCouponById"  parameterType="java.lang.Long" resultType="com.cashmallow.api.domain.model.coupon.entity.Coupon">
+        SELECT id
+            , is_system
+            , from_country_code
+            , coupon_name
+            , coupon_code
+            , coupon_description
+            , coupon_discount_type
+            , coupon_discount_value
+            , max_discount_amount
+            , min_required_amount
+            , expire_type
+            , coupon_start_date
+            , coupon_end_date
+            , expire_period_days
+            , service_type
+            , is_active
+            , created_id
+            , updated_id
+        FROM coupon_v2
+        WHERE id = #{couponId}
+    </select>
+
+    <!-- 모든 유저 대상 시, 해당 국가의 활성화된 유저 대상 -->
+    <select id="getUsersByFromCountryCode" parameterType="java.lang.String" resultType="java.lang.Long">
+        SELECT u.id
+          FROM user u
+          JOIN traveler t
+            ON t.user_id = u.id
+         WHERE u.country = #{fromCountryCode}
+           AND u.activated = '1' -- 활성화 됨
+           AND u.cls = 'T' -- admin('A') traveler('T')
+           AND t.certification_ok = 'Y' -- 본인인증 완료
+    </select>
+
+    <update id="updateCouponActive" parameterType="map">
+        UPDATE coupon_v2
+           SET is_active = #{isActive}
+         WHERE id = #{couponId}
+           AND from_country_code = #{fromCountryCode}
+    </update>
+
+    <!-- Coupon 삭제 전에 삭제 가능한지 발급 이력 및 활성화 여부 체크 : 0이면 삭제 가능. 1개라도 삭제 불가능한 couponId 가 들어오면 break. -->
+    <select id="getIsCouponIssued" parameterType="map" resultType="java.lang.Long">
+        SELECT count(*)
+         FROM coupon_user_v2 u
+         LEFT OUTER JOIN coupon_v2 c
+                      ON u.coupon_id = c.id
+        WHERE u.coupon_id IN  -- 발급이력 있는 쿠폰들
+        <foreach collection="couponIds" item="couponId" separator="," open="(" close=")">
+            #{couponId}
+        </foreach>
+    </select>
+
+    <select id="getIsActive" parameterType="map" resultType="java.lang.Long">
+        SELECT count(*)
+          FROM coupon_v2
+         WHERE is_active = 'Y'  -- 활성화 되어있는 쿠폰들
+           AND id IN
+        <foreach collection="couponIds" item="couponId" separator="," open="(" close=")">
+            #{couponId}
+        </foreach>
+    </select>
+
+    <!-- Coupon 비활성화 되어있는 발급 이력 없는 쿠폰 삭제 -->
+    <delete id="deleteCoupon" parameterType="map">
+        DELETE
+          FROM coupon_v2
+         WHERE id IN
+        <foreach collection="couponIds" item="couponId" separator="," open="(" close=")">
+            #{couponId}
+        </foreach>
+    </delete>
+
+    <!-- 삭제한 Coupon 에 대한 화폐 삭제 -->
+    <delete id="deleteApplyCurrencyByCouponId" parameterType="map">
+        DELETE
+        FROM coupon_apply_currency_v2
+        WHERE coupon_id IN
+        <foreach collection="couponIds" item="couponId" separator="," open="(" close=")">
+            #{couponId}
+        </foreach>
+    </delete>
+
+    <select id="getIssuableCoupons" parameterType="map" resultType="com.cashmallow.api.domain.model.coupon.entity.Coupon">
+        SELECT *
+          FROM coupon_v2
+         WHERE from_country_code = #{fromCountryCode}
+           AND is_active = 'Y' AND is_system = 'N'
+           AND (
+                (expire_type = 'daysFromIssue' AND coupon_start_date IS NULL AND coupon_end_date IS NULL)
+                    OR
+                (expire_type = 'dateRange' AND #{currentDate} <![CDATA[ <= ]]> DATE_FORMAT(coupon_start_date, '%Y-%m-%d'))
+               )
+           AND updated_date BETWEEN #{searchStartDate} AND #{searchEndDate}
+         ORDER BY created_date DESC
+    </select>
+
+
+    <!-- 정확한 쿠폰 코드로 검색. Coupon 코드로 검색: Unique 걸려있으므로 유일함 -->
+    <select id="getCouponByCouponCode" parameterType="java.lang.String" resultType="com.cashmallow.api.domain.model.coupon.entity.Coupon">
+        SELECT id
+             , is_active
+             , created_date
+             , from_country_code
+             , coupon_name
+             , coupon_code
+             , coupon_description
+             , coupon_discount_type
+             , coupon_discount_value
+             , max_discount_amount
+             , min_required_amount
+             , expire_type
+             , service_type
+             , coupon_start_date
+             , coupon_end_date
+             , expire_period_days
+             , created_id
+             , is_system
+         FROM coupon_v2
+        WHERE from_country_code = #{fromCountryCode}
+        <if test="isSystem != null and !''.equals(isSystem)">
+          AND is_system = #{isSystem}
+        </if>
+        <if test="isActive != null and !''.equals(isActive)">
+          AND is_active = #{isActive}
+        </if>
+          AND coupon_code = #{couponCode}
+    </select>
+
+    <select id="checkDuplicateCode" parameterType="java.lang.String" resultType="java.lang.Long">
+        SELECT count(*)
+          FROM coupon_v2
+         WHERE from_country_code = #{fromCountryCode}
+           AND coupon_code = #{couponCode}
+    </select>
+
+    <select id="getApplyCurrencyListByCouponId" parameterType="java.lang.Long" resultType="java.lang.String">
+        SELECT target_iso_3166
+          FROM coupon_apply_currency_v2
+         WHERE coupon_id = #{couponId}
+    </select>
+
+</mapper>

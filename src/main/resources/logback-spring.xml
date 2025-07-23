@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+    <appender name="consoleAppender" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %+5level ${PID:-} --- [%thread][%X{userId}] %logger{36}:%L - %M\(\):%msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="jsonAppender" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+            <version>1</version>
+            <shortenedLoggerNameLength>0</shortenedLoggerNameLength>
+            <includeCallerData>true</includeCallerData>
+            <provider class="com.cashmallow.logger.CashmallowJsonProvider"/>
+        </encoder>
+    </appender>
+
+    <root>
+        <level value="WARN"/>
+        <appender-ref ref="consoleAppender"/>
+    </root>
+
+    <springProfile name="dev-local | dev-local-gtop | dev-wk">
+        <logger name="jdbc" level="OFF"/>
+        <logger name="jdbc.sqlonly" level="OFF"/>
+        <logger name="jdbc.sqltiming" level="DEBUG"/>
+        <logger name="jdbc.audit" level="OFF"/>
+        <logger name="jdbc.resultset" level="OFF"/>
+        <logger name="jdbc.resultsettable" level="DEBUG"/>
+        <logger name="jdbc.connection" level="OFF"/>
+    </springProfile>
+
+    <springProfile name="dev-local | dev-local-gtop">
+        <logger name="com.cashmallow" level="DEBUG" additivity="false">
+            <appender-ref ref="consoleAppender"/>
+            <!--            <appender-ref ref="jsonAppender"/>-->
+        </logger>
+        <logger name="org.springframework" level="WARN" additivity="false">
+            <appender-ref ref="consoleAppender"/>
+        </logger>
+        <logger name="org.springframework.web.client" level="DEBUG" additivity="false">
+            <appender-ref ref="consoleAppender"/>
+        </logger>
+        <logger name="com.openhtmltopdf" level="DEBUG" additivity="false">
+            <appender-ref ref="consoleAppender"/>
+        </logger>
+    </springProfile>
+
+    <springProfile name="dev">
+        <logger name="jdbc.sqltiming" level="OFF" additivity="false">
+            <appender-ref ref="jsonAppender"/>
+        </logger>
+        <logger name="com.cashmallow" level="DEBUG" additivity="false">
+            <appender-ref ref="jsonAppender"/>
+        </logger>
+        <logger name="org.springframework" level="WARN" additivity="false">
+            <appender-ref ref="jsonAppender"/>
+        </logger>
+        <logger name="org.springframework.web.client" level="INFO" additivity="false">
+            <appender-ref ref="jsonAppender"/>
+        </logger>
+        <logger name="com.openhtmltopdf" level="OFF" additivity="false">
+            <appender-ref ref="jsonAppender"/>
+        </logger>
+    </springProfile>
+
+    <springProfile name="prd">
+        <logger name="com.cashmallow" level="INFO" additivity="false">
+            <appender-ref ref="jsonAppender"/>
+        </logger>
+        <logger name="org.springframework" level="WARN" additivity="false">
+            <appender-ref ref="jsonAppender"/>
+        </logger>
+        <logger name="com.openhtmltopdf" level="OFF" additivity="false">
+            <appender-ref ref="jsonAppender"/>
+        </logger>
+    </springProfile>
+
+</configuration>

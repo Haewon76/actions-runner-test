@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- Mybatis 사용법: http://www.mybatis.org/mybatis-3/ko/index.html -->
+
+<mapper namespace="com.cashmallow.api.domain.model.memo.MemoMapper">
+
+    <resultMap type="com.cashmallow.api.domain.model.memo.Memo" id="memoMap">
+        <result column="firstName" property="firstName" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+        <result column="lastName" property="lastName" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+    </resultMap>
+
+
+    <!-- 조회 -->
+    <select id="getMemoList" resultMap="memoMap" parameterType="hashmap">
+        SELECT m.*,
+        u.first_name as firstName,
+        u.last_name as lastName
+        FROM memo m LEFT JOIN user u ON m.creator_id = u.id
+        <where>
+            <if test="id != null and id != ''">
+                AND m.id = #{id}
+            </if>
+            <if test="refId != null and refId != ''">
+                AND m.ref_id = #{refId}
+            </if>
+            <if test="type != null and type != ''">
+                AND m.type = #{type}
+            </if>
+            <if test="creatorId != null and creatorId != ''">
+                AND m.creator_id = #{creatorId}
+            </if>
+        </where>
+        Order by id desc
+    </select>
+
+    <insert id="registerMemo" parameterType="com.cashmallow.api.domain.model.memo.Memo">
+        INSERT INTO memo (
+        ref_id,
+        type,
+        memo,
+        created_at,
+        updated_at,
+        creator_id
+        ) VALUES (
+        #{refId},
+        #{type},
+        #{memo},
+        #{createdAt},
+        #{updatedAt},
+        #{creatorId}
+        )
+        <selectKey keyProperty="id" resultType="Long" order="AFTER">
+            SELECT LAST_INSERT_ID()
+        </selectKey>
+    </insert>
+
+    <update id="updateMemo" parameterType="com.cashmallow.api.domain.model.memo.Memo">
+        UPDATE memo
+        SET ref_id     = #{refId},
+            type       = #{type},
+            memo       = #{memo},
+            updated_at = #{updatedAt},
+            creator_id = #{creatorId}
+        WHERE id = #{id}
+    </update>
+
+</mapper>

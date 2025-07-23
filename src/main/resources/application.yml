@@ -1,0 +1,43 @@
+# 어플리케이션 실행시 환경 변수 세팅 필요
+# dev-local, dev, stg, prd
+spring:
+  config:
+    import: "optional:configserver:http://${config_host:config.console.cm-dev}:8888"
+  application:
+    name: api
+  servlet:
+    # Multipart
+    multipart:
+      enabled: true
+  # rabbitmq auto-config
+  rabbitmq:
+    listener:
+      simple:
+        retry:
+          enabled: true
+
+server:
+  port: 10000
+  servlet:
+    context-path: /api
+  forward-headers-strategy: native
+  error:
+    whitelabel:
+      enabled: false
+    include-message: never # never(기본), always
+    include-exception: true
+    include-stacktrace: never # never(기본), always
+
+    #logging:
+    #  config: classpath:logback-spring.xml
+    #  level:
+    #    org.springframework.web.reactive.function.client.ExchangeFunctions: trace
+    #    org.springframework.web.client.RestTemplate: DEBUG
+    org.springframework.web.client.RestTemplate: DEBUG
+
+# 복호화를 시키는데 사용되는 key값
+encrypt:
+  key: ${encrypt_key}
+
+mybatis:
+  type-handlers-package: com.cashmallow.api.domain.shared

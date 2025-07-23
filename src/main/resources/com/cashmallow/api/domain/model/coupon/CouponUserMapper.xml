@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.cashmallow.api.domain.model.coupon.CouponUserMapper">
+
+    <!-- 평생 1회만 사용할 수 있는 쿠폰 조회용.
+        Welcome, ThankYouMyFriend, Influence 의 경우는 해당 계정에서
+        딱 1번만 사용할을 수 있음. 이벤트 유무에 따라 쿠폰 코드가 다를 수 있으므로 LIKE 로 조회
+    -->
+    <select id="getUserCouponLikeCouponCode" parameterType="map" resultType="java.lang.Long">
+        SELECT u.id as coupon_user_id
+        FROM coupon_user_v2 u
+        INNER JOIN coupon_v2 c
+                ON u.coupon_id = c.id
+        WHERE u.target_user_id = #{userId}
+          <if test="inviteUserId != null and !''.equals(inviteUserId)">
+          AND u.invite_user_id = #{inviteUserId}
+          </if>
+          AND c.coupon_code LIKE CONCAT (#{couponCode}, '%')
+        ORDER BY u.created_date DESC
+    </select>
+
+    <!-- 유저의 unique 한 쿠폰 ID 로 쿠폰을 가져옴 (유니크하므로 반드시 1개만 조회) -->
+    <select id="getCouponUserByIdAndStatus" parameterType="map" resultType="com.cashmallow.api.domain.model.coupon.vo.CouponIssueUser">
+        SELECT id
+             , coupon_id
+             , target_user_id
+             , invite_user_id
+             , created_date
+             , coupon_used_date
+             , coupon_used_amount
+             , available_status
+             , coupon_issue_id
+        FROM coupon_user_v2
+        WHERE available_status = #{availableStatus}
+          AND id = #{couponUserId}
+    </select>
+
+    <select id="getCouponUserById" parameterType="map" resultType="com.cashmallow.api.domain.model.coupon.vo.CouponIssueUser">
+        SELECT id
+             , coupon_id
+             , target_user_id
+             , invite_user_id
+             , created_date
+             , coupon_used_date
+             , coupon_used_amount
+             , available_status
+             , coupon_issue_id
+        FROM coupon_user_v2
+        WHERE id = #{couponUserId}
+    </select>
+
+    <!-- 쿠폰 ID 로 가장 최초에 발급된 유저 쿠폰 조회 -->
+    <select id="getFirstIssuedUserCouponByCouponId" parameterType="java.lang.Long" resultType="com.cashmallow.api.domain.model.coupon.entity.CouponUser">
+        SELECT id
+             , coupon_issue_id
+             , coupon_id
+             , target_user_id
+             , invite_user_id
+             , available_status
+             , coupon_used_amount
+             , coupon_used_date
+             , coupon_used_date_utc
+             , created_date
+             , updated_date
+        FROM coupon_user_v2
+        WHERE coupon_id = #{couponId}
+          AND coupon_issue_id = (select MIN(coupon_issue_id) from coupon_user_v2 WHERE coupon_id = #{couponId})
+        ORDER BY created_date ASC
+            LIMIT 1
+    </select>
+
+    <!-- 쿠폰 ID 로 유저 LIST 쿠폰 조회 : 시스템 쿠폰은 admin 에서 발급할 수 없으므로 따로 체크하지 않음 -->
+    <select id="getUserListCouponByUserIdsAndCouponId" parameterType="map" resultType="com.cashmallow.api.domain.model.coupon.entity.CouponUser">
+        SELECT id
+             , coupon_issue_id
+             , coupon_id
+             , target_user_id
+             , invite_user_id
+             , available_status
+             , coupon_used_amount
+             , coupon_used_date
+             , coupon_used_date_utc
+             , created_date
+             , updated_date
+        FROM coupon_user_v2
+        WHERE coupon_id = #{couponId}
+        AND target_user_id IN
+        <foreach collection="userIds" item="userId" separator="," open="(" close=")">
+            #{userId}
+        </foreach>
+    </select>
+
+    <!-- 쿠폰 코드 prefix 와 userId 로 유저 쿠폰 List 조회 -->
+    <select id="getUserCouponListByUserIdAndLikeCouponCode" parameterType="map" resultType="com.cashmallow.api.domain.model.coupon.vo.CouponIssueUser">
+        SELECT u.id
+             , u.coupon_id
+             , u.target_user_id
+             , u.invite_user_id
+             , u.created_date
+             , u.coupon_used_date
+             , u.coupon_used_amount
+             , u.available_status
+             , u.coupon_issue_id
+             , u.updated_date
+          FROM coupon_user_v2 u
+         INNER JOIN coupon_v2 c ON u.coupon_id = c.id
+         WHERE u.target_user_id = #{userId}
+           AND c.coupon_code LIKE CONCAT(#{couponCode}, '%')
+    </select>
+</mapper>

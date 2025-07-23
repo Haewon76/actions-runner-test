@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>Cashmallow Mail to confirm user's new device</title>
+</head>
+
+<body>
+
+<div th:replace="mail-templates/en/fragments/header :: header"></div>
+
+<div style="background-color:white; padding:16px; line-height:1.5em;">
+    <div style="font-size:1em;">
+
+        Thank you for using Cashmallow's service.<br>
+        To change your device, you have to get your Identification verified again with a new device.<br>
+        <br>
+        Here is your verification code : <strong th:text="${code}">123456</strong><br>
+        <br>
+        Please enter your verification code in the app to finish the verification.<br>
+        Thank you!<br>
+    </div>
+
+    <br>Your account is at risk if this was not you. If you do not recognize this activity, please change your password immediately.
+    <br>&nbsp;
+    <br> <span style="font-size:1.1em; font-weight: bold; line-height:2em;">Cashmallow account</span>
+    <br> <a th:text="${accountEmail}"></a>
+    <br>&nbsp;
+    <br> <span style="font-size:1.1em; font-weight: bold; line-height:2em;">New device</span>
+    <br> <strong><span th:text="${deviceInfo}"></span></strong>
+    <br> <span th:text="${accessTime}"></span>
+    <br> <span th:text="${location}"></span>
+    <br> <span th:text="${ip}"></span> (IP Address)
+
+    <div style="padding-top:24px; font-size:0.875em;">
+        <strong style="color:red;">[Caution]</strong><br>
+        Please remove this message to continue using your old device.<br>
+        &nbsp;<br>
+    </div>
+</div>
+
+<div th:replace="mail-templates/en/fragments/footer :: footer"></div>
+
+</body>
+</html>

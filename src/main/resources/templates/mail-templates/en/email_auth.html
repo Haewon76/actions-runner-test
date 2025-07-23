@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>Cashmallow Mail to confirm a mail address</title>
+</head>
+
+<body>
+
+<div th:replace="mail-templates/en/fragments/header :: header"></div>
+
+<div style="background-color:white; padding:16px; line-height:1.5em;">
+    <div style="font-size:1em;">
+        Thank you for using Cashmallow's service.<br>
+        &nbsp;<br>
+        Here is your verification code : <span style="color:blue;" th:text="${value}"></span><br>
+        &nbsp;<br>
+        Please enter your verification code in the app to finish the verification.<br>
+        Thank you!<br>
+    </div>
+    <div style="padding-top:24px; font-size:0.875em;">
+        <b style="color:red;">&lt;IMPORTANT&gt;</b><br>
+        We will send all notification to this e-mail address. Please register with your often used e-mail to make sure you would not miss out any important message from us.<br>
+        &nbsp;<br>
+    </div>
+</div>
+
+<div th:replace="mail-templates/en/fragments/footer :: footer"></div>
+
+</body>
+</html>

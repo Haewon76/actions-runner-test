@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- Mybatis 사용법: http://www.mybatis.org/mybatis-3/ko/index.html -->
+
+<mapper namespace="com.cashmallow.api.domain.model.openbank.OpenbankLogMapper">
+    <select id="getOpenbankLogs" resultType="com.cashmallow.api.domain.model.openbank.OpenbankLog">
+        SELECT id,
+               request_type,
+               request_bank_tran_id,
+               request_data,
+               request_time,
+               response_code,
+               response_api_tran_id,
+               response_data,
+               response_rsp_code,
+               response_rsp_message,
+               response_time
+        FROM traveler_openbank_log;
+    </select>
+
+    <select id="getOpenbankLogById" parameterType="_long" resultType="com.cashmallow.api.domain.model.openbank.OpenbankLog">
+        SELECT id,
+               request_type,
+               request_bank_tran_id,
+               request_data,
+               request_time,
+               response_code,
+               response_api_tran_id,
+               response_data,
+               response_rsp_code,
+               response_rsp_message,
+               response_time
+        FROM traveler_openbank_log
+        WHERE id = #{id}
+    </select>
+
+    <insert id="saveRequest" parameterType="com.cashmallow.api.domain.model.openbank.OpenbankLogRequest" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO traveler_openbank_log(request_type, request_bank_tran_id, request_data, request_time)
+        VALUES (#{requestType}, #{requestBankTranId}, #{requestData}, NOW())
+    </insert>
+
+    <update id="saveResponse" parameterType="com.cashmallow.api.domain.model.openbank.OpenbankLogResponse">
+        UPDATE traveler_openbank_log
+        SET response_code        = #{responseCode},
+            response_api_tran_id = #{responseApiTranId},
+            response_data        = #{responseData},
+            response_rsp_code    = #{responseRspCode},
+            response_rsp_message = #{responseRspMessage},
+            response_time        = NOW()
+        WHERE id = #{id};
+    </update>
+</mapper>

@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.cashmallow.api.domain.model.bundle.BundleMapper">
+
+    <select id="getBundleList" resultType="com.cashmallow.api.domain.model.bundle.Bundle">
+        SELECT *
+        FROM app_bundle
+        ORDER BY id DESC
+    </select>
+
+    <insert id="registerBundle" parameterType="com.cashmallow.api.domain.model.bundle.Bundle">
+        INSERT INTO app_bundle (version, platform, hash_sha1, size, is_active, fileName, created_id, description)
+        VALUES (#{version}, #{platform}, #{hashSha1}, #{size}, #{isActive}, #{fileName}, #{createdId}, #{description})
+
+        <selectKey keyProperty="id" resultType="long" order="AFTER">
+            SELECT LAST_INSERT_ID()
+        </selectKey>
+    </insert>
+
+    <select id="getLatestActiveBundle" resultType="com.cashmallow.api.domain.model.bundle.Bundle">
+        SELECT *
+        FROM app_bundle
+        WHERE version = #{version}
+          AND platform = #{platform}
+          AND is_active = 'Y'
+        ORDER BY id DESC
+        LIMIT 1
+    </select>
+
+    <update id="setIsActive" parameterType="map">
+        UPDATE app_bundle
+        SET is_active = #{isActive},
+            updated_at = NOW(),
+            updated_id = #{userId},
+            description = #{description}
+        WHERE id = #{id}
+    </update>
+
+    <select id="getBundleInfo" resultType="com.cashmallow.api.domain.model.bundle.Bundle">
+        SELECT *
+        FROM app_bundle
+        WHERE id = #{id}
+    </select>
+
+    <delete id="deleteBundle" parameterType="long">
+        DELETE
+        FROM app_bundle
+        WHERE id = #{id}
+    </delete>
+</mapper>

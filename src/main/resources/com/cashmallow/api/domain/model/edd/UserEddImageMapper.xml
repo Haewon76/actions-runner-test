@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- Mybatis 사용법: http://www.mybatis.org/mybatis-3/ko/index.html -->
+
+<mapper namespace="com.cashmallow.api.domain.model.edd.UserEddImageMapper">
+
+    <!-- 조회 -->
+    <select id="getUserEddImageList" resultType="com.cashmallow.api.domain.model.edd.UserEddImage" parameterType="hashmap">
+        SELECT *
+        FROM user_edd_image
+        <where>
+            <if test="id != null and id != ''">
+                AND id = #{id}
+            </if>
+            <if test="userEddId != null and userEddId != ''">
+                AND user_edd_id = #{userEddId}
+            </if>
+        </where>
+    </select>
+
+    <insert id="registerUserEddImage" parameterType="java.util.List">
+        INSERT INTO user_edd_image (
+        user_edd_id,
+        image,
+        creator_id,
+        created_at,
+        type,
+        content_type,
+        file_size
+        ) VALUES
+        <foreach collection="list" item="item" separator=",">
+            (
+            #{item.userEddId},
+            #{item.image},
+            #{item.creatorId},
+            #{item.createdAt},
+            #{item.type},
+            #{item.contentType},
+            #{item.fileSize}
+            )
+        </foreach>
+    </insert>
+
+    <update id="updateUserEddImage" parameterType="com.cashmallow.api.domain.model.edd.UserEddImage">
+        UPDATE user_edd_image
+        SET user_edd_id  = #{userEddId},
+            image        = #{image},
+            creator_id   = #{creatorId},
+            created_at   = #{createdAt},
+            type         = #{type},
+            content_type = #{contentType},
+            file_size    = #{fileSize}
+        WHERE id = #{id}
+    </update>
+
+    <select id="getUserEddImageIdList" parameterType="long" resultType="long">
+        SELECT id
+        FROM user_edd_image
+        WHERE user_edd_id = #{user_edd_id}
+    </select>
+</mapper>

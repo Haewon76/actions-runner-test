@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- Mybatis 사용법: http://www.mybatis.org/mybatis-3/ko/index.html -->
+
+<mapper namespace="com.cashmallow.api.domain.model.user.AccessTokenMapper">
+
+    <!-- AccessToken Read -->
+    <select id="getAccessTokenByToken" resultType="com.cashmallow.api.domain.model.user.AccessToken">
+        SELECT *
+        FROM access_token
+        WHERE token = #{token}
+    </select>
+
+    <!-- AccessToken Write -->
+    <insert id="insertAccessToken" parameterType="com.cashmallow.api.domain.model.user.AccessToken">
+        INSERT INTO access_token (login, token, access_time, user_id, traveler_id, storekeeper_id, auths)
+        VALUES (#{login}, #{token}, #{accessTime}, #{userId}, #{travelerId}, #{storekeeperId}, #{auths})
+        ON DUPLICATE KEY
+            UPDATE login          = #{login},
+                   token          = #{token},
+                   access_time    = #{accessTime},
+                   user_id        = #{userId},
+                   traveler_id    = #{travelerId},
+                   storekeeper_id = #{storekeeperId},
+                   auths          = #{auths}
+    </insert>
+
+    <delete id="deleteAccessToken">
+        DELETE
+        FROM access_token
+        WHERE login = #{login}
+    </delete>
+
+</mapper>

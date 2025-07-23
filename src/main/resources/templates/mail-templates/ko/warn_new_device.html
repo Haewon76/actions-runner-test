@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>Cashmallow Mail to confirm user's new device</title>
+</head>
+
+<body>
+
+<div th:replace="mail-templates/ko/fragments/header :: header"></div>
+
+<div style="background-color:white; padding:16px; line-height:1.5em; font-size:1em;">
+    방금 고객님의 계정을 이용해 새로운 기기에서 로그인되었습니다.
+    <br>&nbsp;
+    <br>아래 기기로 로그인한 적이 없으시면 지금 바로 캐시멜로 앱을 이용해 비밀번호를 변경하세요.
+    <br>&nbsp;
+    <br> <span style="font-size:1.1em; font-weight: bold; line-height:2em;">캐시멜로 계정</span>
+    <br> <a th:text="${accountEmail}"></a>
+    <br>&nbsp;
+    <br> <span style="font-size:1.1em; font-weight: bold; line-height:2em;">신규 기기 정보</span>
+    <br> <strong th:text="${deviceInfo}"></strong>
+    <br> <span th:text="${accessTime}"></span>
+    <br> <span th:text="${location}"></span>
+    <br> <span th:text="${ip}"></span> (IP Address)
+</div>
+
+<div th:replace="mail-templates/ko/fragments/footer :: footer"></div>
+
+</body>
+</html>

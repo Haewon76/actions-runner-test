@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>Cashmallow Mail to confirm user's new device</title>
+</head>
+
+<body>
+
+<div th:replace="mail-templates/en/fragments/header :: header"></div>
+
+<div style="background-color:white; padding:16px; line-height:1.5em;">
+    <div style="font-size:1em;">
+        Your Cashmallow account was just signed in to from a new device. You are getting this email to make sure it was you.<br>
+        To change your device, you have to get your passport verified again with a new device.<br>
+        &nbsp;<br>
+        <strong>How to use new devices</strong> <br>
+        1. Click the link below <br>
+        2. Sign in as a new device <br>
+        3. Passport information registration <br>
+        4. The service is available after passport information approved <br>
+        &nbsp;<br>
+        To continue using Cashmallow with your new device, click the button below.<br>
+        &nbsp;<br>
+        <a th:href="@{${resetURL}(id=${id}, accountToken=${accountToken})}" style="background-color: #0e70f9; border-radius: 6px; border: 1px solid #337fed; display: inline-block; cursor: pointer; color: #ffffff; font-size: 15px; padding: 6px 24px; text-decoration: none;" onmouseover="this.style.backgroundColor='#1e62d0';" onmouseout="this.style.backgroundColor='#0e70f9';" target="_blank">
+            Continue New Device
+        </a>
+        <br>
+        &nbsp;<br>
+    </div>
+
+    <br>Your account is at risk if this was not you. If you do not recognize this activity, please change your password immediately.
+    <br>&nbsp;
+    <br> <span style="font-size:1.1em; font-weight: bold; line-height:2em;">Cashmallow account</span>
+    <br> <a th:text="${accountEmail}"></a>
+    <br>&nbsp;
+    <br> <span style="font-size:1.1em; font-weight: bold; line-height:2em;">New device</span>
+    <br> <strong><span th:text="${deviceInfo}"></span></strong>
+    <br> <span th:text="${accessTime}"></span>
+    <br> <span th:text="${location}"></span>
+    <br> <span th:text="${ip}"></span> (IP Address)
+
+    <div style="padding-top:24px; font-size:0.875em;">
+        <strong style="color:red;">[Caution]</strong><br>
+        Please remove this message to continue using your old device.<br>
+        &nbsp;<br>
+    </div>
+</div>
+
+<div th:replace="mail-templates/en/fragments/footer :: footer"></div>
+
+</body>
+</html>

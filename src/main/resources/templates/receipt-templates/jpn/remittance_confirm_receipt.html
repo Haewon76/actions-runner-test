@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <meta http-equiv="Content-Style-Type" content="text/css"/>
+    <meta name="generator" content="Aspose.Words for .NET 24.5.0"/>
+    <title></title>
+    <style type="text/css">body {
+        text-align: justify;
+        line-height: 108%;
+        widows: 0;
+        orphans: 0;
+        font-family: 'Droid Sans Fallback';
+        font-size: 10pt
+    }
+
+    p {
+        margin: 0pt 0pt 8pt
+    }
+
+    table {
+        margin-top: 0pt;
+        margin-bottom: 8pt
+    }
+
+    .Footer {
+        margin-bottom: 8pt;
+        text-align: justify;
+        line-height: 108%;
+        widows: 0;
+        orphans: 0
+    }
+
+    .Header {
+        margin-bottom: 8pt;
+        text-align: justify;
+        line-height: 108%;
+        widows: 0;
+        orphans: 0
+    }
+
+    span.Hyperlink {
+        text-decoration: underline;
+        color: #0563c1;
+        -aw-style-name: hyperlink
+    }
+
+    span.UnresolvedMention {
+        color: #605e5c;
+        background-color: #e1dfdd
+    }
+
+    .TableGrid {
+    }</style>
+</head>
+<body>
+<div><p style="text-align:center; line-height:108%; font-size:20pt"><span style="font-weight:bold; text-decoration:underline">取引明細書</span></p>
+    <p style="text-align:right"><span>発行日： </span><span th:text="${date}"></span></p>
+    <p> <span>取引番号：</span> <span th:text="${receiptNo}"></span> <br/> <span>お名前：</span><span> </span> <span th:text="${name}"></span><br/><span style="-aw-import:ignore">&#xa0;</span></p>
+    <p><br/> <span>この度はcashmallowサービスをご利用いただきありがとうございます。</span><br/> <span>以下の入金を確認いたしました。</span></p>
+    <table cellspacing="0" cellpadding="0" class="TableGrid" style="width:468.75pt; margin-bottom:0pt; border:0.75pt solid #000000; -aw-border:0.5pt single; -aw-border-insideh:0.5pt single #000000; -aw-border-insidev:0.5pt single #000000; border-collapse:collapse">
+        <tr style="height:21.6pt">
+            <td style="width:137.8pt; border-bottom-style:solid; border-bottom-width:0.75pt; padding-right:5.4pt; padding-left:5.03pt; vertical-align:middle; -aw-border-bottom:0.5pt single"><p style="margin-left:1.7pt; margin-bottom:0pt; text-align:justify; font-size:10pt"><span style="font-weight:bold">申請(外貨)金額</span></p></td>
+            <td style="width:308.6pt; border-bottom-style:solid; border-bottom-width:0.75pt; padding-right:5.03pt; padding-left:5.4pt; vertical-align:middle; -aw-border-bottom:0.5pt single"><p style="margin-bottom:0pt; text-align:justify; font-size:10pt"><span style="font-weight:bold" th:text="${toIso4217}"></span> <span style="font-weight:bold" th:text="${toAmt}"></span></p></td>
+        </tr>
+        <tr style="height:22.45pt">
+            <td style="width:137.8pt; border-top-style:solid; border-top-width:0.75pt; border-bottom-style:solid; border-bottom-width:0.75pt; padding-right:5.4pt; padding-left:5.03pt; vertical-align:middle; -aw-border-bottom:0.5pt single; -aw-border-top:0.5pt single"><p style="margin-left:1.7pt; margin-bottom:0pt; text-align:justify; font-size:10pt"><span style="font-weight:bold">円金額</span></p></td>
+            <td style="width:308.6pt; border-top-style:solid; border-top-width:0.75pt; border-bottom-style:solid; border-bottom-width:0.75pt; padding-right:5.03pt; padding-left:5.4pt; vertical-align:middle; -aw-border-bottom:0.5pt single; -aw-border-top:0.5pt single"><p style="margin-bottom:0pt; text-align:justify; font-size:10pt"><span style="font-weight:bold">JPY </span><span style="font-weight:bold" th:text="${fromPrincipal}"></span></p></td>
+        </tr>
+        <tr style="height:21.6pt">
+            <td style="width:137.8pt; border-top-style:solid; border-top-width:0.75pt; border-bottom-style:solid; border-bottom-width:0.75pt; padding-right:5.4pt; padding-left:5.03pt; vertical-align:middle; -aw-border-bottom:0.5pt single; -aw-border-top:0.5pt single"><p style="margin-left:1.7pt; margin-bottom:0pt; text-align:justify; font-size:10pt"><span style="  font-weight:bold">手数料金額</span></p></td>
+            <td style="width:308.6pt; border-top-style:solid; border-top-width:0.75pt; border-bottom-style:solid; border-bottom-width:0.75pt; padding-right:5.03pt; padding-left:5.4pt; vertical-align:middle; -aw-border-bottom:0.5pt single; -aw-border-top:0.5pt single"><p style="margin-bottom:0pt; text-align:justify; font-size:10pt"><span style="font-weight:bold">JPY </span><span style="font-weight:bold" th:text="${fee}"></span></p></td>
+        </tr>
+        <tr style="height:21.6pt">
+            <td style="width:137.8pt; border-top-style:solid; border-top-width:0.75pt; border-bottom-style:solid; border-bottom-width:0.75pt; padding-right:5.4pt; padding-left:5.03pt; vertical-align:middle; -aw-border-bottom:0.5pt single; -aw-border-top:0.5pt single"><p style="margin-left:1.7pt; margin-bottom:0pt; text-align:justify; font-size:10pt"><span style="  font-weight:bold">お支払金額</span></p></td>
+            <td style="width:308.6pt; border-top-style:solid; border-top-width:0.75pt; border-bottom-style:solid; border-bottom-width:0.75pt; padding-right:5.03pt; padding-left:5.4pt; vertical-align:middle; -aw-border-bottom:0.5pt single; -aw-border-top:0.5pt single"><p style="margin-bottom:0pt; text-align:justify; font-size:10pt"><span style="font-weight:bold">JPY </span><span style="font-weight:bold" th:text="${fromAmt}"></span></p></td>
+        </tr>
+        <tr style="height:22.45pt">
+            <td style="width:137.8pt; border-top-style:solid; border-top-width:0.75pt; padding-right:5.4pt; padding-left:5.03pt; vertical-align:middle; -aw-border-top:0.5pt single"><p style="margin-left:1.7pt; margin-bottom:0pt; text-align:justify; font-size:10pt"><span style="  font-weight:bold">為替レート</span></p></td>
+            <td style="width:308.6pt; border-top-style:solid; border-top-width:0.75pt; padding-right:5.03pt; padding-left:5.4pt; vertical-align:middle; -aw-border-top:0.5pt single"><p style="margin-bottom:0pt; text-align:justify; font-size:10pt"><span style="  font-weight:bold" th:text="${exchange_rate}"></span></p></td>
+        </tr>
+    </table>
+    <p><span style="  -aw-import:ignore">&#xa0;</span></p>
+    <p><span style="  -aw-import:ignore">&#xa0;</span></p>
+    <p style="text-align:center"><span style="height:0pt; text-align:left; display:block; position:absolute; z-index:0"><img th:src="${stampImage}" width="70" height="68" alt="" style="margin-top:8.75pt; margin-left:368.4pt; -aw-left-pos:368.4pt; -aw-rel-hpos:column; -aw-rel-vpos:paragraph; -aw-top-pos:8.75pt; -aw-wrap-type:none; position:absolute"/></span><br/><span style="line-height:108%;   font-size:9pt">資金移動業者登録関東財務局長第00048号</span><br/><span
+            style="line-height:108%;   font-size:9pt">一般社団法人日本資金決済業協会第500号</span><br/><span style="line-height:108%;   font-size:9pt">ワールドファミリー株式会社</span><br/><span style="line-height:108%;   font-size:9pt">〒169-0073　 東京都新宿区百人町 2-4-6 メイト新宿ビル3F </span><br/><span style="line-height:108%;   font-size:9pt">TEL：03-3362-8055 FAX：03-5937-0911</span><br/><span
+            style="line-height:108%;   font-size:9pt">Email : </span><a href="mailto:cs@wfrcm.com" style="text-decoration:none"><span class="Hyperlink" style="line-height:108%;   font-size:9pt">cs@wfrcm.com</span></a></p>
+    <p style="line-height:108%; font-size:9pt"><span style="  -aw-import:ignore">&#xa0;</span></p>
+    <p style="line-height:108%; widows:2; orphans:2; font-size:9pt"><span style="  -aw-import:ignore">&#xa0;</span></p></div>
+</body>
+</html>

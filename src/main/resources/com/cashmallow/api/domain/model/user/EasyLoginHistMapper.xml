@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.cashmallow.api.domain.model.user.EasyLoginHistMapper">
+
+    <insert id="insertEasyLoginHist" parameterType="com.cashmallow.api.domain.model.user.EasyLoginHist">
+        INSERT easy_login_hist(refresh_token, user_id, refresh_time, pin_code_hash, fail_count, login_success, created_at)
+        VALUES (#{refreshToken},
+                #{userId},
+                #{refreshTime},
+                #{pinCodeHash},
+                #{failCount},
+                #{loginSuccess},
+                #{createdAt})
+    </insert>
+
+</mapper>

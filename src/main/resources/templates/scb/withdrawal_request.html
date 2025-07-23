@@ -1,0 +1,216 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link th:href="${@environment.getProperty('host.cdn.url')} + '/static/css/scb/view.css'" rel="stylesheet"/>
+    <script type="text/javascript" src="https://code.jquery.com/jquery-latest.min.js"></script>
+    <script type="text/javascript" th:src="${@environment.getProperty('host.cdn.url')} + '/static/js/scb.js'"></script>
+    <script th:inline="javascript">
+        let atmUrl = [[${SCB_WITHDRAWAL_ATM_URL}]];
+        let cdmUrl = [[${SCB_WITHDRAWAL_CDM_URL}]];
+        let isAndroid = [[${isAndroid}]];
+        let isWithdrawalClicked = false;
+
+        // open app QR reader
+        function requestWithdraw(cashoutId) {
+            const jsonString = `{"key": "thisistestkey", "cashoutId":"${cashoutId}"}`;
+            if (isAndroid) {
+                Cashmallow.requestWithdraw(jsonString);
+            } else {
+                webkit.messageHandlers.requestWithdraw.postMessage(jsonString);
+            }
+        }
+
+        function requestWithdrawAjax() {
+            if (isWithdrawalClicked == false) {
+                // 중복 클릭 방지 코드
+                isWithdrawalClicked = true;
+                // $('#loading').show();
+                const userId = [[${userId}]];
+                const walletId = [[${walletId}]];
+                const withdrawalPartnerId = [[${partnerId}]];
+                const obj = {"userId": userId, "walletId": walletId, "withdrawalPartnerId": withdrawalPartnerId};
+                $.ajax({
+                    type: "POST",
+                    url: "/api/scb/withdrawal/cashouts", //요청 할 URL
+                    data: JSON.stringify(obj), //넘길 파라미터
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json",
+                    // headers: {"Authorization" : [[${token}]]},
+                    success: function (json) {
+                        // const body = JSON.parse(json);
+                        // unexpected error
+                        if (json['code'] == "400") {
+                            // const msg = 'Something went wrong! please retry!'
+                            const msg = [[${SCB_WITHDRAWAL_REQUEST_ERROR}]];
+                            toast(msg);
+                            isWithdrawalClicked = false;
+                            // $('#loading').hide();
+                            return;
+                        }
+
+                        let cashoutId = json['cashoutId'];
+                        // open app QR reader
+                        requestWithdraw(cashoutId);
+                        isWithdrawalClicked = false;
+                        // $('#loading').hide();
+                    },
+                    error: function (jqXHR, textStatus, errorThrown) {
+                        const json = jqXHR.responseText;
+                        const body = JSON.parse(json);
+
+                        const msgDetail = "code: " + body.code + " message: " + body.errorMessage + " params: " + JSON.stringify(obj);
+                        console.error("Error requestWithdrawAjax() " + msgDetail);
+
+                        toast(body.errorMessage);
+                        isWithdrawalClicked = false;
+                        // $('#loading').hide();
+                    }
+                });
+            }
+        }
+
+        function toast(message) {
+            if (isAndroid) {
+                Cashmallow.message(message);
+            } else {
+                webkit.messageHandlers.message.postMessage(message);
+            }
+        }
+
+        function message() {
+            const message = '테스트 dakjsdas 메세지 입니다.';
+            if (isAndroid) {
+                Cashmallow.message(message);
+            } else {
+                webkit.messageHandlers.message.postMessage(message);
+            }
+        }
+
+        function closeView() {
+            const message = '';
+            if (isAndroid) {
+                Cashmallow.closeView(message);
+            } else {
+                webkit.messageHandlers.closeView.postMessage(message);
+            }
+        }
+
+        $(window).load(function () {
+            // toggleButton($('#btnLeft'));
+        });
+
+        function toggleButton(e) {
+            $('#btnRight').removeClass('bg-white');
+            $('#btnLeft').removeClass('bg-white');
+            $('#btnRight').removeClass('text-[#5C5C62]');
+            $('#btnLeft').removeClass('text-[#5C5C62]');
+            $('#btnRight').removeClass('text-[#212529]');
+            $('#btnLeft').removeClass('text-[#212529]');
+            $('#descriptionAtm').hide();
+            $('#descriptionCdm').hide();
+
+            if ($(e).attr('id') == 'btnLeft') {
+                $('#btnLeft').addClass('bg-white');
+                $('#btnLeft').addClass('text-[#212529]');
+                $('#btnRight').addClass('text-[#5C5C62]');
+                $('#descriptionAtm').show();
+                $('#descriptionLink').attr('href', atmUrl);
+            } else {
+                $('#btnRight').addClass('bg-white');
+                $('#btnRight').addClass('text-[#212529]');
+                $('#btnLeft').addClass('text-[#5C5C62]');
+                $('#descriptionCdm').show();
+                $('#descriptionLink').attr('href', cdmUrl);
+            }
+        }
+    </script>
+</head>
+<body>
+<div class="m-[32px]">
+    <h1 class="text-[20px] mt-[72px]" th:text="${SCB_WITHDRAWAL_REQUEST_TITLE}">인출신청</h1>
+    <h2 class="text-[14px] mt-[12px] mb-[26px] font-normal" th:text="${SCB_WITHDRAWAL_REQUEST_DESCRIPTION}">ATM기기 상단에서 ATM 기종을 확인하세요.</h2>
+    <div class="flex justify-center items-center">
+        <img th:src="${@environment.getProperty('host.cdn.url')} + '/static/images/atm/scb_atms_icon.png'" alt="Cashmallow"/>
+    </div>
+    <div class="flex flex-row rounded-[20px] bg-[#9E9EA51E] mt-[26px] px-[8px] py-[8px] text-[14px]">
+        <div class="text-[#5C5C62] flex-1 rounded-[20px] h-[48px] mr-[4px] flex justify-center items-center bg-white" id="btnLeft" onclick="toggleButton(this)">
+            <span>ATM</span>
+        </div>
+        <div class="text-[#212529] flex-1 rounded-[20px] h-[48px] ml-[4px] flex justify-center items-center" id="btnRight" onclick="toggleButton(this)">
+            <span>CDM/ATM</span>
+        </div>
+    </div>
+    <div class="mt-[16px] text-[#5C5C62] font-normal text-[14px]">
+        <ul id="descriptionAtm">
+            <li th:each="s : ${SCB_WITHDRAWAL_REQUEST_DESCRIPTION_ATMS}" class="ml-[16px] leading-[24px] -indent-4" th:text="${s}">1. CARDLESS ATM 선택</li>
+        </ul>
+        <ul id="descriptionCdm" style="display: none">
+            <li th:each="s : ${SCB_WITHDRAWAL_REQUEST_DESCRIPTION_CDMS}" class="ml-[16px] leading-[24px] -indent-4" th:text="${s}">1. PRESS TO START 선택</li>
+        </ul>
+    </div>
+    <a id="descriptionLink" class="flex text-[14px] text-medium text-[#026FFF] mt-[16px] items-center" th:href="${SCB_WITHDRAWAL_ATM_URL}" target="_blank" rel="noreferrer noopener">
+        <div th:text="${SCB_WITHDRAWAL_REQUEST_DESCRIPTION_LINK}">사진과 함께 보기</div>
+        <div class="ml-[4px]">
+            <svg width="12" height="13" viewBox="0 0 12 13" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M4.5 3.04663L7.5 6.54663L4.5 10.0466" stroke="#026FFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        </div>
+    </a>
+    <div class="h-[100px]"></div>
+</div>
+
+<div onclick="closeView()">
+    <div class="fixed top-[20px] left-[20px]">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M9.52502 4.5L2.02502 12L9.52502 19.5" stroke="#212529" stroke-width="2" stroke-linecap="round"/>
+            <path d="M21 12H3" stroke="#212529" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+    </div>
+</div>
+
+<header class="fixed top-0 left-0 w-full h-16 flex items-center justify-between px-4 bg-white z-10">
+    <!--상단 왼쪽 뒤로가기 버튼-->
+    <div onclick="closeView()">
+        <div class="fixed top-[20px] left-[20px]">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M9.52502 4.5L2.02502 12L9.52502 19.5" stroke="#212529" stroke-width="2" stroke-linecap="round"/>
+                <path d="M21 12H3" stroke="#212529" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+        </div>
+    </div>
+</header>
+
+<!--하단 인출 버튼-->
+<div class="fixed bottom-0 left-0 right-0 bg-white">
+    <div class="flex flex-row px-[8px] py-[16px] border-t-2 border-[#F8FAFA]">
+        <div class="flex-column flex justify-center items-center ml-[24px]">
+            <div class="flex-column">
+                <div class=" text-[12px] text-[#83838C]" th:text="${currency}">KRW</div>
+                <div class="font-bold text-[16px] text-[#212529]" th:text="${priceWithComma}">300,000</div>
+            </div>
+        </div>
+        <div class="grow"></div>
+        <div class="shadow-lg flex-none rounded-[20px] h-[56px] bg-[#0077FF] ml-[4px] flex justify-center items-center w-[207px] mr-[24px]" onclick="requestWithdrawAjax()">
+                <span class="max-h-lg">
+                    <svg width="25" height="25" viewBox="0 0 25 25" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M9.5 21.0466H8.5C6.29086 21.0466 4.5 19.2558 4.5 17.0466V16.0466" stroke="white" stroke-width="2" stroke-linecap="round"/>
+                        <path d="M15.5 21.0466H16.5C18.7091 21.0466 20.5 19.2558 20.5 17.0466V16.0466" stroke="white" stroke-width="2" stroke-linecap="round"/>
+                        <path d="M9.5 4.04663H8.5C6.29086 4.04663 4.5 5.83749 4.5 8.04663V9.04663" stroke="white" stroke-width="2" stroke-linecap="round"/>
+                        <path d="M15.5 4.04663H16.5C18.7091 4.04663 20.5 5.83749 20.5 8.04663V9.04663" stroke="white" stroke-width="2" stroke-linecap="round"/>
+                        <path d="M8.5 12.5466H16.5" stroke="white" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                </span>
+            <span class="ml-[10px] text-[16px] text-white font-bold" th:text="${SCB_WITHDRAWAL_REQUEST_BUTTON}">인출</span>
+        </div>
+    </div>
+</div>
+
+<!--<div id="loading" class="fixed bottom-0 left-0 right-0 bottom-0 flex items-center justify-center h-screen invisible">-->
+<!--    <div class="overlay"></div>-->
+<!--    <div class="loader"></div>-->
+<!--</div>-->
+</body>
+</html>

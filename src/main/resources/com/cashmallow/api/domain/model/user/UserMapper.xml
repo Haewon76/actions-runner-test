@@ -1,0 +1,462 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- Mybatis 사용법: http://www.mybatis.org/mybatis-3/ko/index.html -->
+
+<mapper namespace="com.cashmallow.api.domain.model.user.UserMapper">
+
+    <resultMap type="com.cashmallow.api.domain.model.user.User" id="userMap">
+        <result column="first_name" property="firstName" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+        <result column="last_name" property="lastName" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+        <result column="email" property="email" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+        <result column="phone_number" property="phoneNumber" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+        <result column="en_first_name" property="enFirstName" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+        <result column="en_last_name" property="enLastName" typeHandler="com.cashmallow.api.infrastructure.security.EncryptTypeHandler"/>
+    </resultMap>
+
+
+    <!-- User Read -->
+
+    <!-- login과 암호가 일치하는 사용자 ID를 응답한다. -->
+    <select id="checkUserPwd" parameterType="HashMap" resultMap="userMap">
+        SELECT *
+        FROM user
+        WHERE login = #{loginId}
+          AND password_hash = #{password}
+          AND cls = #{cls}
+    </select>
+
+    <select id="checkUserWithoutPassword" parameterType="HashMap" resultMap="userMap">
+        SELECT *
+        FROM user
+        WHERE login = #{loginId}
+          AND cls = #{cls}
+    </select>
+
+    <!-- userId로 조회 -->
+    <select id="getUserByUserId" resultMap="userMap">
+        SELECT *
+        FROM user
+        WHERE id = #{userId}
+    </select>
+
+    <!-- userId List 로 조회 -->
+    <select id="getUsersByUserIds" parameterType="map" resultMap="userMap">
+        SELECT *
+        FROM user
+        WHERE id IN
+          <foreach collection="userIds" item="userId" separator="," open="(" close=")">
+                #{userId}
+          </foreach>
+    </select>
+
+    <select id="getUserByWithdrawalTransactionId" resultMap="userMap">
+        select *
+        from user
+        where id = (select user_id
+                    from traveler
+                    where id = (select traveler_id from cash_out where casm_txn_id = #{transactionId}));
+    </select>
+
+    <select id="getUserByWithdrawalCashoutId" resultMap="userMap">
+        select *
+        from user
+        where id = (select user_id
+                    from traveler
+                    where id = (select traveler_id from cash_out where id = #{cashoutId}));
+    </select>
+
+    <select id="getHkUsers" resultMap="userMap">
+        SELECT *
+        FROM user
+        where country = '001'
+        and activated = 1
+        and cls = 'T'
+        and email is not null
+        <![CDATA[
+        and id >= #{userId}
+        ]]>
+        order by id
+    </select>
+
+    <select id="getUserByTravelerId" resultMap="userMap">
+        SELECT *
+        FROM user
+        WHERE id = (select user_id from traveler where id = #{travelerId});
+    </select>
+
+    <select id="getUserOtp" resultType="string">
+        SELECT code
+        FROM otp
+        WHERE user_id = #{userId}
+    </select>
+
+    <select id="getFirstUser" resultMap="userMap">
+        SELECT *
+        FROM user
+        WHERE profile_photo IS NOT NULL
+        ORDER BY id DESC
+        LIMIT 1
+    </select>
+
+    <!-- login id 로 조회 -->
+    <select id="getUserByLoginId" resultMap="userMap">
+        SELECT *
+        FROM user
+        WHERE login = #{loginId}
+    </select>
+
+    <!-- email 로 조회 -->
+    <select id="getUserByEmail" resultMap="userMap">
+        SELECT *
+        FROM user
+        WHERE email = #{email, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}
+    </select>
+
+    <!-- admin권한 유저 조회 -->
+    <select id="getAdminUsers" resultMap="userMap">
+        SELECT *
+        FROM user
+        WHERE cls = 'A'
+          AND email != '*'
+    </select>
+
+    <!-- 검색 조건으로 조회 -->
+    <select id="searchUsers" parameterType="string" resultMap="userMap">
+        SELECT u.*, t.en_first_name, t.en_last_name
+        FROM user u
+   LEFT JOIN traveler t
+          ON u.id = t.user_id AND t.certification_type = 'PASSPORT'
+        WHERE u.country NOT IN ('004')
+            AND u.id LIKE #{keyword}
+           OR u.email LIKE CONCAT('%', #{keyword, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler}, '%')
+    </select>
+
+    <!-- 검색 조건으로 여행자정보까지 가져옴 -->
+    <select id="getUsers" parameterType="string" resultType="hashmap">
+        SELECT u.*, t2.account_no, t2.account_name, t2.bank_name
+        FROM user u
+                 inner join traveler t2
+                            ON u.id = t2.user_id
+        WHERE u.country NOT IN ('004')
+           AND u.id LIKE #{keyword}
+           OR u.email LIKE CONCAT('%', #{keyword}, '%')
+            AND u.activated = 1
+    </select>
+
+    <!-- 사용자수 조회 -->
+    <select id="getUserCntByCountry" parameterType="string" resultType="hashmap">
+        SELECT COUNT(1)                                                  user,
+               IFNULL(SUM(IF(cls = 'T', 1, 0)), 0)                       traveler,
+               IFNULL(SUM(IF(cls = 'S', 1, 0)), 0)                       storekeeper,
+               IFNULL(SUM(IF(cls = 'A', 1, 0)), 0)                       adminUser,
+               IFNULL(SUM(IF(cls = 'T' AND activated = FALSE, 1, 0)), 0) ina_traveler,
+               IFNULL(SUM(IF(cls = 'S' AND activated = FALSE, 1, 0)), 0) ina_storekeeper,
+               IFNULL(SUM(IF(cls = 'A' AND activated = FALSE, 1, 0)), 0) ina_adminUser
+        FROM user u
+        WHERE cls IN ('S', 'T', 'A')
+          AND country = #{country}
+    </select>
+
+    <!-- User Write -->
+
+    <!-- insert user info -->
+    <insert id="insertUser" parameterType="com.cashmallow.api.domain.model.user.User">
+        INSERT INTO user (login, password_hash, first_name, last_name, email,
+        allow_recv_email, lang_key, profile_photo, birth_date, cls, country,
+        recommender_id, agree_terms, agree_privacy, phone_number, phone_country, instance_id, bundle_version)
+        VALUES (#{login},
+        #{passwordHash},
+        #{firstName, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler},
+        #{lastName, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler},
+        #{email, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler},
+        #{allowRecvEmail},
+        #{langKey},
+        #{profilePhoto},
+        #{birthDate},
+        #{cls},
+        #{country},
+        #{recommenderId},
+        #{agreeTerms},
+        #{agreePrivacy},
+        #{phoneNumber, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler},
+        #{phoneCountry},
+        #{instanceId},
+        #{bundleVersion})
+
+        <selectKey keyProperty="id" resultType="long" order="AFTER">
+            SELECT LAST_INSERT_ID()
+        </selectKey>
+    </insert>
+
+    <!-- insert user info -->
+    <insert id="insertOtp" parameterType="com.cashmallow.api.domain.model.user.User">
+        INSERT INTO otp (user_id, code)
+            VALUE (#{id}, #{login})
+        ON DUPLICATE KEY UPDATE updated_at = NOW()
+    </insert>
+
+    <insert id="insertAuthmeWebhookLog" parameterType="com.cashmallow.api.domain.model.authme.Authme">
+        insert into authme (user_id, status, document_type, json, received_at)
+        values (#{customerId}, #{status}, #{documentType}, #{json}, NOW())
+    </insert>
+
+    <update id="updateAuthmeTravelerSynced">
+        update authme
+        set traveler_synced_at = NOW()
+        WHERE user_id = #{userId}
+        and traveler_synced_at is null
+    </update>
+
+    <select id="selectOtp" parameterType="string">
+        SELECT code
+        FROM otp
+        WHERE user_id = #{userId}
+    </select>
+
+    <!-- update user info -->
+    <update id="updateUser" parameterType="com.cashmallow.api.domain.model.user.User">
+        UPDATE user
+        SET login              = #{login},
+            password_hash      = #{passwordHash},
+            first_name         = #{firstName, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler},
+            last_name          = #{lastName, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler},
+            email              = #{email, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler},
+            profile_photo      = #{profilePhoto},
+            birth_date         = #{birthDate},
+            country            = #{country},
+            lang_key           = #{langKey},
+            activated          = ${activated},
+            last_login_time    = #{lastLoginTime},
+            last_modifier      = #{lastModifier},
+            last_modified_date = #{lastModifiedDate},
+            deactivated_date   = #{deactivatedDate},
+            instance_id        = #{instanceId},
+            device_type        = #{deviceType},
+            version_code       = #{versionCode},
+            device_os_version  = #{deviceOsVersion},
+            bundle_version     = #{bundleVersion},
+            agree_terms        = #{agreeTerms},
+            agree_privacy      = #{agreePrivacy},
+            phone_number       = #{phoneNumber, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler},
+            phone_country      = #{phoneCountry}
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateUserLangKey" parameterType="com.cashmallow.api.domain.model.user.User">
+        UPDATE user
+        SET lang_key = #{langKey}
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateUserLoginCount" parameterType="com.cashmallow.api.domain.model.notification.EmailTokenVerity">
+        UPDATE user
+        SET login_fail_count = login_fail_count + 1,
+            password_hash    = #{password}
+        WHERE id = #{userId}
+    </update>
+
+    <update id="clearUserLoginCount" parameterType="long">
+        UPDATE user
+        SET login_fail_count = 0
+        WHERE id = #{userId}
+    </update>
+
+    <!-- update user info -->
+    <update id="updateUserPassword" parameterType="com.cashmallow.api.domain.model.notification.EmailTokenVerity">
+        UPDATE user
+        SET login_fail_count = 0,
+            password_hash    = #{password}
+        WHERE id = #{userId}
+    </update>
+
+    <update id="cancelTermsAgree" parameterType="long">
+        UPDATE user
+        SET agree_terms   = 'N',
+            agree_privacy = 'N'
+        WHERE id = #{id}
+    </update>
+
+    <!-- UserAuthority Read -->
+    <!-- 사용자의 권한 정보를 응답한다. -->
+    <select id="getUserAuthListByUserId" resultType="java.lang.String">
+        SELECT UPPER(authority_name) AS authority_name
+        FROM user_authority
+        WHERE user_id = #{userId}
+    </select>
+
+    <!-- UserAuthority Write -->
+    <!-- Insert user_authority -->
+    <insert id="insertUserAuthority" parameterType="com.cashmallow.api.domain.model.user.UserAuthority">
+        INSERT INTO user_authority
+        VALUES (#{userId}, #{authorityName})
+    </insert>
+
+
+    <!-- Ip Write -->
+    <!-- edited by kgy 20170820 : Admin User IP 정보 업데이트 -->
+    <update id='updateAdminIpInfo' parameterType="HashMap">
+        UPDATE ip
+        <set>
+            updated_date = NOW(),
+            ip = #{ip},
+            allow = #{allow},
+            name = #{name}
+        </set>
+        WHERE user_id=#{user_id}
+    </update>
+
+    <!-- 69.2. 로그인/아웃 히스토리 등록 -->
+    <insert id="addLogInOutHist" parameterType="HashMap">
+        INSERT INTO login_hist (user_id, log_type)
+        VALUES (#{user_id}, #{log_type})
+    </insert>
+
+    <!-- 최근 가입 유저의 id 목록을 반환 -->
+    <select id="getOrderByDescNewUserIds" resultType="java.lang.Long">
+        SELECT u.id
+        FROM user u
+        ORDER BY u.id DESC
+        LIMIT #{limitCount}
+    </select>
+
+    <select id="getUserAgreeTermsByLoginId" resultType="com.cashmallow.api.domain.model.user.UserAgreeTerms">
+        SELECT u.id            AS userId,
+               u.login         AS login,
+               u.password_hash AS passwordHash,
+               u.agree_terms   AS agreeTerms,
+               u.agree_privacy AS agreePrivacy,
+               u.activated     AS activated,
+               u.country       AS countryCode,
+               c.iso_3166      AS iso3166
+        FROM user u
+                 JOIN country c on u.country = c.code
+        WHERE u.login = #{loginId}
+    </select>
+
+    <select id="getUserAgreeTermsByUserId" parameterType="long" resultType="com.cashmallow.api.domain.model.user.UserAgreeTerms">
+        SELECT u.id            AS userId,
+               u.login         AS login,
+               u.password_hash AS passwordHash,
+               u.agree_terms   AS agreeTerms,
+               u.agree_privacy AS agreePrivacy,
+               u.activated     AS activated,
+               u.country       AS countryCode,
+               c.iso_3166      AS iso3166
+        FROM user u
+                 JOIN country c on u.country = c.code
+        WHERE u.id = #{userId}
+    </select>
+
+    <select id="getCountNewUsers" resultType="java.lang.Integer">
+        <![CDATA[
+        SELECT count(*)
+        FROM user u
+        WHERE u.created_date >= CONVERT_TZ(DATE_FORMAT(#{startDate}, '%Y-%m-%d 00:00:00'), '+09:00', '+00:00')
+          AND u.created_date
+            <= CONVERT_TZ(DATE_FORMAT(#{endDate}, '%Y-%m-%d 23:59:59'), '+09:00', '+00:00')
+          AND u.cls = 'T'
+        ]]>
+        AND country NOT IN ('004')
+    </select>
+
+    <select id="getCountNewUsersAndTravelersByCountry" resultType="com.cashmallow.api.interfaces.user.dto.CountNewUsersAndTravelersByCountryVO">
+        <![CDATA[
+        SELECT
+            u.country AS countryCode,
+            COUNT(DISTINCT CASE
+                               WHEN t.account_ok_date >= CONVERT_TZ(DATE_FORMAT(#{startDate}, '%Y-%m-%d 00:00:00'), '+09:00', '+00:00')
+                                   AND t.account_ok_date <= CONVERT_TZ(DATE_FORMAT(#{endDate}, '%Y-%m-%d 23:59:59'), '+09:00', '+00:00')
+                                   AND t.certification_ok = 'Y'
+                                   AND t.account_ok = 'Y'
+                                   THEN t.user_id END) AS travelerCount,
+            COUNT(DISTINCT CASE
+                               WHEN u.created_date >= CONVERT_TZ(DATE_FORMAT(#{startDate}, '%Y-%m-%d 00:00:00'), '+09:00', '+00:00')
+                                   AND u.created_date <= CONVERT_TZ(DATE_FORMAT(#{endDate}, '%Y-%m-%d 23:59:59'), '+09:00', '+00:00')
+                                   AND u.cls = 'T'
+                                   THEN u.id END) AS userCount
+        FROM user u
+                 LEFT JOIN traveler t ON t.user_id = u.id
+        GROUP BY u.country
+        HAVING travelerCount > 0 OR userCount > 0
+        ]]>
+    </select>
+
+    <select id="getUsersLimit" resultType="com.cashmallow.api.domain.model.user.User" parameterType="hashmap">
+        SELECT *
+        FROM user
+        WHERE country NOT IN ('004')
+        ORDER BY id ASC
+        LIMIT #{start}, #{size}
+    </select>
+
+
+    <insert id="insertUserUnMaskedLog" parameterType="com.cashmallow.api.domain.model.user.UserUnmaskedLog">
+        INSERT INTO /* insertUserUnMaskedLog */
+            user_unmasked_log (user_id, traveler_id, view_name, creator, created_at)
+        VALUES (#{userId}, #{travelerId}, #{viewName}, #{creator}, now())
+    </insert>
+
+    <update id="updateUserInfo" parameterType="com.cashmallow.api.domain.model.user.User">
+        update /* updateUserInfo */
+            `user`
+        set phone_number  = #{phoneNumber, typeHandler=com.cashmallow.api.infrastructure.security.EncryptTypeHandler},
+            phone_country = #{phoneCountry}
+        where id = #{id}
+    </update>
+
+    <select id="getUsersByUserSearch" resultType="com.cashmallow.api.domain.model.user.User">
+        select id,
+        login,
+        password_hash,
+        first_name,
+        last_name,
+        email,
+        allow_recv_email,
+        activated,
+        lang_key,
+        profile_photo,
+        birth_date,
+        cls,
+        country,
+        recommender_id,
+        last_login_time,
+        last_logout_time,
+        creator,
+        created_date,
+        last_modifier,
+        last_modified_date,
+        deactivated_date,
+        instance_id,
+        device_type,
+        version_code,
+        agree_privacy,
+        agree_terms,
+        phone_number,
+        phone_country,
+        device_os_version,
+        login_fail_count,
+        bundle_version
+        from user
+        where 1 = 1
+        <if test="ids != null">
+            and id in
+            <foreach collection="ids" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="country != null">
+            and country = #{country}
+        </if>
+        <if test="birthMonthDay != null">
+            and birth_month_day = #{birthMonthDay}
+        </if>
+    </select>
+
+    <select id="getUserRoleByUserId" parameterType="map" resultType="java.lang.Integer">
+        SELECT count(*)
+          FROM user_authority
+         WHERE user_id = #{userId}
+          AND authority_name = #{authorityName}
+    </select>
+</mapper>

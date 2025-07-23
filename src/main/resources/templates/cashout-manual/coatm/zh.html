@@ -1,0 +1,177 @@
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        .collapsible {
+            background-color: #ffffff;
+            cursor: pointer;
+            padding-left: 16px;
+            padding-right: 16px;
+            height: 48px;
+            width: 100%;
+            border: none;
+            text-align: left;
+            outline: none;
+            font-size: 24px;
+            margin-top: 8px;
+            vertical-align: middle;
+        }
+
+        .content {
+            padding: 0 16px;
+            display: none;
+            overflow: hidden;
+            background-color: #f8fafa;
+        }
+
+        .align-right {
+            float: right;
+        }
+
+        .material-icons-round {
+            font-family: 'Material Icons';
+            font-weight: normal;
+            font-style: round;
+            font-size: 24px; /* Preferred icon size */
+            display: inline-block;
+            line-height: 1;
+            text-transform: none;
+            letter-spacing: normal;
+            word-wrap: normal;
+            white-space: nowrap;
+            direction: ltr;
+
+            /* Support for all WebKit browsers. */
+            -webkit-font-smoothing: antialiased;
+            /* Support for Safari and Chrome. */
+            text-rendering: optimizeLegibility;
+
+            /* Support for Firefox. */
+            -moz-osx-font-smoothing: grayscale;
+
+            /* Support for IE. */
+            font-feature-settings: 'liga';
+        }
+
+        p {
+            font-size: 14px;
+        }
+
+
+    </style>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons"
+          rel="stylesheet">
+</head>
+<body>
+<span style="font-size:14;">請點選與ATM畫面左上角相同的圖案。</span>
+<button type="button" class="collapsible">
+    <img th:src="${cdnUrl} + '/images/nice_logo.png'" style="height: 22px;"/>
+    <span name="expand_icon" class="material-icons-round align-right" style="margin-top: 2px;">expand_more</span>
+    <span style="font-size:9; color:gray; margin-top: 6px; float: right;">(CU, Emart24∙∙∙)</span>
+</button>
+<div class="content">
+    <p>
+        1. 比對ATM畫面左上角ATM系統名稱
+        <br> 2. 點選 "스마트(포인트) 출금"
+        <br> 3. 點選 "COATM"
+        <br> 4. 輸入您的生日(YYYYMMDD)後按 "확인"
+        <br> 5. 輸入一次性密碼(OTP)後按 "확인"
+        <br> 6. 領取現金
+    <div style="text-align: right;"><a href="https://www.cashmallow.com/zh-hant/atm-withdrawal-way/nicepark">Detail</a></div>
+    </p>
+</div>
+
+<button type="button" class="collapsible">
+    <img th:src="${cdnUrl} + '/images/hannet.png'" style="height: 32px;"></img>
+    <span name="expand_icon" class="material-icons-round align-right" style="margin-top: 6px;">expand_more</span>
+    <span style="font-size:9; color:gray; margin-top: 6px; float: right;">(Subway Station, Emart24∙∙∙)</span>
+</button>
+<div class="content">
+    <p>
+        1. 比對ATM畫面左上角ATM系統名稱
+        <br> 2. 點選 "포인트/스마트 출금”
+        <br> 3. 點選 "COATM"
+        <br> 4. 輸入您的生日(YYYYMMDD)後按 "확인"
+        <br> 5. 輸入一次性密碼(OTP)後按 "정정"
+        <br> 6. 選擇是否列印收據／明細表
+        <br> 7. 領取收據／明細表
+        <br> 8. 領取現金
+    <div style="text-align: right;"><a href="https://www.cashmallow.com/zh-hant/atm-withdrawal-way/hannet">Detail</a></div>
+    </p>
+</div>
+
+<button type="button" class="collapsible">
+    <img th:src="${cdnUrl} + '/images/hyosung.png'" style="height: 16px;"></img>
+    <span name="expand_icon" class="material-icons-round align-right">expand_more</span>
+    <span style="font-size:9; color:gray; margin-top: 4px; float: right;">(GS25, Ministop∙∙∙)</span>
+</button>
+<div class="content">
+    <p>
+        1. 比對ATM畫面左上角ATM系統名稱
+        <br> 2. 點選 "모바일/포인트 출금"
+        <br> 3. 點選 "COATM"
+        <br> 4. 點選 "앱출금"
+        <br> 5. 點選 "다음화면"
+        <br> 6. 輸入您的生日(YYYYMMDD)後按 "확인"
+        <br> 7. 輸入一次性密碼(OTP)後按 "확인"
+        <br> 8. 確認提領並點選"확인"
+        <br> 9. 確認金額並點選"확인"
+        <br>10. 領取現金
+    <div style="text-align: right;"><a href="https://www.cashmallow.com/zh-hant/atm-withdrawal-way/hs">Detail</a></div>
+    </p>
+</div>
+
+<button type="button" class="collapsible">
+    <img th:src="${cdnUrl} + '/images/lotte_atm.png'" style="height: 14px;"></img>
+    <span name="expand_icon" class="material-icons-round align-right">expand_more</span>
+    <span style="font-size:9; color:gray; margin-top: 4px; float: right;">(7-11, Lotte Mart∙∙∙)</span>
+</button>
+<div class="content">
+    <p>
+        1. 比對ATM畫面左上角ATM系統名稱
+        <br> 2. 點選 "포인트‧캐시 PAYCO‧L.POINT"
+        <br> 3. 點選 "COATM"
+        <br> 4. 點選 "스마트 출금"
+        <br> 5. 輸入您的生日(YYYYMMDD)後按 "확인"
+        <br> 6. 輸入一次性密碼(OTP)後按 "확인"
+        <br> 7. 確認提領並點選"확인"
+        <br> 8. 選擇是否列印收據／明細表
+        <br> 9. 領取收據／明細表
+        <br>10. 領取現金
+    <div style="text-align: right;"><a href="https://www.cashmallow.com/zh-hant/atm-withdrawal-way/lotte">Detail</a></div>
+    </p>
+</div>
+
+<script>
+    var coll = document.getElementsByClassName("collapsible");
+    var i;
+
+    for (i = 0; i < coll.length; i++) {
+        coll[i].addEventListener("click", function () {
+            this.classList.toggle("active");
+            var content = this.nextElementSibling;
+            if (content.style.display === "block") {
+                content.style.display = "none";
+                this.childNodes[3].innerHTML = "expand_more";
+            } else {
+                content.style.display = "block";
+                this.childNodes[3].innerHTML = "expand_less";
+            }
+
+            for (j = 0; j < coll.length; j++) {
+                var c = coll[j]
+                if (c != this) {
+                    var otherContent = c.nextElementSibling;
+                    otherContent.style.display = "none";
+                    c.childNodes[3].innerHTML = "expand_more";
+                }
+            }
+        });
+    }
+</script>
+
+</body>
+</html>
+
+

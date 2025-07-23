@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>Cashmallow Mail to confirm a mail address</title>
+</head>
+
+<body>
+
+<div th:replace="mail-templates/ja/fragments/header :: header"></div>
+
+<div style="background-color:white; padding:16px; line-height:1.5em;">
+    <div style="font-size:1em;">
+        お客様
+        こちらはCASHMALLOWカスタマーサービスセンターです。<br>
+
+        いつもCASHMALLOWをご利用いただき、誠にありがとうございます。<br>
+        &nbsp;<br>
+        認証コードは 「 <span style="color:blue;" th:text="${value}"></span> 」です。<br>
+        &nbsp;<br>
+        アプリ画面に認証コード入力して手続きを進んでください。<br>
+        何卒宜しくお願い致します。<br>
+    </div>
+    <div style="padding-top:24px; font-size:0.875em;">
+        <b style="color:red;">＜重要＞</b><br>
+        当社はこちらのメールアドレスに利用に関する重要な情報をお知らせ致します。<br>
+        よく使われているメールアドレスを登録して利用に関する重要な情報をご確認お願いします。<br>
+        &nbsp;<br>
+    </div>
+</div>
+
+<div th:replace="mail-templates/ja/fragments/footer :: footer"></div>
+
+</body>
+</html>

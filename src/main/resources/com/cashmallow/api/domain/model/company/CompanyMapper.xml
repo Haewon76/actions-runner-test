@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.cashmallow.api.domain.model.company.CompanyMapper">
+
+    <!-- 62.2. 사용 은행 정보 검색 -->
+    <select id="countBankAccount" parameterType="hashmap" resultType="int">
+        SELECT COUNT(1)
+        FROM bank_account
+        <where>
+            <if test="country != null and country != ''">
+                AND country = #{country}
+            </if>
+            <if test="companyId != null and companyId != ''">
+                AND company_id = #{companyId}
+            </if>
+            <if test="bankCode != null and bankCode != ''">
+                AND bank_code LIKE CONCAT('%', #{bankCode}, '%')
+            </if>
+            <if test="bankName != null and bankName != ''">
+                AND bank_name LIKE CONCAT('%', #{bankName}, '%')
+            </if>
+            <if test="bankAccountNo != null and bankAccountNo != ''">
+                AND bank_account_no = #{bankAccountNo}
+            </if>
+            <if test="useYn != null and (useYn.equalsIgnoreCase('Y') or useYn.equalsIgnoreCase('N'))">
+                AND use_yn = #{useYn}
+            </if>
+        </where>
+    </select>
+
+    <select id="findBankAccount" parameterType="hashmap" resultType="com.cashmallow.api.domain.model.company.BankAccount">
+        SELECT id, company_id, country, bank_code, bank_name, bank_account_no, account_type, sort_order, use_yn,
+        first_name, last_name, ref_value, created_date
+        FROM bank_account
+        <where>
+            <if test="country != null and country != ''">
+                AND country = #{country}
+            </if>
+            <if test="companyId != null and companyId != ''">
+                AND company_id = #{companyId}
+            </if>
+            <if test="bankCode != null and bankCode != ''">
+                AND bank_code LIKE CONCAT('%', #{bankCode}, '%')
+            </if>
+            <if test="bankName != null and bankName != ''">
+                AND bank_name LIKE CONCAT('%', #{bankName}, '%')
+            </if>
+            <if test="bankAccountNo != null and bankAccountNo != ''">
+                AND bank_account_no = #{bankAccountNo}
+            </if>
+            <if test="useYn != null and (useYn.equalsIgnoreCase('Y') or useYn.equalsIgnoreCase('N'))">
+                AND use_yn = #{useYn}
+            </if>
+        </where>
+        ORDER BY ${sort}
+        LIMIT #{startRow}, #{size}
+    </select>
+
+    <select id="getBankAccountByBankAccountId" resultType="com.cashmallow.api.domain.model.company.BankAccount">
+        SELECT id,
+               company_id,
+               country,
+               bank_code,
+               bank_name,
+               branch_name,
+               bank_account_no,
+               account_type,
+               sort_order,
+               use_yn,
+               first_name,
+               last_name,
+               ref_value,
+               created_date
+        FROM bank_account
+        WHERE id = #{bankAccountId}
+    </select>
+
+    <!-- country에 대한 company_id를 응답한다. -->
+    <select id="getCompanyIdByCountry" parameterType="HashMap" resultType="int">
+        SELECT IFNULL(id, -1) AS company_id
+        FROM company
+        WHERE country = #{country}
+    </select>
+
+    <select id="findBankAccountByCountryCodeAndBankCode" resultType="com.cashmallow.api.domain.model.company.BankAccount">
+        SELECT id,
+               company_id,
+               country,
+               bank_code,
+               bank_name,
+               bank_account_no,
+               account_type,
+               sort_order,
+               use_yn,
+               first_name,
+               last_name,
+               ref_value,
+               created_date
+        FROM bank_account ba
+        WHERE country = #{countryCode}
+          AND bank_code = #{bankCode};
+    </select>
+
+    <!-- 62.1. 사용 은행 정보 등록 -->
+    <insert id="putBankAccount" parameterType="com.cashmallow.api.interfaces.admin.dto.BankAccountVO">
+        INSERT INTO bank_account (company_id,
+                                  country,
+                                  bank_code,
+                                  bank_name,
+                                  bank_account_no,
+                                  account_type,
+                                  sort_order,
+                                  use_yn,
+                                  first_name,
+                                  last_name,
+                                  ref_value)
+        VALUES (#{company_id},
+                #{country},
+                #{bank_code},
+                #{bank_name},
+                #{bank_account_no},
+                #{account_type},
+                #{sort_order},
+                #{use_yn},
+                #{first_name},
+                #{last_name},
+                0)
+    </insert>
+
+    <insert id="insertRepaymentHistory" parameterType="com.cashmallow.api.domain.model.company.RepaymentHistory" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO repayment_history (currency, amount, fee, traveler_id, manager_id)
+        VALUES (#{currency}, #{amount}, #{fee}, #{travelerId} ,#{managerId})
+    </insert>
+
+</mapper>

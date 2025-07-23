@@ -71,7 +71,7 @@ public class DbsService {
     public CashmallowFxQuotationResponse getDbsFxQuotation(Long endUserId, CashmallowFxQuotationRequest request) throws CashmallowException {
         request.setEndUserId(endUserId.toString());
 
-        // fxService.checkIfDuplicatedTransaction(request.getTransactionId());
+        fxService.checkIfDuplicatedTransaction(request.getTransactionId());
 
         final CashmallowFxQuotationResponse dbsFxQuotation = dbsClient.getDbsFxQuotation(request);
         dbsFxQuotation.setQuotationId(fxService.addFxQuotation(request, dbsFxQuotation));

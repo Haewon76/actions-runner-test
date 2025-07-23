@@ -21,3 +21,4 @@ public abstract class RestClient<R> {
 
     public abstract HttpHeaders getHeaders();
 }
+// 캐싱 테스트 444444444444444444

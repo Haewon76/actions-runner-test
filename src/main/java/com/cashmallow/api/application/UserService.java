@@ -17,7 +17,6 @@ import java.util.Map;
 
 public interface UserService {
 
-    boolean isVerifyRole(Long userId, String... roleCodes);
 
     /**
      * search user

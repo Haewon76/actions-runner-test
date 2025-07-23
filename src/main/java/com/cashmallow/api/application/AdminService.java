@@ -12,3 +12,5 @@ public interface AdminService {
                       Locale locale) throws CashmallowException;
 
 }
+
+//testestsetsetsetset

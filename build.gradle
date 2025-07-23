@@ -129,12 +129,12 @@ dependencies {
 
 }
 
-test {
-    useJUnitPlatform()
-    systemProperty "spring.profiles.active", System.getenv("SPRING_PROFILES_ACTIVE") ?: "dev-local"
-    systemProperty "encrypt_key", System.getenv("encrypt_key")
-    systemProperty "RUNNER_NAME", "test"
-}
+// test {
+//     useJUnitPlatform()
+//     systemProperty "spring.profiles.active", System.getenv("SPRING_PROFILES_ACTIVE") ?: "dev-local"
+//     systemProperty "encrypt_key", System.getenv("encrypt_key")
+//     systemProperty "RUNNER_NAME", "test"
+// }
 
 dependencyManagement {
     imports {

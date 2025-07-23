@@ -33,6 +33,9 @@ jobs:
         run: |
           prefix_build_service=${INPUT_BUILD_SERVICE_NAME:-}
           GRADLE_CMD="./gradlew ${prefix_build_service:+${prefix_build_service}:}build"
+          if [ "${{ inputs.run-tests }}" == "false" ]; then
+          GRADLE_CMD="$GRADLE_CMD -x test"
+          fi
           GRADLE_CMD="$GRADLE_CMD --no-daemon --build-cache --project-cache-dir=/opt/hostedtoolcache/gradle_project_cache/${{ github.repository }}"
           echo "Running: $GRADLE_CMD"
           $GRADLE_CMD

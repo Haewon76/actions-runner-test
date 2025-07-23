@@ -11,6 +11,8 @@ public interface AdminService {
                       String instanceId, String deviceInfo, String ip,
                       Locale locale) throws CashmallowException;
 
+    String logintestn() throws CashmallowException;
+
 }
 
 //testestsetsetsetset
